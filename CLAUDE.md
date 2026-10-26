@@ -75,7 +75,8 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 - The check finds wrong statements, not missing ones: a dropped recommendation or a lost caveat (for example the severity limit "the status is displayed") is not detected.
 - The same input can give slightly different verdicts between runs. Keep the saved `results/` file of the run that goes into the report.
 - Duplicate IDs in the test sheet (F-001, F-002 appear twice, TEST ONLY rows): the first row is used, with a warning.
-- Reading drafts directly from Google Docs and writing results to a "Claims" tab are not built; today drafts are text files and results are a CSV.
+- Decision: drafts are read as text files and results are saved as files (a CSV per run, named with the model and the date). Nothing is written back into the Google Sheet.
+  Reading drafts directly from Google Docs is only an idea, not decided and not built.
 - Idea: add real approved (draft, source) pairs as style examples for the Make prompt after the supervisor's review.
 
 ## Conventions
