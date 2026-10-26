@@ -52,6 +52,7 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 ## Status (state at last update)
 
 - Offline: 20 tests pass; dry run works on all nine cases (the number "30%" and the finished-work words are found).
+- First Colab test (26 Oct): the key and endpoint work; the model answered 503 "high demand" for both gemini-3.1-flash-lite and gemini-3.5-flash-lite (overload, not a wrong name). The notebook test cell now retries.
 - **Not yet run against the real model.** The structured JSON answer from Gemini, the model name and the free-tier limits are untested. First step: `--only "T6 "` in Colab.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
