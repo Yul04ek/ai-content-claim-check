@@ -63,7 +63,11 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
   Caught: invented or finished claims (T1, T4 "Founders often ask", T6, T8), assumption stated as fact (T2, T3, T8). Clean controls T7 and T9 gave no false alarms.
   Missed: T2 "Founders often juggle..." (same kind as T1/T4, so run-to-run variation), T3 dropped "initially", T4 "looked like they were updated" and "alongside the Company DNA screen", T5 "This happens after...".
   Noise: T2 "users may need to restate" flagged although the draft is hedged; T8 first claim is supported but the judge's quote was not found, so it was downgraded.
-  Next: same nine cases with a stronger model of another family (via OpenRouter) and compare with this run. Keep the CSV of each run.
+  Saved in `results/`: `results_all9_gemini-3.1-flash-lite_2026-10-26.csv` (this run, goes into the report) and the first T6 run. Name every saved run with the model and the date.
+- Next (waiting for Tapiwa's approval, because it is a purchase): prepaid OpenRouter credit of $5-10 (OpenAI-compatible, base URL `https://openrouter.ai/api/v1`, not yet tested).
+  Prices seen on 26 Oct from third-party pages, to be checked: GPT-5 Mini $0.25/$2.00, Claude Sonnet 5.5 $2/$10, per 1M tokens. A full nine-case run is about 1-6 cents.
+  Plan: run the same nine cases with a stronger model of another family than the Make drafter (not GPT) and compare with the Gemini run. GPT-5 Mini only for quick debugging.
+  The free Gemini tier is fine for fictional data only: free-tier prompts may be used by Google, so never use it for real data.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
 ## Known limitations / TODO
