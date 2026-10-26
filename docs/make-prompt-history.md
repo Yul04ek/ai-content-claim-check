@@ -38,3 +38,23 @@ Each version was tried on one or two findings only, so this is a record of what 
 | v4 | Opening is a question or scenario, no claims about people, one-test wording, do not join two screens | F-008: no errors found by manual review (case T9) |
 
 Known gap in all versions: the severity limit "the status is displayed" is often dropped (F-002, F-008).
+
+## What the claim check found (26 Oct 2026)
+
+Checker: gemini-3.1-flash-lite, free tier. One draft per version, so this is a record of what was seen, not a measurement.
+The same input can give different verdicts between runs. Saved run: `results/results_all9_gemini-3.1-flash-lite_2026-10-26.csv`.
+
+| Version | Case | What the checker reported |
+|---|---|---|
+| v1 | T1 (F-007), T3 (F-008) | T1: "Founders often worry ..." Unsupported. T3: "which could mislead decisions" Needs Human Verification |
+| v2 | T2 (F-007), T4 (F-008) | T4: "Founders often ask ..." Unsupported. T2: two Needs Human Verification (one looks like a false alarm: the draft sentence was already hedged); "Founders often juggle ..." was missed |
+| v3 | T5 (F-008) | "paired with a Company DNA label" Needs Human Verification; "This happens after ..." was missed |
+| v4 | T9 (F-008) | nothing reported, same as the manual review |
+
+Error types seen in v1-v3, as ideas for prompt rules. NOT applied yet, and to be tested on other findings than F-007 and F-008:
+- A USER IMPACT assumption written as a fact: keep "may", "could", "might".
+- A consequence or cause added that the record does not state.
+- A limiting word lost ("initially", "the status is displayed").
+- Two items joined into one picture ("paired with", "alongside"); v4 already has a rule for this.
+
+The checker finds wrong statements, not missing ones, so a lost recommendation or caveat still needs a human.
