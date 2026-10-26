@@ -1,0 +1,7 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-007
+Created: 2026-10-26 12:35
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A8
+Evidence: none
+----------------------------------------
+Founders often worry about whether a paused conversation with an AI can pick up where it left off. In our testing with the Company DNA voice flow, we paused, then resumed through Continue with AURA, while asking what AURA knows about StudioFlow. The interface showed Resume context — Saved · Paused and Continue with AURA. After resuming, AURA remembered class scheduling and membership management, but said the target market was not known. The later target-market response also showed that draft documents were not necessarily treated as authoritative memory. The voice interaction itself worked in the checks I made. This could mean users may be able to resume, but may need to restate information that exists in a draft or provided in a different context. [Add: what surprised you?] [Add: what this taught us about building AURA]. #AURABuildLog #FundraiseInPublic #AURAFundraiseLog Suggested topic tags: #usabilitytesting #voiceassistants

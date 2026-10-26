@@ -1,0 +1,10 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-008
+Created: 2026-10-26 12:36
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A9
+Evidence: none
+----------------------------------------
+The Home page showed a saved item like “What is StudioFlow’s target market?” paired with a Company DNA label that wasn’t immediately clear in its state. This happens after generating and proposing StudioFlow information, where Company DNA moved from 0% accepted to a 40% working draft, then to final application pending. This could matter because users might think a Home item updates the Company DNA when it’s actually just a saved work item or unapplied proposal. We suggest labeling Home items by their state (saved work, pending Company DNA review, or accepted Company DNA) and linking directly to the relevant review action. [Add: what this taught us about building AURA]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productdesign

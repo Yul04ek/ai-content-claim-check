@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.idea/
+*.zip
+.ipynb_checkpoints/
+results/*dryrun*.csv

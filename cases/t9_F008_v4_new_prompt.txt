@@ -1,0 +1,12 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-008
+Created: 2026-10-26 13:30
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A9
+Evidence: none
+----------------------------------------
+Have you ever tried to see if a task you saved actually reflects an approved update? In this test, we checked Home after generating and proposing StudioFlow information. We observed items like What is StudioFlow’s target market? and The company. On the Company DNA page, the state started at 0% accepted with no completed apply, then showed a 40% working draft; after approval, the final application remained pending. The screen presents accepted facts and proposed changes as separate states, and this distinction was not clear at first during testing.
+
+This may matter because a user could misinterpret a saved item as an updated Company DNA rather than a proposal or work in progress. We suggest labeling Home items with their state (saved work, pending Company DNA review, or accepted Company DNA) and linking directly to the relevant review action. [Add: what surprised you?] [Add: what this taught us about building AURA].
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productdesign

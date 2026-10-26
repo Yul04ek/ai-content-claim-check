@@ -1,0 +1,10 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-006
+Created: 2026-10-26 13:30
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A7
+Evidence: none
+----------------------------------------
+The approval was saved, but the final step never completed. In this test of the Company DNA workflow, a 40% working draft appeared and stayed after a refresh, while accepted Company DNA remained at 0%. The recovery action returned the same failure a second time. The draft fields also contained instructions meant for AURA, such as “Show me a draft for review”. We suggest letting the recovery action complete an already-approved update without a new approval, and keeping prompt instructions out of company fields. [Add: what surprised you?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productfeedback

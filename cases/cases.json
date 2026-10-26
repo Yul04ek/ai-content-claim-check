@@ -1,0 +1,20 @@
+[
+  {"case": "T1 F-007 real draft v1", "id": "F-007", "draft_file": "t1_F007_v1.txt",
+   "expect": "Unsupported: 'Founders often worry...'. Needs verification: first person 'checks I made'. Recommendation missing (not detectable)."},
+  {"case": "T2 F-007 real draft v2", "id": "F-007", "draft_file": "t2_F007_v2.txt",
+   "expect": "Unsupported: 'Founders often juggle... across different modes'. Needs verification: 'didn't reliably know the target market' (record: AURA said it was not known)."},
+  {"case": "T3 F-008 real draft v1", "id": "F-008", "draft_file": "t3_F008_v1.txt",
+   "expect": "Unsupported: 'which could mislead decisions'. Needs verification: 'saved draft', 'wasn't clear' (record: 'initially unclear'). Labels in text."},
+  {"case": "T4 F-008 real draft v2", "id": "F-008", "draft_file": "t4_F008_v2.txt",
+   "expect": "Unsupported: 'Founders often ask...'. Assumption as fact: 'items that looked like they were updated'. Needs verification: 'alongside the Company DNA screen'."},
+  {"case": "T5 F-008 real draft v3", "id": "F-008", "draft_file": "t5_F008_v3.txt",
+   "expect": "Needs verification: 'paired with a Company DNA label', 'This happens', '0% accepted to a 40% working draft'."},
+  {"case": "T6 F-008 synthetic: invented number and finished fix", "id": "F-008", "draft_file": "t6_F008_fake_numbers.txt",
+   "expect": "Unsupported: '30%', 'relabelled the Home items', 'already shipped the fix'. The opening question is not a claim."},
+  {"case": "T7 F-006 synthetic: clean control", "id": "F-006", "draft_file": "t7_F006_clean_control.txt",
+   "expect": "No problems expected (every claim is in the record)."},
+  {"case": "T8 F-002 synthetic: qualifier dropped", "id": "F-002", "draft_file": "t8_F002_qualifier_dropped.txt",
+   "expect": "Needs verification or Unsupported: 'The cause is clear...' (record: cannot confirm retrieval behavior); 'Users have to re-enter' (record: 'may have to')."},
+  {"case": "T9 F-008 real draft v4 (new opening rules)", "id": "F-008", "draft_file": "t9_F008_v4_new_prompt.txt",
+   "expect": "Manual review found no unsupported claim. The opening is a question, not a claim. Only loss: severity limit 'the status is displayed'."}
+]

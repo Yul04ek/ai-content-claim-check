@@ -1,0 +1,10 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-007
+Created: 2026-10-26 12:35
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A8
+Evidence: none
+----------------------------------------
+Founders often juggle keeping context when resuming conversations with AURA, especially across different modes. In our tests, resuming from a paused StudioFlow session via Continue with AURA worked, and AURA remembered class scheduling and membership management, but it didn’t reliably know the target market. It also showed that draft documents aren’t guaranteed to be authoritative memory. This could mean users may need to restate information from drafts or from prior context when resuming. We suggest considering making the source and scope of resumed context clearer, and informing users whether voice resumes stay within the live Voice session or extend beyond it. [Add: what surprised you?] [Add: what this taught us about building AURA]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productfeedback

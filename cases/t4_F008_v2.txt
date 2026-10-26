@@ -1,0 +1,12 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-008
+Created: 2026-10-26 12:36
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A9
+Evidence: none
+----------------------------------------
+Founders often ask how clearly a product idea moves from thought to reality. When we checked Home recent work after generating StudioFlow information, we found items that looked like they were updated but weren’t yet finalized. The Home area showed a saved topic like “What is StudioFlow’s target market?” alongside the Company DNA screen, which initially displayed 0% accepted and no completed apply, then shifted to a 40% working draft and finally showed the final application still pending after approval. This could make a user think an item has been updated in Company DNA when it’s still a saved work item or an unapplied proposal, a distinction that wasn’t obvious at first glance.
+
+One option is to consider clearer labeling of states and direct links to the review action, so users know exactly what’s in review and what’s finalized. We suggest labeling Home items by their state (saved work, pending Company DNA review, or accepted Company DNA) and linking to the relevant review step. [Add: what surprised you?] [Add: what this taught us about building AURA]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productfeedback

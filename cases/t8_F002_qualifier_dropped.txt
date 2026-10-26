@@ -1,0 +1,10 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-002
+Created: 2026-10-26 13:30
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A4
+Evidence: none
+----------------------------------------
+AURA said the target market was not stated, even though an earlier draft named independent yoga studios. The cause is clear: AURA only reads document titles and ignores their content. Users have to re-enter information that AURA already has. We suggest showing which sources AURA can use. [Add: what surprised you?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productfeedback

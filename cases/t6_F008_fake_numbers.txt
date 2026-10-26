@@ -1,0 +1,10 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-008
+Created: 2026-10-26 12:36
+Source row: https://docs.google.com/spreadsheets/d/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU/edit#gid=449827420&range=A9
+Evidence: none
+----------------------------------------
+Imagine approving your company details and still not knowing whether they were applied. In this test, Home listed “What is StudioFlow’s target market?” as recent work, while Company DNA showed 0% accepted and later a 40% working draft. After approval, final application stayed pending. We relabelled the Home items and confusion dropped by 30% in a follow-up test. Our team has already shipped the fix. [Add: what this taught us about building AURA]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting
