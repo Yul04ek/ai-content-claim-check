@@ -21,6 +21,7 @@ For each claim choose exactly ONE finding:
 Rules:
 - record_quote must be copied EXACTLY from the record. Use an empty string if nothing in the record is relevant. Never paraphrase it.
 - source_field is the record field the quote comes from, or "none".
+- Use the field the claim comes from. SCENARIO and OBSERVATION describe what the tester really did and saw, so it may be stated as done. RECOMMENDATION is a proposal and USER IMPACT is an assumption; stating either as done or proven is an error.
 - Judge only against the record. Use no outside knowledge. Plausible-sounding is not supported.
 - Keep claims short. One fact per claim.
 - reason: one short sentence.

@@ -51,7 +51,8 @@ def overall(rows: list[dict], dry_run: bool) -> str:
     flag_text = f"; {flags} style flag(s)" if flags else ""
     if dry_run:
         # Without the AI layer a clean result means nothing, so never print "No problems found".
-        found = "deterministic problems found" if "Unsupported" in verdicts else "no deterministic problems"
+        found = ("deterministic findings to review"
+                 if verdicts & {"Unsupported", "Needs Human Verification"} else "no deterministic findings")
         return f"DRY RUN (AI layer skipped, NOT a verdict): {found}{flag_text}"
     if "Unsupported" in verdicts:
         text = "NOT READY: unsupported claims found"

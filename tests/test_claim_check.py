@@ -52,9 +52,11 @@ def test_clean_draft_handles_inline_hashtags():
     assert "#usabilitytesting" in hashtags
 
 
-def test_invented_number_is_unsupported_but_record_numbers_pass():
+def test_number_not_in_record_needs_human_look_but_record_numbers_pass():
     rows = det.deterministic_checks("Confusion dropped by 30%. Draft reached 40%.", det.REQUIRED_TAGS, [], RECORD_TEXT)
-    assert [r["text"] for r in rows if r["kind"] == "number"] == ["30%"]
+    numbers = [r for r in rows if r["kind"] == "number"]
+    assert [r["text"] for r in numbers] == ["30%"]
+    assert numbers[0]["verdict"] == "Needs Human Verification"
 
 
 def test_invented_quote_is_unsupported_but_real_quote_passes():
@@ -64,13 +66,16 @@ def test_invented_quote_is_unsupported_but_real_quote_passes():
 
 
 def test_flags():
-    rows = det.deterministic_checks("Founders often worry. I checked it. We shipped the fix.", [], [], RECORD_TEXT)
-    assert {"often", "I", "shipped"} <= {r["text"] for r in rows if r["kind"] == "flag"}
+    rows = det.deterministic_checks("Founders often worry about it.", [], [], RECORD_TEXT)
+    assert {"often"} == {r["text"] for r in rows if r["kind"] == "flag" and "Banned" in r["reason"]}
     assert any("hashtag missing" in r["reason"] for r in rows)
 
 
-def test_first_person_inside_quotes_is_ignored():
-    rows = det.deterministic_checks("Instructions such as “Show me a draft” appeared.", det.REQUIRED_TAGS, [], "x")
+def test_context_dependent_wording_is_left_to_the_judge():
+    # "I", "shipped" and section labels can be right or wrong depending on where the claim comes from,
+    # so plain Python must not flag them.
+    body = "I generated a plan. What happened: we shipped the report, which was fixed."
+    rows = det.deterministic_checks(body, det.REQUIRED_TAGS, [], "x")
     assert not [r for r in rows if r["kind"] == "flag"]
 
 

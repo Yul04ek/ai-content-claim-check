@@ -38,8 +38,9 @@ The free Gemini tier has per-minute and daily limits. If you see a 429 or 503 er
 ## How it works
 
 1. The draft is cleaned: the document header, hashtags, "Suggested topic tags" and `[Add: ...]` placeholders are removed.
-2. **Plain Python checks** (no model): numbers and quoted text that are not in the record are Unsupported;
-   banned words, section labels, first-person leftovers, finished-work wording and missing series hashtags are flagged.
+2. **Plain Python checks** (no model): quoted text that is not in the record is Unsupported; a number that is not in the record
+   needs a human look (Needs Human Verification); banned words and missing series hashtags are flagged.
+   Anything that depends on context (who acted, what was really done) is left to the model.
 3. **The model** lists the claims and compares each with the record. It must copy a quote from the record for its verdict;
    the code checks that the quote really is there. A "Supported" claim without a real quote becomes "Needs Human Verification".
 4. The result is one CSV row per claim, check or flag. Questions and placeholders are not treated as claims.

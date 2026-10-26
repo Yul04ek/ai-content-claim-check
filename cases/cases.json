@@ -4,7 +4,7 @@
   {"case": "T2 F-007 real draft v2", "id": "F-007", "draft_file": "t2_F007_v2.txt",
    "expect": "Unsupported: 'Founders often juggle... across different modes'. Needs verification: 'didn't reliably know the target market' (record: AURA said it was not known)."},
   {"case": "T3 F-008 real draft v1", "id": "F-008", "draft_file": "t3_F008_v1.txt",
-   "expect": "Unsupported: 'which could mislead decisions'. Needs verification: 'saved draft', 'wasn't clear' (record: 'initially unclear'). Labels in text."},
+   "expect": "Unsupported: 'which could mislead decisions'. Needs verification: 'saved draft', 'wasn't clear' (record: 'initially unclear')."},
   {"case": "T4 F-008 real draft v2", "id": "F-008", "draft_file": "t4_F008_v2.txt",
    "expect": "Unsupported: 'Founders often ask...'. Assumption as fact: 'items that looked like they were updated'. Needs verification: 'alongside the Company DNA screen'."},
   {"case": "T5 F-008 real draft v3", "id": "F-008", "draft_file": "t5_F008_v3.txt",

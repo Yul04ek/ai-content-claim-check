@@ -41,7 +41,10 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 
 - Plain `openai` client with the Gemini endpoint (as in the research agent), not Pydantic AI: fewer moving parts, the same retry helper,
   and the structured answer is validated with Pydantic models. Pydantic AI can replace `judge_with_llm` later.
-- Two layers. Numbers and quoted text are checked in code because that is exact and free. The model does the rest.
+- Two layers. Quotes, numbers, banned words, hashtags and placeholders are checked in code because that is exact and free. The model does the rest.
+- Checks that depend on context are NOT regexes: who acted ("I"), whether something was really done ("shipped"), section labels. The judge decides them
+  because it sees the field a claim comes from (SCENARIO/OBSERVATION may describe done work; RECOMMENDATION and USER IMPACT may not). Removed on 26 Oct after review.
+- A number that is not in the record gets Needs Human Verification (it can be derived from the record), not an automatic Unsupported.
 - The judge returns a *finding* (`not_in_record`, `assumption_as_fact`, `qualifier_dropped`, ...), and code maps it to one of the three
   required verdicts (`FINDING_TO_VERDICT` in `judge.py`). The mapping is the one place to change when the reviewer disagrees.
 - The judge must quote the record. If the quote is not in the record, or missing, `Supported` becomes `Needs Human Verification`.
@@ -51,7 +54,8 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 
 ## Status (state at last update)
 
-- Offline: 20 tests pass; dry run works on all nine cases (the number "30%" and the finished-work words are found).
+- Offline: 20 tests pass; dry run works on all nine cases (in T6 the invented number "30%" is found and marked Needs Human Verification).
+- First real run (26 Oct, gemini-3.1-flash-lite, case T6): the judge marked both invented claims Unsupported ("dropped by 30%", "already shipped the fix"); 794 input / 410 output tokens.
 - First Colab test (26 Oct): the key and endpoint work; the model answered 503 "high demand" for both gemini-3.1-flash-lite and gemini-3.5-flash-lite (overload, not a wrong name). The notebook test cell now retries.
 - **Not yet run against the real model.** The structured JSON answer from Gemini, the model name and the free-tier limits are untested. First step: `--only "T6 "` in Colab.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
