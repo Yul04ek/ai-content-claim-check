@@ -10,7 +10,7 @@
   {"case": "T5 F-008 real draft v3", "id": "F-008", "draft_file": "t5_F008_v3.txt",
    "expect": "Needs verification: 'paired with a Company DNA label', 'This happens', '0% accepted to a 40% working draft'."},
   {"case": "T6 F-008 synthetic: invented number and finished fix", "id": "F-008", "draft_file": "t6_F008_fake_numbers.txt",
-   "expect": "Unsupported: '30%', 'relabelled the Home items', 'already shipped the fix'. The opening question is not a claim."},
+   "expect": "Unsupported (judge): the claim 'dropped by 30% in a follow-up test', 'relabelled the Home items', 'already shipped the fix'. Needs Human Verification (code): the number '30%' itself. The opening question is not a claim."},
   {"case": "T7 F-006 synthetic: clean control", "id": "F-006", "draft_file": "t7_F006_clean_control.txt",
    "expect": "No problems expected (every claim is in the record)."},
   {"case": "T8 F-002 synthetic: qualifier dropped", "id": "F-002", "draft_file": "t8_F002_qualifier_dropped.txt",

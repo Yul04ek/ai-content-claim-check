@@ -55,9 +55,11 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 ## Status (state at last update)
 
 - Offline: 20 tests pass; dry run works on all nine cases (in T6 the invented number "30%" is found and marked Needs Human Verification).
-- First real run (26 Oct, gemini-3.1-flash-lite, case T6): the judge marked both invented claims Unsupported ("dropped by 30%", "already shipped the fix"); 794 input / 410 output tokens.
 - First Colab test (26 Oct): the key and endpoint work; the model answered 503 "high demand" for both gemini-3.1-flash-lite and gemini-3.5-flash-lite (overload, not a wrong name). The notebook test cell now retries.
-- **Not yet run against the real model.** The structured JSON answer from Gemini, the model name and the free-tier limits are untested. First step: `--only "T6 "` in Colab.
+- Real runs, case T6 (26 Oct, gemini-3.1-flash-lite): the JSON answer from Gemini is valid. Run 1: 2 claims Unsupported, 794 in / 410 out tokens.
+  After removing the context-dependent regexes: 3 claims Unsupported (relabelled items, "dropped by 30% in a follow-up test", "already shipped the fix"), 849 in / 448 out.
+  The number "30%" is also listed by code as Needs Human Verification. Two rows for one invention is by design: the claim (model) and the bare number (code, safety net). The strictest verdict decides the result.
+- **Not yet run:** all nine cases against the real model (Step 5 in Colab) and the free-tier limits for nine calls in a row.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
 ## Known limitations / TODO
