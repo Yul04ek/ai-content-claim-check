@@ -59,7 +59,11 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
 - Real runs, case T6 (26 Oct, gemini-3.1-flash-lite): the JSON answer from Gemini is valid. Run 1: 2 claims Unsupported, 794 in / 410 out tokens.
   After removing the context-dependent regexes: 3 claims Unsupported (relabelled items, "dropped by 30% in a follow-up test", "already shipped the fix"), 849 in / 448 out.
   The number "30%" is also listed by code as Needs Human Verification. Two rows for one invention is by design: the claim (model) and the bare number (code, safety net). The strictest verdict decides the result.
-- **Not yet run:** all nine cases against the real model (Step 5 in Colab) and the free-tier limits for nine calls in a row.
+- Full run, all nine cases (26 Oct, gemini-3.1-flash-lite, free tier): finished, 74 rows, 8025 in / 4994 out tokens (about 1 cent at paid prices). The retry helper handled two 503 answers and one timeout (20 s waits).
+  Caught: invented or finished claims (T1, T4 "Founders often ask", T6, T8), assumption stated as fact (T2, T3, T8). Clean controls T7 and T9 gave no false alarms.
+  Missed: T2 "Founders often juggle..." (same kind as T1/T4, so run-to-run variation), T3 dropped "initially", T4 "looked like they were updated" and "alongside the Company DNA screen", T5 "This happens after...".
+  Noise: T2 "users may need to restate" flagged although the draft is hedged; T8 first claim is supported but the judge's quote was not found, so it was downgraded.
+  Next: same nine cases with a stronger model of another family (via OpenRouter) and compare with this run. Keep the CSV of each run.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
 ## Known limitations / TODO
