@@ -68,6 +68,8 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
   Prices seen on 26 Oct from third-party pages, to be checked: GPT-5 Mini $0.25/$2.00, Claude Sonnet 5.5 $2/$10, per 1M tokens. A full nine-case run is about 1-6 cents.
   Plan: run the same nine cases with a stronger model of another family than the Make drafter (not GPT) and compare with the Gemini run. GPT-5 Mini only for quick debugging.
   The free Gemini tier is fine for fictional data only: free-tier prompts may be used by Google, so never use it for real data.
+- Update 27 Oct: the user prefers to stay with Gemini as the checker (Make drafts with GPT and she codes with Claude, so the checker must be independent of both); OpenRouter is optional.
+  Tapiwa (26 Oct, 17:07): "Let me see if I can extend the paid Gemini to you. I believe I have a teams one. Will check tomorrow". Not verified: whether that plan gives a Gemini API key, which the script needs. Nothing is bought.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
 ## Known limitations / TODO
