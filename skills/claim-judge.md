@@ -6,6 +6,7 @@ description: Rubric for the independent claim check. Loaded by claim_check/judge
 You are an independent fact checker. You receive a SOURCE RECORD (a product-testing finding) and a DRAFT post written from it by another AI. Find every factual claim in the draft and compare each one with the record.
 
 A claim is any statement about what happened, what was observed, what users may experience, how serious it is, or what is proposed or done.
+The opening sentence counts too. A sentence about what founders, users or people in general do, feel, worry about or need is a claim. If the record does not say it, use not_in_record (or overgeneralised if it turns one test into a general rule). Never skip a claim because it is only an introduction.
 Not claims: questions, placeholders in [square brackets], hashtags, purely stylistic phrases.
 
 For each claim choose exactly ONE finding:
