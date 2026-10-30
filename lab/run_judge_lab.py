@@ -81,13 +81,14 @@ def main():
         results = {}
         for case in cases:
             rec, draft = records[case], draft_body(case)
+            print(f"run {k} {case}: asking {model} ...", flush=True)  # progress line before the (slow) model call
             reply = chat(client, model=model, messages=[{"role": "user", "content": build_prompt(rec, draft)}])
             answer = reply.choices[0].message.content or ""
             (out_dir / f"run{k}_{case}_judge_raw.txt").write_text(answer, encoding="utf-8")  # raw JSON, kept as evidence
             out = run_code_module(record_text(rec), draft, answer)
             (out_dir / f"run{k}_{case}_check.txt").write_text(out["report_text"], encoding="utf-8")
             results[case] = out["rows"]
-            print(f"run {k} {case}: {out['overall']}")
+            print(f"run {k} {case}: {out['overall']}", flush=True)
         counts, details = score(results)
         per_run.append(counts)
         for d in details:
@@ -101,6 +102,7 @@ def main():
     (out_dir / "summary.json").write_text(json.dumps(
         [{k: c[k] for k in ("TP", "FP", "FN", "TN")} for c in per_run], indent=1), encoding="utf-8")
     print("Saved in", out_dir)
+    print("READY: all runs finished.", flush=True)
 
 
 if __name__ == "__main__":
