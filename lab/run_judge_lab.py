@@ -22,7 +22,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from score_golden import BASE, score  # noqa: E402
 
 DEFAULT_PROMPT = BASE / "prompts" / "judge_prompt_v1.txt"  # the Make prompt of baseline v1
-CODE = (BASE / "code" / "make_code_module_v1.py").read_text(encoding="utf-8")
+DEFAULT_CODE = BASE / "code" / "make_code_module_v1.py"  # the Make Code module of baseline v1
+CODE = DEFAULT_CODE.read_text(encoding="utf-8")
 FIELDS = {"1": "scenario", "2": "observation", "4": "severity", "5": "user impact", "6": "recommendation"}
 
 
@@ -65,8 +66,11 @@ def main():
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--prompt", default=str(DEFAULT_PROMPT), help="judge prompt file (default: baseline v1)")
+    ap.add_argument("--code", default=str(DEFAULT_CODE), help="Code module file (default: baseline v1)")
     ap.add_argument("--model", default=None, help="model name; default: MODEL_NAME from the environment")
     args = ap.parse_args()
+    global CODE
+    CODE = Path(args.code).read_text(encoding="utf-8")
 
     prompt_path = Path(args.prompt)
     prompt = prompt_path.read_text(encoding="utf-8")
@@ -79,6 +83,8 @@ def main():
     from claim_check.config import chat, get_client, get_env
     client, model = get_client(), args.model or get_env("MODEL_NAME")
     tag = "" if prompt_path.resolve() == DEFAULT_PROMPT.resolve() else prompt_path.stem + "_"  # keep v1 folder names unchanged
+    if Path(args.code).resolve() != DEFAULT_CODE.resolve():
+        tag += Path(args.code).stem + "_"  # a changed Code module gets its own folder too
     stamp = f"{model}_{tag}{datetime.date.today().isoformat()}"
     out_dir = ROOT / "lab" / "runs" / stamp
     out_dir.mkdir(parents=True, exist_ok=True)
