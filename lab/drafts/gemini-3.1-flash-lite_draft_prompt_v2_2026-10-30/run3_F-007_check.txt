@@ -1,0 +1,23 @@
+Result: REVIEW: 1 style flag, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reflects the testing process, observations, and recommendations found in the source record. All claims are supported by the provided information.
+
+Problems (1)
+- Style: always -- Banned word in the draft (generalisation or hype).
+
+Supported (4)
+- During testing of the voice flow, I paused my session and resumed it later to ask about my target market. -- Record: "I used the Company DNA voice flow, paused it, and resumed through Continue with AURA. I asked what AURA knew about StudioFlow."
+- While the assistant recalled class scheduling and membership details, it could not identify the target market despite that information being in my draft documents. -- Record: "AURA remembered class scheduling and membership management, but said the target market was not known. The later target-market response also showed that draft documents were not necessarily treated as authoritative memory."
+- This may mean that the system does not always treat drafts as authoritative memory. -- Record: "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory."
+- A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session. -- Record: "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 1 (always)
+Missing series hashtags: 0
+Draft length: 111 words
+Placeholders to fill: 2 ([Add: how did it feel to have to repeat that info?] [Add: what this taught us about building AURA.])

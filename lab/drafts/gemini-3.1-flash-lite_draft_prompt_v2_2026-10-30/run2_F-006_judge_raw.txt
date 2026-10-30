@@ -1,0 +1,33 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, after providing information about StudioFlow, the final step to apply those updates failed.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I provided founder-stated StudioFlow context through the Company DNA workflow... the final apply step failed.",
+      "reason": "The record confirms this specific sequence of events and the failure of the final step."
+    },
+    {
+      "claim": "Even after refreshing the page, the system displayed an approval status but would not complete the final action, leaving the draft stuck in a loop.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "A 40% working draft appeared and remained after refresh... The screen continued to show Approved / Final apply pending... The same Finish applying recovery action returned the same failure again.",
+      "reason": "The observation confirms the status remained, the action failed, and the recovery loop occurred."
+    },
+    {
+      "claim": "This may mean that critical updates remain unfinished, or that internal instructions meant for the AI could accidentally be saved as official company facts.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "The user cannot complete an approved Company DNA update and is sent back into a recovery loop. If applied without correction, the draft would also place prompt instructions in Company DNA fields.",
+      "reason": "The draft correctly frames these outcomes as possibilities, matching the user impact assessment."
+    },
+    {
+      "claim": "A possible next step is to make the recovery action reliably complete the already-approved update without requiring a new approval, provide a clear cancel or edit route, and prevent prompt instructions from being stored as company facts.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the recovery action reliably complete the already-approved update without requiring a new approval. Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts.",
+      "reason": "The draft accurately reflects the proposed recommendations."
+    }
+  ],
+  "summary": "The draft accurately summarizes the testing findings regarding the failure of the final apply step in the StudioFlow Company DNA update process. It correctly identifies the technical loop issue and the potential for incorrect data ingestion, while appropriately framing the suggested improvements as recommendations."
+}

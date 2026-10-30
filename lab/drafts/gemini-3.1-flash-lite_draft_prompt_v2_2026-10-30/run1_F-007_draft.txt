@@ -1,0 +1,4 @@
+Have you ever tried to pick up a conversation where you left off, only to find the other person has forgotten what you just said? During testing, I paused a session about business planning and resumed it later to ask about specific details. While the system remembered class scheduling and membership management, it did not recognize information regarding the target market. This could mean that draft documents are not always treated as authoritative memory, and users may need to restate information provided in different contexts. [Add: what surprised you?] A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session. [Add: what this taught us about building AURA.]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productdevelopment

@@ -1,0 +1,4 @@
+Have you ever tried to clear out an old file from your digital workspace, only to find no way to remove it? In a recent test of our documents area, the option to delete a file could not be found. This lack of visibility may mean that users struggle to understand how to remove unwanted files or whether they are limited to archiving them instead. A possible next step is to clarify whether deletion is supported, where it is available, and how it differs from archiving. [Add: what this taught us about building a clear interface?] [Add: what happened when you tried to navigate the workspace?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productdesign

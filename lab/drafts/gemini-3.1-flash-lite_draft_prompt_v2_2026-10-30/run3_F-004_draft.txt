@@ -1,0 +1,4 @@
+Do you ever need to remove a file you no longer need from your document list? During testing, I looked for a way to delete a document but could not find an option to do so. This may mean that you might be unsure how to clear out unwanted files or if archiving is the only path available. [Add: what this taught us about building AURA?] A possible next step is to clarify whether deletion is supported, where it is available, and how it differs from archiving. [Add: what change would make the biggest difference here?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usability #design

@@ -1,0 +1,23 @@
+Result: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately describes the observed failure of the Company DNA apply process and the presence of unwanted AURA instructions in the draft fields. All claims are supported by the source record, including the summary of recommendations.
+
+Problems (0)
+
+Supported (5)
+- During testing, after approving a draft of company facts, the final step failed to apply the data. -- Record: "The approval was saved, but the final apply step failed."
+- The system displayed an update as approved but did not finalize it -- Record: "The screen continued to show Approved / Final apply pending"
+- while also keeping draft instructions inside the fields instead of just the facts. -- Record: "The draft fields also contained AURA instructions such as “Show me a draft for review” and “Please record only these two product areas,” rather than only clean company facts."
+- This may mean that information is not correctly saved or cleaned for final use. -- Record: "If applied without correction, the draft would also place prompt instructions in Company DNA fields."
+- A possible next step is to make the recovery action reliably complete the update without requiring a new approval, while providing a clear way to cancel or edit the input and preventing system instructions from being stored. -- Record: "Make the recovery action reliably complete the already-approved update without requiring a new approval. Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 112 words
+Placeholders to fill: 2 ([Add: what this taught us about building AURA] [Add: what changed after the fix?])

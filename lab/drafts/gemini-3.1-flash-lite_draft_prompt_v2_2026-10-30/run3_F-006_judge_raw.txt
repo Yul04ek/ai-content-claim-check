@@ -1,0 +1,40 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, the system failed to finalize an approved company profile update.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The approval was saved, but the final apply step failed.",
+      "reason": "The record confirms the failure of the final apply step for an approved update."
+    },
+    {
+      "claim": "Even after refreshing or using the recovery action, the update remained pending",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "A 40% working draft appeared and remained after refresh... The same Finish applying recovery action returned the same failure again. The screen continued to show Approved / Final apply pending",
+      "reason": "The record notes the draft persisted after refresh and the recovery action failed to change the pending status."
+    },
+    {
+      "claim": "and the draft included internal prompt instructions instead of just the intended information.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The draft fields also contained AURA instructions such as “Show me a draft for review” and “Please record only these two product areas,” rather than only clean company facts.",
+      "reason": "The record explicitly mentions AURA instructions appearing in the draft fields."
+    },
+    {
+      "claim": "This could mean a significant delay in maintaining accurate records and potential confusion due to the unwanted text.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "The user cannot complete an approved Company DNA update and is sent back into a recovery loop. If applied without correction, the draft would also place prompt instructions in Company DNA fields.",
+      "reason": "The draft's claims about impact align with the consequences described in the record."
+    },
+    {
+      "claim": "A possible next step is to make the recovery action reliably complete the approved update, keep the payload available, provide a clear cancel or edit route, and prevent prompt instructions from being stored as company facts.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the recovery action reliably complete the already-approved update without requiring a new approval. Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts.",
+      "reason": "The draft accurately reflects the recommendations provided in the record."
+    }
+  ],
+  "summary": "The draft accurately describes the testing findings, including the failure to apply updates, the persistence of the pending status, and the presence of erroneous prompt instructions in the draft. All claims are consistent with the source record."
+}

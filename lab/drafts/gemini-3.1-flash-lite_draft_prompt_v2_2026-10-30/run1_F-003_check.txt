@@ -1,0 +1,23 @@
+Result: REVIEW: 1 to verify, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reports the test failure and the resulting user impact. However, the recommendation to fix the archive feature was weakened from a direct recommendation to a mere possibility.
+
+Problems (1)
+- Verify: A possible next step is to fix the archive action and provide a clear success or failure state for the user. -- The record provides a direct recommendation, while the draft labels it as a 'possible next step', weakening the proposal.
+  Record: "Fix the archive action in the next release and provide a clear success or failure state"
+
+Supported (3)
+- During testing, when attempting to archive a document from the main list, the action failed with a 503 status code error. -- Record: "The action failed with Request failed with status code 503."
+- The document remained visible in the active list and did not move to the archive. -- Record: "The document remained in Documents and did not appear in the archive."
+- This could mean that relying on the current archive feature to organize documents may lead to confusion about what has been successfully stored. -- Record: "Users cannot rely on archiving to organise or remove a document from the active list."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 106 words
+Placeholders to fill: 2 ([Add: what this taught us about building a reliable system] [Add: what changed after the fix?])

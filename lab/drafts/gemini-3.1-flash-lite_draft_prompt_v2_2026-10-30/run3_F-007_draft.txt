@@ -1,0 +1,4 @@
+Have you ever tried to pick up a conversation with an assistant right where you left off, only to find it has forgotten a key detail? During testing of the voice flow, I paused my session and resumed it later to ask about my target market. While the assistant recalled class scheduling and membership details, it could not identify the target market despite that information being in my draft documents. This may mean that the system does not always treat drafts as authoritative memory. [Add: how did it feel to have to repeat that info?] A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session. [Add: what this taught us about building AURA.]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productmanagement

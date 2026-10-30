@@ -1,0 +1,26 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, an attempt to archive a document from the main view failed with a 503 status code, leaving the file exactly where it started.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The action failed with Request failed with status code 503. The document remained in Documents and did not appear in the archive.",
+      "reason": "The draft accurately describes the observation recorded during testing."
+    },
+    {
+      "claim": "This could mean that people are unable to effectively organize their files or clean up their active project lists, which may lead to frustration when trying to keep things tidy.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users cannot rely on archiving to organise or remove a document from the active list.",
+      "reason": "The draft maintains the speculative nature of the impact described in the record."
+    },
+    {
+      "claim": "One option is to fix the archive action and provide a clear success or failure state so that the status of a document is never in doubt.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Fix the archive action in the next release and provide a clear success or failure state without leaving the user uncertain about the document’s status.",
+      "reason": "The draft frames the recommendation as an option, which is consistent with the proposed nature of the record."
+    }
+  ],
+  "summary": "All factual claims in the draft are supported by the provided source record. The draft accurately reflects the testing failure, the potential user impact, and the recommended solution."
+}

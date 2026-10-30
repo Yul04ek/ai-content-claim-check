@@ -1,0 +1,26 @@
+{
+  "claims": [
+    {
+      "claim": "In a recent test of our documents area, the option to delete a file could not be found.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I could not find a delete option.",
+      "reason": "The draft accurately reflects the tester's observation."
+    },
+    {
+      "claim": "This lack of visibility may mean that users struggle to understand how to remove unwanted files or whether they are limited to archiving them instead.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users may not know how to remove an unwanted document or whether archiving is the only option.",
+      "reason": "The draft maintains the speculative nature of the record's user impact."
+    },
+    {
+      "claim": "A possible next step is to clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "reason": "The draft correctly frames the recommendation as a proposed action."
+    }
+  ],
+  "summary": "The draft accurately reports the findings from the usability test. All claims are supported by the source record, and the speculative nature of the user impact and recommendations is preserved."
+}

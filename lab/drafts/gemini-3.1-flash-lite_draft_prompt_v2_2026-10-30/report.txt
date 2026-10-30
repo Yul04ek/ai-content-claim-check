@@ -1,0 +1,46 @@
+Drafter: gemini-3.1-flash-lite | drafting prompt: draft_prompt_v2.txt | judge: judge_prompt_v2f.txt + make_code_module_v2c.py
+
+run 1 F-003: 128 words | 'suggest' x0 | 'we' x0 | record verbs kept: fix yes
+   judge+code: REVIEW: 1 to verify, 2 placeholders to fill
+   - Verify: A possible next step is to fix the archive action and provide a clear success or failure state for the user. -- The record provides a direct recommendation, whi
+run 1 F-004: 119 words | 'suggest' x0 | 'we' x0 | record verbs kept: clarify yes
+   judge+code: REVIEW: 1 to verify, 2 placeholders to fill
+   - Verify: During testing, when looking for a way to delete a document in the Documents area, the delete option could not be found. -- The draft accurately describes the a
+run 1 F-005: 115 words | 'suggest' x0 | 'we' x0 | record verbs kept: -
+   judge+code: REVIEW: 2 to verify, 2 placeholders to fill
+   - Verify: While testing the file storage section with 29 assets, searching for a specific item named StudioFlow returned two relevant results. -- The claim accurately ref
+   - Verify: This check indicated that the basic search and document count functions were operating as intended during this test. -- The record only states no issue was obse
+run 1 F-006: 134 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes, keep yes
+   judge+code: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+run 1 F-007: 132 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes
+   judge+code: NOT READY: 1 unsupported, 1 style flag, 2 placeholders to fill
+   - Unsupported: During testing, I paused a session about business planning and resumed it later to ask about specific details. -- The record mentions using the Company DNA
+   - Style: always -- Banned word in the draft (generalisation or hype).
+run 2 F-003: 113 words | 'suggest' x0 | 'we' x0 | record verbs kept: fix yes
+   judge+code: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+run 2 F-004: 114 words | 'suggest' x0 | 'we' x0 | record verbs kept: clarify yes
+   judge+code: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+run 2 F-005: 122 words | 'suggest' x0 | 'we' x0 | record verbs kept: -
+   judge+code: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+run 2 F-006: 136 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes, keep NO
+   judge+code: REVIEW: 2 to verify, 2 placeholders to fill
+   - Verify: During testing, after providing information about StudioFlow, the final step to apply those updates failed. -- The record confirms this specific sequence of eve
+   - Verify: Even after refreshing the page, the system displayed an approval status but would not complete the final action, leaving the draft stuck in a loop. -- The obser
+run 2 F-007: 131 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes
+   judge+code: REVIEW: 1 style flag, 2 placeholders to fill
+   - Style: always -- Banned word in the draft (generalisation or hype).
+run 3 F-003: 135 words | 'suggest' x0 | 'we' x0 | record verbs kept: fix yes
+   judge+code: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+run 3 F-004: 104 words | 'suggest' x0 | 'we' x0 | record verbs kept: clarify yes
+   judge+code: REVIEW: 1 to verify, 2 placeholders to fill
+   - Verify: During testing, I looked for a way to delete a document but could not find an option to do so. -- The draft accurately reflects the tester's actions and finding
+run 3 F-005: 124 words | 'suggest' x0 | 'we' x0 | record verbs kept: -
+   judge+code: NOT READY: 1 unsupported, 1 to verify, 2 placeholders to fill
+   - Unsupported: These successful checks indicate that the search and filter functions may work reliably for organizing business materials. -- The record makes no mention o
+   - Verify: During testing of the library with 29 assets, searching for a specific term returned the correct results. -- The record specifies that searching for 'StudioFlow
+run 3 F-006: 132 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes, keep yes
+   judge+code: REVIEW: 1 to verify, 2 placeholders to fill
+   - Verify: Even after refreshing or using the recovery action, the update remained pending -- The record notes the draft persisted after refresh and the recovery action fa
+run 3 F-007: 138 words | 'suggest' x0 | 'we' x0 | record verbs kept: make yes
+   judge+code: REVIEW: 1 style flag, 2 placeholders to fill
+   - Style: always -- Banned word in the draft (generalisation or hype).
