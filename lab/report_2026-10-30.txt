@@ -1,0 +1,64 @@
+Baseline (Make, 29 Oct): TP 3 / FP 3 / FN 3 / TN 33
+
+== gemini-3.1-flash-lite_2026-10-30
+  run 1: TP 2 / FP 3 / FN 4 / TN 33
+  run 2: TP 3 / FP 2 / FN 3 / TN 34
+  run 3: TP 3 / FP 2 / FN 3 / TN 34
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | FN TP FN  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+    F-006 s10 | TN | FP TN TN  (and could place prompt instructions into company f)
+    F-006 s11 | FN | FN FN TP  (We suggest exploring a reliable recovery path that)
+
+== gemini-3.1-flash-lite_judge_prompt_v2a_2026-10-30
+  run 1: TP 3 / FP 2 / FN 3 / TN 34
+  run 2: TP 3 / FP 2 / FN 3 / TN 34
+  run 3: TP 3 / FP 3 / FN 3 / TN 33
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | FN TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | TP FN FN  (This test suggests the search and view actions can)
+    F-007 s 8 | TN | TN TN FP  (one option is to make the source and scope of resu)
+
+== gemini-3.1-flash-lite_judge_prompt_v2b_make_code_module_v2a_2026-10-30
+  run 1: TP 5 / FP 1 / FN 1 / TN 35
+  run 2: TP 4 / FP 1 / FN 2 / TN 35
+  run 3: TP 4 / FP 1 / FN 2 / TN 35
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+    F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
+    F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
+    F-007 s 7 | FN | TP FN FN  (This may matter because it suggests resumed contex)
+
+== gemini-3.5-flash-lite_2026-10-30
+  run 1: TP 3 / FP 2 / FN 3 / TN 34
+  run 2: TP 3 / FP 3 / FN 3 / TN 33
+  run 3: TP 3 / FP 2 / FN 3 / TN 34
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 1 | TN | TN FP TN  (Did you ever try to tidy up by archiving a documen)
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+
+== gemini-3.5-flash-lite_judge_prompt_v2a_2026-10-30
+  run 1: TP 3 / FP 2 / FN 3 / TN 34
+  run 2: TP 3 / FP 2 / FN 3 / TN 34
+  run 3: TP 3 / FP 2 / FN 3 / TN 34
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+
+== gemini-3.5-flash-lite_judge_prompt_v2b_make_code_module_v2a_2026-10-30
+  run 1: TP 3 / FP 1 / FN 3 / TN 35
+  run 2: TP 4 / FP 1 / FN 2 / TN 35
+  run 3: TP 4 / FP 1 / FN 2 / TN 35
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+    F-006 s11 | FN | FN TP TP  (We suggest exploring a reliable recovery path that)
+    F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
