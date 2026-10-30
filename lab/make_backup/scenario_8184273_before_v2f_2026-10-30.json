@@ -1,0 +1,1246 @@
+{
+ "id": 8184273,
+ "name": "YL004 AI story draft",
+ "teamId": 3099897,
+ "hookId": null,
+ "devices": [],
+ "deviceId": null,
+ "deviceScope": null,
+ "concept": false,
+ "description": "",
+ "folderId": null,
+ "slots": null,
+ "isinvalid": false,
+ "islinked": false,
+ "islocked": false,
+ "isPaused": false,
+ "usedPackages": [
+  "google-sheets",
+  "google-sheets",
+  "ai-tools",
+  "google-docs",
+  "ai-tools",
+  "builtin",
+  "code",
+  "google-docs",
+  "builtin",
+  "google-sheets"
+ ],
+ "lastEdit": "2026-10-29T12:05:21.455Z",
+ "scheduling": {
+  "type": "indefinitely",
+  "interval": 900
+ },
+ "iswaiting": false,
+ "dlqCount": 0,
+ "allDlqCount": 0,
+ "createdByUser": {
+  "id": 6784653,
+  "name": "yul Sh",
+  "email": "yu.hobby@gmail.com"
+ },
+ "updatedByUser": {
+  "id": 6784653,
+  "name": "yul Sh",
+  "email": "yu.hobby@gmail.com"
+ },
+ "nextExec": null,
+ "created": "2026-10-26T10:40:04.609Z",
+ "chainingRole": "none",
+ "type": "scenario",
+ "isShared": false,
+ "isActive": false,
+ "labels": [],
+ "blueprint": {
+  "flow": [
+   {
+    "id": 1,
+    "mapper": {
+     "from": "drive",
+     "limit": "100",
+     "filter": [
+      [
+       {
+        "a": "M",
+        "b": "Yes",
+        "o": "text:equal"
+       },
+       {
+        "a": "K",
+        "b": "Open",
+        "o": "text:equal"
+       }
+      ]
+     ],
+     "sheetId": "BZ021_Test_Copy",
+     "sortOrder": "asc",
+     "spreadsheetId": "1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU",
+     "tableFirstRow": "A1:Z1",
+     "includesHeaders": true,
+     "valueRenderOption": "FORMATTED_VALUE",
+     "dateTimeRenderOption": "FORMATTED_STRING"
+    },
+    "module": "google-sheets:filterRows",
+    "version": 2,
+    "metadata": {
+     "expect": [
+      {
+       "name": "from",
+       "type": "select",
+       "label": "Search Method",
+       "required": true,
+       "validate": {
+        "enum": [
+         "drive",
+         "share"
+        ]
+       }
+      },
+      {
+       "name": "valueRenderOption",
+       "type": "select",
+       "label": "Value render option",
+       "validate": {
+        "enum": [
+         "FORMATTED_VALUE",
+         "UNFORMATTED_VALUE",
+         "FORMULA"
+        ]
+       }
+      },
+      {
+       "name": "dateTimeRenderOption",
+       "type": "select",
+       "label": "Date and time render option",
+       "validate": {
+        "enum": [
+         "SERIAL_NUMBER",
+         "FORMATTED_STRING"
+        ]
+       }
+      },
+      {
+       "name": "limit",
+       "type": "uinteger",
+       "label": "Limit"
+      },
+      {
+       "name": "spreadsheetId",
+       "type": "select",
+       "label": "Spreadsheet Name",
+       "required": true
+      },
+      {
+       "name": "sheetId",
+       "type": "select",
+       "label": "Sheet Name",
+       "required": true
+      },
+      {
+       "name": "includesHeaders",
+       "type": "select",
+       "label": "Table contains headers",
+       "required": true,
+       "validate": {
+        "enum": [
+         true,
+         false
+        ]
+       }
+      },
+      {
+       "name": "tableFirstRow",
+       "type": "select",
+       "label": "Column range",
+       "required": true,
+       "validate": {
+        "enum": [
+         "A1:Z1",
+         "A1:BZ1",
+         "A1:CZ1",
+         "A1:DZ1",
+         "A1:MZ1",
+         "A1:ZZ1",
+         "A1:AZZ1",
+         "A1:BZZ1",
+         "A1:CZZ1",
+         "A1:DZZ1",
+         "A1:MZZ1",
+         "A1:ZZZ1"
+        ]
+       }
+      },
+      {
+       "name": "filter",
+       "type": "filter",
+       "label": "Filter",
+       "options": "rpc://google-sheets/2/rpcGetFilterKeys?includesHeaders=true"
+      },
+      {
+       "name": "orderBy",
+       "type": "select",
+       "label": "Order by"
+      },
+      {
+       "name": "sortOrder",
+       "type": "select",
+       "label": "Sort order",
+       "validate": {
+        "enum": [
+         "asc",
+         "desc"
+        ]
+       }
+      }
+     ],
+     "restore": {
+      "expect": {
+       "from": {
+        "label": "Select from My Drive"
+       },
+       "orderBy": {
+        "mode": "chose",
+        "label": "Empty"
+       },
+       "sheetId": {
+        "mode": "chose",
+        "label": "BZ021_Test_Copy"
+       },
+       "sortOrder": {
+        "mode": "chose",
+        "label": "Ascending"
+       },
+       "spreadsheetId": {
+        "mode": "chose",
+        "label": "BZ021_YL001_Test_Copy_Corrected (1)"
+       },
+       "tableFirstRow": {
+        "label": "A-Z"
+       },
+       "includesHeaders": {
+        "mode": "chose",
+        "label": "Yes"
+       },
+       "valueRenderOption": {
+        "mode": "chose",
+        "label": "Formatted value"
+       },
+       "dateTimeRenderOption": {
+        "mode": "chose",
+        "label": "Formatted string"
+       }
+      },
+      "parameters": {
+       "__IMTCONN__": {
+        "data": {
+         "scoped": "true",
+         "connection": "google"
+        },
+        "label": "aura's Google connection (yl.make2026@gmail.com)"
+       }
+      }
+     },
+     "designer": {
+      "x": 0,
+      "y": 300,
+      "name": "Story candidates (M = Yes)"
+     },
+     "interface": [
+      {
+       "name": "__IMTLENGTH__",
+       "type": "uinteger",
+       "label": "Total number of bundles"
+      },
+      {
+       "name": "__IMTINDEX__",
+       "type": "uinteger",
+       "label": "Bundle order position"
+      },
+      {
+       "name": "__ROW_NUMBER__",
+       "type": "number",
+       "label": "Row number"
+      },
+      {
+       "name": "__SPREADSHEET_ID__",
+       "type": "text",
+       "label": "Spreadsheet ID"
+      },
+      {
+       "name": "__SHEET__",
+       "type": "text",
+       "label": "Sheet"
+      },
+      {
+       "name": "0",
+       "type": "text",
+       "label": "ID (A)"
+      },
+      {
+       "name": "1",
+       "type": "text",
+       "label": "scenario (B)"
+      },
+      {
+       "name": "2",
+       "type": "text",
+       "label": "observation (C)"
+      },
+      {
+       "name": "3",
+       "type": "text",
+       "label": "evidence (D)"
+      },
+      {
+       "name": "4",
+       "type": "text",
+       "label": "severity (E)"
+      },
+      {
+       "name": "5",
+       "type": "text",
+       "label": "user impact (F)"
+      },
+      {
+       "name": "6",
+       "type": "text",
+       "label": "recommendation (G)"
+      },
+      {
+       "name": "7",
+       "type": "text",
+       "label": "status (H)"
+      },
+      {
+       "name": "8",
+       "type": "text",
+       "label": "date added (I)"
+      },
+      {
+       "name": "9",
+       "type": "text",
+       "label": "last update (J)"
+      },
+      {
+       "name": "10",
+       "type": "text",
+       "label": "resolution (K)"
+      },
+      {
+       "name": "11",
+       "type": "text",
+       "label": "has data (L)"
+      },
+      {
+       "name": "12",
+       "type": "text",
+       "label": "Story Candidate (M)"
+      },
+      {
+       "name": "13",
+       "type": "text",
+       "label": "(N)"
+      },
+      {
+       "name": "14",
+       "type": "text",
+       "label": "(O)"
+      },
+      {
+       "name": "15",
+       "type": "text",
+       "label": "(P)"
+      },
+      {
+       "name": "16",
+       "type": "text",
+       "label": "(Q)"
+      },
+      {
+       "name": "17",
+       "type": "text",
+       "label": "(R)"
+      },
+      {
+       "name": "18",
+       "type": "text",
+       "label": "(S)"
+      },
+      {
+       "name": "19",
+       "type": "text",
+       "label": "(T)"
+      },
+      {
+       "name": "20",
+       "type": "text",
+       "label": "(U)"
+      },
+      {
+       "name": "21",
+       "type": "text",
+       "label": "(V)"
+      },
+      {
+       "name": "22",
+       "type": "text",
+       "label": "(W)"
+      },
+      {
+       "name": "23",
+       "type": "text",
+       "label": "(X)"
+      },
+      {
+       "name": "24",
+       "type": "text",
+       "label": "(Y)"
+      },
+      {
+       "name": "25",
+       "type": "text",
+       "label": "(Z)"
+      }
+     ],
+     "parameters": [
+      {
+       "name": "__IMTCONN__",
+       "type": "account:google",
+       "label": "Connection",
+       "required": true
+      }
+     ],
+     "setupValidation": {
+      "result": {
+       "valid": true,
+       "fields": []
+      },
+      "version": 1,
+      "configuration": "dadcee8775fd1196"
+     }
+    },
+    "parameters": {
+     "__IMTCONN__": 11884410
+    }
+   },
+   {
+    "id": 2,
+    "mapper": {
+     "from": "drive",
+     "limit": "100",
+     "filter": [
+      [
+       {
+        "a": "A",
+        "b": "{{1.`0`}}",
+        "o": "text:equal"
+       }
+      ]
+     ],
+     "sheetId": "Story queue",
+     "sortOrder": "asc",
+     "spreadsheetId": "1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU",
+     "tableFirstRow": "A1:Z1",
+     "includesHeaders": true,
+     "valueRenderOption": "FORMATTED_VALUE",
+     "dateTimeRenderOption": "FORMATTED_STRING"
+    },
+    "module": "google-sheets:filterRows",
+    "version": 2,
+    "metadata": {
+     "expect": [
+      {
+       "name": "from",
+       "type": "select",
+       "label": "Search Method",
+       "required": true,
+       "validate": {
+        "enum": [
+         "drive",
+         "share"
+        ]
+       }
+      },
+      {
+       "name": "valueRenderOption",
+       "type": "select",
+       "label": "Value render option",
+       "validate": {
+        "enum": [
+         "FORMATTED_VALUE",
+         "UNFORMATTED_VALUE",
+         "FORMULA"
+        ]
+       }
+      },
+      {
+       "name": "dateTimeRenderOption",
+       "type": "select",
+       "label": "Date and time render option",
+       "validate": {
+        "enum": [
+         "SERIAL_NUMBER",
+         "FORMATTED_STRING"
+        ]
+       }
+      },
+      {
+       "name": "limit",
+       "type": "uinteger",
+       "label": "Limit"
+      },
+      {
+       "name": "spreadsheetId",
+       "type": "select",
+       "label": "Spreadsheet Name",
+       "required": true
+      },
+      {
+       "name": "sheetId",
+       "type": "select",
+       "label": "Sheet Name",
+       "required": true
+      },
+      {
+       "name": "includesHeaders",
+       "type": "select",
+       "label": "Table contains headers",
+       "required": true,
+       "validate": {
+        "enum": [
+         true,
+         false
+        ]
+       }
+      },
+      {
+       "name": "tableFirstRow",
+       "type": "select",
+       "label": "Column range",
+       "required": true,
+       "validate": {
+        "enum": [
+         "A1:Z1",
+         "A1:BZ1",
+         "A1:CZ1",
+         "A1:DZ1",
+         "A1:MZ1",
+         "A1:ZZ1",
+         "A1:AZZ1",
+         "A1:BZZ1",
+         "A1:CZZ1",
+         "A1:DZZ1",
+         "A1:MZZ1",
+         "A1:ZZZ1"
+        ]
+       }
+      },
+      {
+       "name": "filter",
+       "type": "filter",
+       "label": "Filter",
+       "options": "rpc://google-sheets/2/rpcGetFilterKeys?includesHeaders=true"
+      },
+      {
+       "name": "orderBy",
+       "type": "select",
+       "label": "Order by"
+      },
+      {
+       "name": "sortOrder",
+       "type": "select",
+       "label": "Sort order",
+       "validate": {
+        "enum": [
+         "asc",
+         "desc"
+        ]
+       }
+      }
+     ],
+     "restore": {
+      "expect": {
+       "from": {
+        "label": "Select from My Drive"
+       },
+       "orderBy": {
+        "mode": "chose",
+        "label": "Empty"
+       },
+       "sheetId": {
+        "mode": "chose",
+        "label": "Story queue"
+       },
+       "sortOrder": {
+        "mode": "chose",
+        "label": "Ascending"
+       },
+       "spreadsheetId": {
+        "mode": "chose",
+        "label": "BZ021_YL001_Test_Copy_Corrected (1)"
+       },
+       "tableFirstRow": {
+        "label": "A-Z"
+       },
+       "includesHeaders": {
+        "mode": "chose",
+        "label": "Yes"
+       },
+       "valueRenderOption": {
+        "mode": "chose",
+        "label": "Formatted value"
+       },
+       "dateTimeRenderOption": {
+        "mode": "chose",
+        "label": "Formatted string"
+       }
+      },
+      "parameters": {
+       "__IMTCONN__": {
+        "data": {
+         "scoped": "true",
+         "connection": "google"
+        },
+        "label": "aura's Google connection (yl.make2026@gmail.com)"
+       }
+      }
+     },
+     "designer": {
+      "x": 300,
+      "y": 300,
+      "name": "Find ID in Story queue"
+     },
+     "interface": [
+      {
+       "name": "__ROW_NUMBER__",
+       "type": "number",
+       "label": "Row number"
+      },
+      {
+       "name": "__SPREADSHEET_ID__",
+       "type": "text",
+       "label": "Spreadsheet ID"
+      },
+      {
+       "name": "__SHEET__",
+       "type": "text",
+       "label": "Sheet"
+      },
+      {
+       "name": "0",
+       "type": "text",
+       "label": "ID (A)"
+      },
+      {
+       "name": "1",
+       "type": "text",
+       "label": "scenario (B)"
+      },
+      {
+       "name": "2",
+       "type": "text",
+       "label": "Draft link (C)"
+      },
+      {
+       "name": "3",
+       "type": "text",
+       "label": "Check result (D)"
+      },
+      {
+       "name": "4",
+       "type": "text",
+       "label": "Claim check link (E)"
+      },
+      {
+       "name": "5",
+       "type": "text",
+       "label": "Review status (F)"
+      },
+      {
+       "name": "6",
+       "type": "text",
+       "label": "Review comment (G)"
+      },
+      {
+       "name": "7",
+       "type": "text",
+       "label": "Date (H)"
+      },
+      {
+       "name": "8",
+       "type": "text",
+       "label": "(I)"
+      },
+      {
+       "name": "9",
+       "type": "text",
+       "label": "(J)"
+      },
+      {
+       "name": "10",
+       "type": "text",
+       "label": "(K)"
+      },
+      {
+       "name": "11",
+       "type": "text",
+       "label": "(L)"
+      },
+      {
+       "name": "12",
+       "type": "text",
+       "label": "(M)"
+      },
+      {
+       "name": "13",
+       "type": "text",
+       "label": "(N)"
+      },
+      {
+       "name": "14",
+       "type": "text",
+       "label": "(O)"
+      },
+      {
+       "name": "15",
+       "type": "text",
+       "label": "(P)"
+      },
+      {
+       "name": "16",
+       "type": "text",
+       "label": "(Q)"
+      },
+      {
+       "name": "17",
+       "type": "text",
+       "label": "(R)"
+      },
+      {
+       "name": "18",
+       "type": "text",
+       "label": "(S)"
+      },
+      {
+       "name": "19",
+       "type": "text",
+       "label": "(T)"
+      },
+      {
+       "name": "20",
+       "type": "text",
+       "label": "(U)"
+      },
+      {
+       "name": "21",
+       "type": "text",
+       "label": "(V)"
+      },
+      {
+       "name": "22",
+       "type": "text",
+       "label": "(W)"
+      },
+      {
+       "name": "23",
+       "type": "text",
+       "label": "(X)"
+      },
+      {
+       "name": "24",
+       "type": "text",
+       "label": "(Y)"
+      },
+      {
+       "name": "25",
+       "type": "text",
+       "label": "(Z)"
+      }
+     ],
+     "parameters": [
+      {
+       "name": "__IMTCONN__",
+       "type": "account:google",
+       "label": "Connection",
+       "required": true
+      }
+     ],
+     "setupValidation": {
+      "result": {
+       "valid": true,
+       "fields": []
+      },
+      "version": 1,
+      "configuration": "fbfb9bf963b08a8a"
+     }
+    },
+    "parameters": {
+     "__IMTCONN__": 11884410
+    }
+   },
+   {
+    "id": 3,
+    "filter": {
+     "name": "No draft yet",
+     "conditions": [
+      [
+       {
+        "a": "{{2.`0`}}",
+        "b": "{{1.`0`}}",
+        "o": "text:notequal"
+       }
+      ]
+     ]
+    },
+    "mapper": {
+     "input": "You write a short draft of a public post for the series #FundraiseInPublic #AURAFundraiseLog. The draft is based on ONE product-testing finding. It is for internal review only and will never be published automatically.\n\nRULES\n1. Use only the information in the RECORD below. Do not add numbers, names, users, customers, investors, results or dates that are not in the RECORD.\n2. SCENARIO and OBSERVATION are verified facts. You may state them as facts.\n3. USER IMPACT is an assumption. Write it with careful words (may, likely, could). Never present it as a proven result.\n4. RECOMMENDATION is a proposal, not finished work. Never say that it was fixed, changed, released or improved.\n5. SEVERITY is a team judgement, not a measured fact.\n6. If the record contains a target or a plan, present it as a goal, not as something already achieved.\n7. If a good story needs information that is not in the RECORD, do not invent it. Insert a placeholder for a person instead, for example [Add: what changed after the fix?].\n8. If a field is empty, ignore it. Do not guess its content.\n\nSTYLE\r\n- Audience: anyone who is starting or running a business, or who wants to organise their business documents. Do not assume technical knowledge. Use plain words. If you use a product term (for example Company DNA), explain it in a few simple words or avoid it.\r\n- The first sentence is an opening for a reader who does not know the product. Write it as a plain question or a short everyday scenario about what a person is trying to do, based on the situation in SCENARIO. Use everyday words, no product terms.\r\n- The opening is a question or a scenario, not a statement of fact about people. Do not say what founders, users or people \"often\", \"usually\" or \"always\" do, feel or worry about. Do not use \"many\", \"surprising\" or \"shocking\".\r\n- The opening must not present an assumption (such as USER IMPACT) as if it had been observed.\r\n- Describe the finding itself as one test (\"in this test\", \"during testing\"), not as something that always happens.\r\n- Do not connect two screens, items or events into one picture unless OBSERVATION connects them.\r\n- Write one or two flowing paragraphs in this order: opening, what happened, why it may matter, what we suggest next. Do not use labels such as \"Situation:\" or \"What happened:\".\r\n- Choose the 2 or 3 most important facts. Do not list every detail from the record.\r\n- Present recommendations as suggestions (\"we suggest\", \"one option is\"), never as commitments (\"we will\", \"we aim to\").\r\n- Keep the honest limits from the record, including limiting words such as \"initially\" or \"the status is displayed\", and statements that the cause cannot be confirmed.\r\n- Add 1 or 2 placeholders where a person should add their own voice, for example [Add: what surprised you?] or [Add: what this taught us about building AURA].\r\n- Do not add plans, decisions or timelines that are not in RECOMMENDATION.\r\n- Length: 80 to 130 words. If the record is short, write a shorter draft. Never pad it with invented details.\r\n- No emojis, no headings, no bullet points.\r\n- End with the line: #AURABuildLog #FundraiseInPublic #AURAFundraiseLog\r\n- Then add one more line: \"Suggested topic tags:\" followed by 1 or 2 common, widely used hashtags that fit this finding (for example #usabilitytesting). Do not invent new tags. No brand, product or company names.\r\n- Return only the draft text, nothing else.\n\nRECORD\nID: {{1.`0`}}\nSCENARIO: {{1.`1`}}\nOBSERVATION: {{1.`2`}}\nSEVERITY: {{1.`4`}}\nUSER IMPACT: {{1.`5`}}\nRECOMMENDATION: {{1.`6`}}"
+    },
+    "module": "ai-tools:Ask",
+    "version": 2,
+    "metadata": {
+     "restore": {
+      "parameters": {
+       "model": {
+        "mode": "chose",
+        "label": "SmallModel: gpt-5-nano. Reasoning: minimal. Efficiently handles long conversations and reasoning, delivering smart conclusions quickly",
+        "nested": []
+       },
+       "makeConnectionId": {
+        "data": {
+         "scoped": "true",
+         "connection": "ai-provider"
+        },
+        "label": "Make's AI Provider (default)"
+       }
+      }
+     },
+     "designer": {
+      "x": 600,
+      "y": 300,
+      "name": "AI draft"
+     }
+    },
+    "parameters": {
+     "model": "small",
+     "makeConnectionId": 11707707
+    }
+   },
+   {
+    "id": 4,
+    "mapper": {
+     "name": "{{1.`0`}} | story draft | {{formatDate(now; \"YYYY-MM-DD\"; \"Europe/Berlin\")}}",
+     "footer": false,
+     "header": false,
+     "content": "DRAFT, NOT APPROVED. DO NOT PUBLISH.\r\nID: {{1.`0`}}\r\nCreated: {{formatDate(now; \"YYYY-MM-DD HH:mm\"; \"Europe/Berlin\")}}\r\nSource: BZ021_Test_Copy, column A, finding ID {{1.`0`}}\r\nEvidence: {{ifempty(1.`3`; \"none\")}}\r\n----------------------------------------\r\n{{3.answer}}",
+     "folderId": "/1vFNtyMsDw9mVwK9SHqHWVeFDXl6YKaBz",
+     "destination": "drive"
+    },
+    "module": "google-docs:createADocument",
+    "version": 1,
+    "metadata": {
+     "restore": {
+      "expect": {
+       "folderId": {
+        "mode": "chose",
+        "path": [
+         "Story draft"
+        ]
+       },
+       "destination": {
+        "label": "My Drive"
+       }
+      },
+      "parameters": {
+       "__IMTCONN__": {
+        "data": {
+         "scoped": "true",
+         "connection": "google"
+        },
+        "label": "aura's Google connection (yl.make2026@gmail.com)"
+       }
+      }
+     },
+     "designer": {
+      "x": 900,
+      "y": 300,
+      "name": "Create draft document"
+     }
+    },
+    "parameters": {
+     "__IMTCONN__": 11884410
+    }
+   },
+   {
+    "id": 6,
+    "mapper": {
+     "input": "You are an independent fact checker. You receive a SOURCE RECORD (a product-testing finding) and a DRAFT post written from it by another AI. Find every factual claim in the draft and compare each one with the record.\n\nA claim is any statement about what happened, what was observed, what users may experience, how serious it is, or what is proposed or done.\nThe opening sentence counts too. A sentence about what founders, users or people in general do, feel, worry about or need is a claim. If the record does not say it, use not_in_record (or overgeneralised if it turns one test into a general rule). Never skip a claim because it is only an introduction.\nNot claims: questions, placeholders in [square brackets], hashtags, purely stylistic phrases.\n\nFor each claim choose exactly ONE finding:\n- supported: stated in the record, or a faithful paraphrase with the same strength.\n- not_in_record: nothing in the record says this (invented detail, number, actor, cause, result).\n- contradicted: the record says something different.\n- done_not_proposed: a recommendation is described as already done, decided or planned.\n- assumption_as_fact: the record offers this only as an assumption or possibility (USER IMPACT, SEVERITY) but the draft states it as an observed fact.\n- overgeneralised: one test is presented as something that always or usually happens, or the claim is about people in general.\n- qualifier_dropped: the record limits the statement (\"initially\", \"cannot confirm\", \"the status is displayed\", \"not necessarily\") and the draft drops the limit.\n- meaning_shifted: the wording looks close, but the meaning is stronger, weaker or different.\n\nRules:\n- record_quote must be copied EXACTLY from the record. Use an empty string if nothing in the record is relevant. Never paraphrase it.\n- source_field is the record field the quote comes from, or \"none\".\n- Use the field the claim comes from. SCENARIO and OBSERVATION describe what the tester really did and saw, so it may be stated as done. RECOMMENDATION is a proposal and USER IMPACT is an assumption; stating either as done or proven is an error.\n- Judge only against the record. Use no outside knowledge. Plausible-sounding is not supported.\n- Keep claims short. One fact per claim.\n- reason: one short sentence.\n- summary: write it LAST, after all claims, so it agrees with your findings. Two or three plain sentences for a reviewer who has not read the draft. If any claim is not supported, name the main problem; say that no problem was found only if every claim is supported. No advice about publishing.\n\nReturn ONLY one JSON object, with no other text and no code fences, in exactly this shape:\n{\"claims\": [{\"claim\": \"...\", \"finding\": \"<one of: supported, not_in_record, contradicted, done_not_proposed, assumption_as_fact, overgeneralised, qualifier_dropped, meaning_shifted>\", \"source_field\": \"<one of: SCENARIO, OBSERVATION, SEVERITY, USER IMPACT, RECOMMENDATION, none>\", \"record_quote\": \"...\", \"reason\": \"...\"}], \"summary\": \"...\"}\n\nSOURCE RECORD\nSCENARIO: {{1.`1`}}\nOBSERVATION: {{1.`2`}}\nSEVERITY: {{1.`4`}}\nUSER IMPACT: {{1.`5`}}\nRECOMMENDATION: {{1.`6`}}\n\nDRAFT\n{{3.answer}}"
+    },
+    "module": "ai-tools:Ask",
+    "onerror": [
+     {
+      "id": 9,
+      "mapper": {
+       "answer": ""
+      },
+      "module": "builtin:Resume",
+      "version": 1,
+      "metadata": {
+       "designer": {
+        "x": 1500,
+        "y": 600,
+        "name": "Judge failed: continue without it"
+       }
+      }
+     }
+    ],
+    "version": 2,
+    "metadata": {
+     "expect": [
+      {
+       "name": "input",
+       "type": "text",
+       "label": "Text",
+       "required": true
+      }
+     ],
+     "restore": {
+      "parameters": {
+       "model": {
+        "mode": "chose",
+        "label": "Gemini 3.5 Flash LiteMost cost-efficient Gemini model for high-volume agentic tasks, translation, and simple data processing",
+        "nested": []
+       },
+       "makeConnectionId": {
+        "data": {
+         "scoped": "true",
+         "connection": "gemini-ai-q9zyjp"
+        },
+        "label": "yul's Gemini AI connection"
+       }
+      }
+     },
+     "designer": {
+      "x": 1200,
+      "y": 300,
+      "name": "AI judge (Gemini)"
+     },
+     "parameters": [
+      {
+       "name": "makeConnectionId",
+       "type": "account:ai-provider,openai-gpt-3,anthropic-claude,gemini-ai-q9zyjp,ai-agent-foundry-openai,ai-agent-foundry-non-openai,mistral-ai,cohere,groq,ai-agent-xai,amazon-bedrock,ai-agent-openai-compatible",
+       "label": "Connection",
+       "required": true
+      },
+      {
+       "name": "model",
+       "type": "select",
+       "label": "Model",
+       "required": true
+      }
+     ],
+     "setupValidation": {
+      "result": {
+       "valid": true,
+       "fields": []
+      },
+      "version": 1,
+      "configuration": "3ccb3ee7ec446dd7"
+     }
+    },
+    "parameters": {
+     "model": "gemini-3.5-flash-lite",
+     "makeConnectionId": 12448331
+    }
+   },
+   {
+    "id": 7,
+    "mapper": {
+     "input": [
+      {
+       "name": "record",
+       "value": "SCENARIO: {{1.`1`}}\nOBSERVATION: {{1.`2`}}\nSEVERITY: {{1.`4`}}\nUSER IMPACT: {{1.`5`}}\nRECOMMENDATION: {{1.`6`}}"
+      },
+      {
+       "name": "draft",
+       "value": "{{3.answer}}"
+      },
+      {
+       "name": "judge_answer",
+       "value": "{{6.answer}}"
+      }
+     ],
+     "language": "python",
+     "inputFormat": "editor",
+     "dependencies": [],
+     "codeEditorPython": "import json\nimport re\n\n# Inputs (Make Code \"Input\" variables). judge_answer is optional.\nrecord = input.get('record') or ''\ndraft = input.get('draft') or ''\njudge_answer = input.get('judge_answer') or ''\n\n# ---- Settings (same values as in the claim_check repository) ----\nREQUIRED_TAGS = [\"#AURABuildLog\", \"#FundraiseInPublic\", \"#AURAFundraiseLog\"]\nSEPARATOR = re.compile(r\"^-{10,}\\s*$\", re.M)\nPLACEHOLDER = re.compile(r\"\\[Add:[^\\]]*\\]\")\nNUMBER = re.compile(r\"\\d+(?:[.,]\\d+)?\\s?%?\")\nQUOTE = re.compile(r\"[“\\\"]([^”\\\"]{3,}?)[”\\\"]\")\nBANNED = re.compile(r\"\\b(often|many|always|usually|typically|obviously|shocking|surprising)\\b\", re.I)\n\n# How the judge's finding maps to one of the three verdicts\nFINDING_TO_VERDICT = {\n    \"supported\": \"Supported\",\n    \"not_in_record\": \"Unsupported\",\n    \"contradicted\": \"Unsupported\",\n    \"done_not_proposed\": \"Unsupported\",\n    \"assumption_as_fact\": \"Needs Human Verification\",\n    \"overgeneralised\": \"Needs Human Verification\",\n    \"qualifier_dropped\": \"Needs Human Verification\",\n    \"meaning_shifted\": \"Needs Human Verification\",\n}\n\n\ndef norm(text):\n    \"\"\"Normalise quotes and spaces so copy-paste differences do not matter.\"\"\"\n    text = text.replace(\"’\", \"'\").replace(\"‘\", \"'\")\n    text = text.replace(\"“\", '\"').replace(\"”\", '\"')\n    return re.sub(r\"\\s+\", \" \", text).strip().lower()\n\n\ndef make_row(kind, text, verdict=\"\", finding=\"\", source_field=\"\", quote=\"\", reason=\"\"):\n    return {\"kind\": kind, \"text\": text, \"verdict\": verdict, \"finding\": finding,\n            \"source_field\": source_field, \"record_quote\": quote, \"reason\": reason}\n\n\ndef clean_draft(text):\n    \"\"\"Remove the document header, hashtags and placeholders. Returns (body, placeholders, hashtags).\"\"\"\n    parts = SEPARATOR.split(text)\n    body = parts[-1] if len(parts) > 1 else text\n    body = re.sub(r\"\\s+\", \" \", body).strip()\n    hashtags = re.findall(r\"#\\w+\", body)\n    body = re.sub(r\"Suggested topic tags:.*\", \"\", body, flags=re.I)\n    body = re.sub(r\"#\\w+\", \"\", body)\n    placeholders = PLACEHOLDER.findall(body)\n    body = PLACEHOLDER.sub(\"\", body)\n    return re.sub(r\"\\s+\", \" \", body).strip(), placeholders, hashtags\n\n\ndef code_checks(body, hashtags, placeholders, record_text):\n    \"\"\"Checks that need no AI: numbers, quotes, banned words, hashtags, placeholders.\"\"\"\n    rows = []\n    # A number that is not in the record needs a human look (it may be derived, e.g. \"2 of 3\")\n    record_numbers = {n.replace(\" \", \"\") for n in NUMBER.findall(record_text)}\n    for number in dict.fromkeys(x.replace(\" \", \"\") for x in NUMBER.findall(body)):\n        if number not in record_numbers:\n            rows.append(make_row(\"number\", number, \"Needs Human Verification\", \"not_in_record\", \"none\",\n                                 reason=\"Number does not appear in the record. Check that it is not invented.\"))\n    # Quoted text must be copied from the record\n    record_norm = norm(record_text)\n    for quote in QUOTE.findall(body):\n        if norm(quote).rstrip(\"?.!,\") not in record_norm:\n            rows.append(make_row(\"quote\", quote, \"Unsupported\", \"not_in_record\", \"none\",\n                                 reason=\"Quoted text does not appear in the record.\"))\n    for match in BANNED.finditer(body):\n        rows.append(make_row(\"flag\", match.group(0), reason=\"Banned word in the draft (generalisation or hype).\"))\n    missing = [tag for tag in REQUIRED_TAGS if tag not in hashtags]\n    if missing:\n        rows.append(make_row(\"flag\", \" \".join(missing), reason=\"Approved series hashtag missing.\"))\n    for placeholder in placeholders:\n        rows.append(make_row(\"placeholder\", placeholder, reason=\"A person must fill this in before approval.\"))\n    return rows\n\n\ndef judge_rows(answer, record_text):\n    \"\"\"Turn the judge's JSON answer into rows and verify each quote against the record.\"\"\"\n    start, end = answer.find(\"{\"), answer.rfind(\"}\")\n    if start == -1 or end == -1:\n        raise ValueError(\"no JSON object found in the judge answer\")\n    data = json.loads(answer[start:end + 1])\n    claims = data.get(\"claims\")\n    note = str(data.get(\"summary\") or \"\").strip()[:600]\n    if not isinstance(claims, list):\n        raise ValueError(\"the JSON has no 'claims' list\")\n    record_norm = norm(record_text)\n    rows = []\n    for item in claims:\n        finding = str(item.get(\"finding\", \"\"))\n        verdict = FINDING_TO_VERDICT.get(finding, \"Needs Human Verification\")\n        reason = str(item.get(\"reason\", \"\"))\n        quote = str(item.get(\"record_quote\", \"\"))\n        if finding not in FINDING_TO_VERDICT:\n            reason += \" [unknown finding]\"\n        if quote and norm(quote) not in record_norm:\n            reason += \" [quote NOT found in record]\"\n            if verdict == \"Supported\":\n                verdict = \"Needs Human Verification\"\n        elif verdict == \"Supported\" and not quote:\n            verdict = \"Needs Human Verification\"\n            reason += \" [no supporting quote given]\"\n        rows.append(make_row(\"claim\", str(item.get(\"claim\", \"\")), verdict, finding,\n                             str(item.get(\"source_field\", \"\")), quote, reason))\n    return rows, note\n\n\n# ---- Run the checks ----\nMIN_WORDS = 20  # a shorter draft is treated as empty or broken\n\nbody, placeholders, hashtags = clean_draft(draft)\nrows = code_checks(body, hashtags, placeholders, record)\ntoo_short = len(body.split()) < MIN_WORDS\n\njudge_status = \"not provided\"\nai_note = \"\"\nif judge_answer.strip():\n    try:\n        judge_part, ai_note = judge_rows(judge_answer, record)\n        rows = judge_part + rows\n        judge_status = \"ok\"\n    except (ValueError, AttributeError) as error:\n        judge_status = \"invalid: \" + str(error)[:200]\n\nunsupported = sum(1 for r in rows if r[\"verdict\"] == \"Unsupported\")\nto_verify = sum(1 for r in rows if r[\"verdict\"] == \"Needs Human Verification\")\nflags = sum(1 for r in rows if r[\"kind\"] == \"flag\")\nn_placeholders = sum(1 for r in rows if r[\"kind\"] == \"placeholder\")\n\n\ndef plural(n, word):\n    return \"%d %s%s\" % (n, word, \"\" if n == 1 else \"s\")\n\n\n# Counts in plain words (placeholders are expected in every draft, so they are not \"problems\")\nparts = []\nif unsupported:\n    parts.append(\"%d unsupported\" % unsupported)\nif to_verify:\n    parts.append(\"%d to verify\" % to_verify)\nif flags:\n    parts.append(plural(flags, \"style flag\"))\nif n_placeholders:\n    parts.append(plural(n_placeholders, \"placeholder\") + \" to fill\")\ncounts = \", \".join(parts)\n\nif too_short:\n    overall = \"REVIEW: draft is too short (%d words)\" % len(body.split())\nelif judge_status == \"not provided\":\n    # Without the AI layer a clean result means nothing, so never say \"no issues found\"\n    overall = \"CHECK FAILED: no judge answer\"\nelif judge_status != \"ok\":\n    overall = \"CHECK FAILED: judge answer unreadable\"\nelif unsupported:\n    overall = \"NOT READY: \" + counts\nelif to_verify or flags:\n    # A style flag (banned word, missing hashtag) is a reason to look, even if the judge found nothing\n    overall = \"REVIEW: \" + counts\nelse:\n    overall = \"NO ISSUES FOUND (human review still required)\"\n    if counts:\n        overall += \": \" + counts\n\nproblems = unsupported + to_verify + flags\n\n# ---- Report for the check file (plain text) ----\nLABEL = {\"claim\": \"\", \"number\": \"number \", \"quote\": \"quoted text \", \"flag\": \"\"}\n\n\ndef problem_line(r):\n    if r[\"kind\"] == \"flag\":\n        label = \"Style\"\n    elif r[\"verdict\"] == \"Unsupported\":\n        label = \"Unsupported\"\n    else:\n        label = \"Verify\"\n    text = r[\"text\"]\n    if r[\"kind\"] == \"quote\":\n        text = '\"%s\"' % text\n    return \"- %s: %s%s -- %s\" % (label, LABEL[r[\"kind\"]], text, r[\"reason\"])\n\n\n# Order: unsupported first, then verify, then style flags\nproblem_rows = [r for r in rows if r[\"verdict\"] == \"Unsupported\"] \\\n    + [r for r in rows if r[\"verdict\"] == \"Needs Human Verification\"] \\\n    + [r for r in rows if r[\"kind\"] == \"flag\"]\ngood = [r for r in rows if r[\"kind\"] == \"claim\" and r[\"verdict\"] == \"Supported\"]\n\njudge_ok = judge_status == \"ok\"\nreport = [\"Result: \" + overall, \"\", \"-----\", \"AI-generated:\"]\nif judge_ok:\n    report.append(\"Judge summary: \" + (ai_note or \"none\"))\n    report += [\"\", \"Problems (%d)\" % len(problem_rows)]\n    for r in problem_rows:\n        report.append(problem_line(r))\n        if r[\"kind\"] == \"claim\" and r[\"record_quote\"]:\n            report.append('  Record: \"%s\"' % r[\"record_quote\"])\n    report += [\"\", \"Supported (%d)\" % len(good)]\n    for r in good:\n        report.append('- %s -- Record: \"%s\"' % (r[\"text\"], r[\"record_quote\"]))\nelse:\n    # No judge answer: no claim lists at all (code findings are in the code checks below)\n    reason_text = \"judge gave no answer\" if judge_status == \"not provided\" else \"judge answer unreadable\"\n    report.append(\"Judge summary: not available (%s)\" % reason_text)\n\n# Fixed list: every code check is always shown, so a missing line can never mean \"not run\"\nnumbers = [r for r in rows if r[\"kind\"] == \"number\"]\nquotes = [r for r in rows if r[\"kind\"] == \"quote\"]\nbanned = [r for r in rows if r[\"kind\"] == \"flag\" and r[\"reason\"].startswith(\"Banned\")]\ntags = [r for r in rows if r[\"kind\"] == \"flag\" and r[\"reason\"].startswith(\"Approved\")]\nholders = [r for r in rows if r[\"kind\"] == \"placeholder\"]\nwords = len(body.split())\n\n\ndef line(name, found, details=\"\"):\n    \"\"\"0 = nothing found. Details only when something was found.\"\"\"\n    return \"%s: %d%s\" % (name, len(found), \" (%s)\" % details if found else \"\")\n\n\nreport += [\"\", \"-----\", \"Code checks (Python, rule-based)\",\n           line(\"Numbers not in the record\", numbers, \", \".join(r[\"text\"] for r in numbers)),\n           line(\"Quoted text not in the record\", quotes, \"; \".join('\"%s\"' % r[\"text\"] for r in quotes)),\n           line(\"Banned words\", banned, \", \".join(r[\"text\"] for r in banned)),\n           \"Missing series hashtags: %d%s\" % (len([t for t in REQUIRED_TAGS if t not in hashtags]),\n                                              \" (%s)\" % \" \".join(t for t in REQUIRED_TAGS if t not in hashtags)\n                                              if tags else \"\"),\n           \"Draft length: %d words%s\" % (words, \" (too short, minimum %d)\" % MIN_WORDS if too_short else \"\"),\n           line(\"Placeholders to fill\", holders, \" \".join(r[\"text\"] for r in holders))]\n\nreturn {\n    \"overall\": overall,\n    \"judge_status\": judge_status,\n    \"problems\": problems,\n    \"ai_note\": ai_note,\n    \"report_text\": \"\\n\".join(report),\n    \"rows\": rows,\n}\n"
+    },
+    "module": "code:ExecuteCode",
+    "version": 1,
+    "metadata": {
+     "expect": [
+      {
+       "name": "language",
+       "type": "select",
+       "label": "Language",
+       "required": true,
+       "validate": {
+        "enum": [
+         "javascript",
+         "python"
+        ]
+       }
+      },
+      {
+       "name": "input",
+       "spec": {
+        "name": "value",
+        "spec": [
+         {
+          "name": "name",
+          "type": "text",
+          "label": "Name",
+          "required": true,
+          "validate": {
+           "max": 32,
+           "min": 1,
+           "pattern": "^[a-zA-Z0-9_]{1,32}$"
+          }
+         },
+         {
+          "name": "value",
+          "type": "any",
+          "label": "Value"
+         }
+        ],
+        "type": "collection",
+        "label": "Variable"
+       },
+       "type": "array",
+       "label": "Input"
+      },
+      {
+       "name": "dependencies",
+       "spec": {
+        "name": "value",
+        "type": "text",
+        "label": "Dependency",
+        "required": true,
+        "validate": {
+         "max": 214,
+         "min": 1,
+         "pattern": "^[A-Za-z0-9_@\\./<>=!~\\^+-]{1,214}$"
+        }
+       },
+       "type": "array",
+       "label": "Additional dependencies (Enterprise plans only)"
+      },
+      {
+       "name": "inputFormat",
+       "type": "select",
+       "label": "Input format",
+       "required": true,
+       "validate": {
+        "enum": [
+         "editor",
+         "string"
+        ]
+       }
+      },
+      {
+       "name": "codeEditorPython",
+       "type": "editor",
+       "label": "Code",
+       "required": true
+      }
+     ],
+     "restore": {
+      "expect": {
+       "input": {
+        "items": [
+         null,
+         null,
+         null
+        ]
+       },
+       "language": {
+        "mode": "chose",
+        "label": "Python"
+       },
+       "inputFormat": {
+        "label": "Code editor"
+       }
+      }
+     },
+     "designer": {
+      "x": 1500,
+      "y": 150,
+      "name": "Code check (numbers, quotes, flags)"
+     }
+    },
+    "parameters": {}
+   },
+   {
+    "id": 8,
+    "mapper": {
+     "name": "{{1.`0`}} | claim check | {{formatDate(now; \"YYYY-MM-DD\"; \"Europe/Berlin\")}}",
+     "footer": false,
+     "header": false,
+     "content": "Claim check for draft {{1.`0`}}\r\nChecked: {{formatDate(now; \"YYYY-MM-DD HH:mm\"; \"Europe/Berlin\")}}\r\nDraft: {{4.webViewLink}}\r\n----------------------------------------\r\n{{7.result.report_text}}",
+     "folderId": "/1vFNtyMsDw9mVwK9SHqHWVeFDXl6YKaBz",
+     "destination": "drive"
+    },
+    "module": "google-docs:createADocument",
+    "onerror": [
+     {
+      "id": 10,
+      "mapper": {
+       "webViewLink": ""
+      },
+      "module": "builtin:Resume",
+      "version": 1,
+      "metadata": {
+       "designer": {
+        "x": 2100,
+        "y": 300,
+        "name": "Check file failed: continue"
+       }
+      }
+     }
+    ],
+    "version": 1,
+    "metadata": {
+     "restore": {
+      "expect": {
+       "folderId": {
+        "mode": "chose",
+        "path": [
+         "Story draft"
+        ]
+       },
+       "destination": {
+        "label": "My Drive"
+       }
+      },
+      "parameters": {
+       "__IMTCONN__": {
+        "data": {
+         "scoped": "true",
+         "connection": "google"
+        },
+        "label": "aura's Google connection (yl.make2026@gmail.com)"
+       }
+      }
+     },
+     "designer": {
+      "x": 1800,
+      "y": 150,
+      "name": "Create check document"
+     }
+    },
+    "parameters": {
+     "__IMTCONN__": 11884410
+    }
+   },
+   {
+    "id": 5,
+    "mapper": {
+     "from": "share",
+     "mode": "select",
+     "values": {
+      "0": "{{1.`0`}}",
+      "1": "{{1.`1`}}",
+      "2": "=HYPERLINK(\"{{4.webViewLink}}\"; \"Open draft\")",
+      "3": "{{7.result.overall}}",
+      "4": "=IF(\"{{8.webViewLink}}\"=\"\"; \"Check file not created\"; HYPERLINK(\"{{8.webViewLink}}\"; \"Open check\"))",
+      "5": "Draft, not approved",
+      "7": "{{formatDate(now; \"YYYY-MM-DD\"; \"Europe/Berlin\")}}"
+     },
+     "sheetId": "Story queue",
+     "spreadsheetId": "/1bq2OSZtboppn9QeJlOUT4DVr4wD3x6zBuf1in7GAfhU",
+     "includesHeaders": true,
+     "insertDataOption": "OVERWRITE",
+     "useColumnHeaders": false,
+     "valueInputOption": "USER_ENTERED",
+     "insertUnformatted": false
+    },
+    "module": "google-sheets:addRow",
+    "version": 2,
+    "metadata": {
+     "restore": {
+      "expect": {
+       "from": {
+        "label": "Shared with me"
+       },
+       "mode": {
+        "label": "Search by path"
+       },
+       "sheetId": {
+        "label": "Story queue"
+       },
+       "spreadsheetId": {
+        "path": [
+         "BZ021_YL001_Test_Copy_Corrected (1)"
+        ]
+       },
+       "includesHeaders": {
+        "label": "Yes"
+       },
+       "useColumnHeaders": {
+        "label": "No"
+       },
+       "valueInputOption": {
+        "mode": "chose",
+        "label": "User entered"
+       }
+      },
+      "parameters": {
+       "__IMTCONN__": {
+        "data": {
+         "scoped": "true",
+         "connection": "google"
+        },
+        "label": "aura's Google connection (yl.make2026@gmail.com)"
+       }
+      }
+     },
+     "designer": {
+      "x": 2100,
+      "y": 0,
+      "name": "Add row to Story queue (ID, links, check, status, date)"
+     }
+    },
+    "parameters": {
+     "__IMTCONN__": 11884410
+    }
+   }
+  ],
+  "name": "YL004 AI story draft",
+  "metadata": {
+   "instant": false,
+   "version": 1,
+   "designer": {
+    "orphans": []
+   },
+   "scenario": {
+    "dlq": true,
+    "slots": null,
+    "dataloss": false,
+    "maxErrors": 3,
+    "autoCommit": true,
+    "roundtrips": 1,
+    "sequential": false,
+    "confidential": false,
+    "freshVariables": false,
+    "autoCommitTriggerLast": true
+   }
+  },
+  "scheduling": {
+   "type": "indefinitely",
+   "interval": 900
+  },
+  "interface": {
+   "input": [],
+   "output": []
+  }
+ }
+}
