@@ -9,7 +9,8 @@ Baseline Make (29 Oct, gemini 3.1): TP 4 / FP 2 / FN 3 / TN 33. Code module v2a/
 | v2b | weaker/different main verb of a proposed action = meaning_shifted | 5-6 TP, 0 FP | 4-5 TP, 0 FP (one broken JSON answer in run 1) | kept |
 | v2c | a new conclusion not stated in the record = meaning_shifted | 6 TP, 0-2 FP | 6 TP, 1 FP (F-005 s6) | too broad |
 | v2d | v2c limited to inference sentences ("this suggests") | 6 TP, 1 FP (F-005 s6), 1 FN | 6 TP, 0 FP, 1 FN, identical in 3 runs | **accepted** |
-| v2e | a quote must cover the whole claim (half-quote) | same as v2d | same as v2d, F-005 s6 flickers | rejected: no gain |
+| v2e | a quote must cover the whole claim (half-quote) | same as v2d | same as v2d, F-005 s6 flickers | rejected: no gain; it also pushed the judge to split sentences, against labelling rule 2b |
+| v2f | labelling rule 2b: a sentence that depends on "because" / "so" is one claim, do not split (v2d + this) | to be tested | to be tested | - |
 
 Known limit after v2d: F-007 s7 (synthesis OBSERVATION + USER IMPACT) is still passed as Supported by both models, with a quote from USER IMPACT only.
 Verified: all numbers above come from the saved runs in lab/runs (raw judge JSON + check texts) and lab/report_2026-10-30.txt.
