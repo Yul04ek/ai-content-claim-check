@@ -1,0 +1,11 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-003
+Created: 2026-10-29 10:44
+Source: BZ021_Test_Copy, column A, finding ID F-003
+Evidence: https://drive.google.com/file/d/1-EUXlVvKGcqGb1HkVDCS1Ls_Tp5xDjpN/view?usp=sharing
+----------------------------------------
+Did you ever try to tidy up by archiving a document and it didn’t move? In this test, archiving from Documents failed with a 503 error, and the document stayed visible instead of moving to the archive. This may matter because users rely on archiving to keep active lists clean, so they could lose confidence in the system when an action looks like it worked but didn’t. We suggest exploring improvements in the archive action for the next release and adding a clear success or failure state so users aren’t left unsure about a document’s status. [Add: what this taught us about building AURA] [Add: what changed after the fix?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+
+Suggested topic tags: #usabilitytesting #qualityassurance

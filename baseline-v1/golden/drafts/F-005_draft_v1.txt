@@ -1,0 +1,11 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-005
+Created: 2026-10-29 10:45
+Source: BZ021_Test_Copy, column A, finding ID F-005
+Evidence: https://drive.google.com/file/d/1_uCDue17qv-u_ZYvwUtNm9h2cAwmwf4t/view?usp=sharing
+----------------------------------------
+Have you ever tried finding a specific document in a large library and seen a different result than you expected? In this test of the Documents library with 29 assets, searching for StudioFlow returned 2 results, and QA-S02 — StudioFlow — Interview Guide opened with its content visible. After a refresh, the document count stayed at 29, and category filters plus “All documents” behaved as expected. This test suggests the search and view actions can display content consistently in this scenario, but timing and exhaustive verification of every document were not performed. [Add: what surprised you?] One option is to plan a broader check to confirm results across more assets and timing conditions.
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+
+Suggested topic tags: #usabilitytesting #documentationsearch

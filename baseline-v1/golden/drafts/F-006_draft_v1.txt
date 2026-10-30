@@ -1,0 +1,15 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-006
+Created: 2026-10-29 10:45
+Source: BZ021_Test_Copy, column A, finding ID F-006
+Evidence: https://drive.google.com/file/d/1Wes6H2GAtnH6OUTOIvSG_S_vFXAu3Nq3/view?usp=sharing
+----------------------------------------
+Opening question: When you try to update your StudioFlow context through the Company DNA workflow, what happens if the final apply step can’t complete?
+
+During testing, a 40% working draft appeared and stayed after refresh; the accepted Company DNA remained at 0%. The approval was saved, but the final apply step failed, and the same recovery action kept failing. The screen showed Approved / Final apply pending, while the accepted version history indicated no completed final apply. Draft fields also contained prompt instructions like “Show me a draft for review” and “Please record only these two product areas,” instead of clean company facts.
+
+This could matter because it blocks updates and could place prompt instructions into company facts if applied as-is. We suggest exploring a reliable recovery path that completes the approved update, with a clear cancel/edit option and separation of draft prompts from company facts. [Add: what this taught us about building AURA] [Add: next steps for handling recovery flows]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+
+Suggested topic tags: #usabilitytesting #productfeedback

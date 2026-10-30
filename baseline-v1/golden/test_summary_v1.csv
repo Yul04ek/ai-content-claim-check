@@ -1,0 +1,14 @@
+case,"Make result (Story queue, column D)",planted trap (test design),did the trap reach the draft?,TP,FP,FN,TN,not counted (?),code checks (mechanical)
+F-003,"NOT READY: 1 unsupported, 2 placeholders to fill",recommendation edited to 'Fix ...' (test: done vs proposed),"No: the draft says 'suggest', and even weakens the recommendation",0,1,1,4,0,"0 numbers, 0 quotes, 0 banned words, hashtags ok, 96 words"
+F-004,"NOT READY: 1 unsupported, 2 placeholders to fill",uncertainty ('behavior and permissions are not clear'),No: the qualifier was kept,1,0,0,7,0,"0 numbers, 0 quotes, 0 banned words, hashtags ok, 100 words"
+F-005,"NOT READY: 2 unsupported, 1 to verify, 1 placeholder to fill",control: numbers 29 and 2,No: numbers are correct. The model added a plan (broader check),2,1,0,6,0,"0 numbers not in record, 0 quotes, 0 banned words, 109 words"
+F-006,NO ISSUES FOUND (human review still required): 2 placeholders to fill,exaggeration + two exact quotes + 40% / 0%,Partly: quotes and numbers exact; 'kept failing' and 'instead of' are possible exaggerations (marked ?),0,0,1,10,0,"0 numbers, 0 quotes, 0 banned words, 146 words"
+F-007,"NOT READY: 1 unsupported, 2 placeholders to fill","derived number ('two areas', digit-only check gap) + qualifier",No: no derived number; qualifier kept. Code flagged a scare quote ('remembers'),0,1,1,6,0,"1 quoted text not in record (false alarm), 141 words"
+TOTAL,,,,3,3,3,33,0,
+,,,,,,,,,
+HOW TO READ,,,,,,,,,
+TP = a real problem that the checker flagged. FN = a real problem the checker missed. FP = a false alarm. TN = a correct sentence that was not flagged.,,,,,,,,,
+"Rows with 'sure? = ?' are not counted until you decide. A decision turns the ? into 'yes' and, if needed, changes the gold verdict.",,,,,,,,,
+"Gold labels are PROPOSED by Claude from the record fields B, C, E, F, G only (not the evidence file). Yuliia confirms or changes them.",,,,,,,,,
+"A sentence counts as flagged when the judge says Unsupported / Needs Human Verification, or the Python code flagged it.",,,,,,,,,
+"Mechanical checks (numbers, quotes, banned words, hashtags, length, placeholders) are verified by running the code, not labelled by hand.",,,,,,,,,

@@ -1,0 +1,44 @@
+case,no,draft sentence / claim,type,record field,gold finding (proposed),gold verdict (proposed),sure?,Make judge verdict,Python code flag,outcome (computed),verdict match (computed),note
+F-003,1,Did you ever try to tidy up by archiving a document and it didn’t move?,question,-,not a claim,not a claim,yes,not listed,no,TN,,Opening question. Not a claim by rule 2.
+F-003,2,"In this test, archiving from Documents failed with a 503 error",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-003,3,the document stayed visible instead of moving to the archive,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-003,4,users rely on archiving to keep active lists clean,claim,USER IMPACT,meaning_shifted,Needs Human Verification,?,Supported,no,not counted,,Record says users CANNOT rely on archiving; the draft says they rely on it. The judge accepted it with the quote 'Users cannot rely...'. Could also be contradicted.
+F-003,5,they could lose confidence in the system when an action looks like it worked but didn’t,claim,none,not_in_record,Unsupported,yes,Unsupported,no,TP,same verdict,'Lose confidence' and 'looks like it worked' are not in the record.
+F-003,6,We suggest exploring improvements in the archive action for the next release,claim,RECOMMENDATION,meaning_shifted,Needs Human Verification,?,Supported,no,not counted,,Record: 'Fix the archive action in the next release'. 'Exploring improvements' is weaker.
+F-003,7,adding a clear success or failure state so users aren’t left unsure about a document’s status,claim,RECOMMENDATION,supported,Supported,yes,Supported,no,TN,,
+F-004,1,Is there an easy way to remove a document when I’m working in the Documents area?,question,-,not a claim,not a claim,yes,not listed,no,TN,,Opening question.
+F-004,2,"In this test, I looked for a delete option",claim,SCENARIO,supported,Supported,yes,Supported,no,TN,,
+F-004,3,but could not find one,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-004,4,and I did not delete anything,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-004,5,This suggests the intended product behavior and permissions around deletion are not clear,claim,SEVERITY,supported,Supported,yes,Supported,no,TN,,The uncertainty (planted trap) is kept.
+F-004,6,which could leave users unsure how to remove an unwanted document or whether archiving is the only option,claim,USER IMPACT,supported,Supported,yes,Supported,no,TN,,
+F-004,7,It may matter because unclear options can slow people down and raise questions about document management,claim,none,not_in_record,Unsupported,yes,Unsupported,no,TP,same verdict,'Slow people down' is invented.
+F-004,8,"We suggest clarifying whether deletion is supported, where it is available, and how it differs from archiving",claim,RECOMMENDATION,supported,Supported,yes,Supported,no,TN,,
+F-005,1,Have you ever tried finding a specific document in a large library and seen a different result than you expected?,question,-,not a claim,not a claim,yes,Unsupported,no,FP,,Opening question. The judge flagged it although its own rules say questions are not claims: false alarm.
+F-005,2,In this test of the Documents library with 29 assets,claim,SCENARIO,supported,Supported,yes,Supported,no,TN,,
+F-005,3,searching for StudioFlow returned 2 results,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-005,4,and QA-S02 — StudioFlow — Interview Guide opened with its content visible,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-005,5,"After a refresh, the document count stayed at 29",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-005,6,and category filters plus “All documents” behaved as expected,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,Record: 'caused no issue in the checks reported'. Close paraphrase.
+F-005,7,This test suggests the search and view actions can display content consistently in this scenario,claim,USER IMPACT,meaning_shifted,Needs Human Verification,?,Needs Human Verification,no,not counted,,"Record: 'No issue observed in these specific checks'. The draft is hedged ('suggests', 'in this scenario') but still more positive."
+F-005,8,but timing and exhaustive verification of every document were not performed,claim,RECOMMENDATION,supported,Supported,yes,Supported,no,TN,,
+F-005,9,One option is to plan a broader check to confirm results across more assets and timing conditions,claim,RECOMMENDATION,not_in_record,Unsupported,yes,Unsupported,no,TP,same verdict,Record proposes no change; a broader check is a plan it does not contain.
+F-006,1,"When you try to update your StudioFlow context through the Company DNA workflow, what happens if the final apply step can’t complete?",question,-,not a claim,not a claim,yes,not listed,no,TN,,Opening question.
+F-006,2,"During testing, a 40% working draft appeared and stayed after refresh",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-006,3,the accepted Company DNA remained at 0%,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-006,4,"The approval was saved, but the final apply step failed",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-006,5,and the same recovery action kept failing,claim,OBSERVATION,meaning_shifted,Needs Human Verification,?,Supported,no,not counted,,Record: 'returned the same failure again' (one repeat). 'Kept failing' suggests many repeats. Planted exaggeration.
+F-006,6,"The screen showed Approved / Final apply pending, while the accepted version history indicated no completed final apply",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-006,7,"Draft fields also contained prompt instructions like “Show me a draft for review” and “Please record only these two product areas,”",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,Both quotes are exact copies from the record (planted trap not triggered).
+F-006,8,instead of clean company facts,claim,OBSERVATION,meaning_shifted,Needs Human Verification,?,Supported,no,not counted,,"Record: 'rather than only clean company facts'. The instructions were present alongside facts, not instead of them."
+F-006,9,This could matter because it blocks updates,claim,USER IMPACT,supported,Supported,yes,Supported,no,TN,,
+F-006,10,and could place prompt instructions into company facts if applied as-is,claim,USER IMPACT,supported,Supported,yes,Supported,no,TN,,
+F-006,11,"We suggest exploring a reliable recovery path that completes the approved update, with a clear cancel/edit option and separation of draft prompts from company facts",claim,RECOMMENDATION,supported,Supported,yes,Supported,no,TN,,
+F-007,1,Did you try picking up where you left off with a voice session and wonder what AURA “remembers”?,question,-,not a claim,not a claim,yes,not listed,yes,FP,,"Code flagged the quoted word 'remembers' (record has 'remembered'). It is a scare quote inside a question, not a quote from the record: false alarm that alone made the result NOT READY."
+F-007,2,"during testing, we used the Company DNA voice flow, paused it, and resumed with Continue with AURA",claim,SCENARIO,supported,Supported,yes,Supported,no,TN,,'We' instead of 'I': style only.
+F-007,3,The interface showed Resume context — Saved · Paused and Continue with AURA,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-007,4,"After resuming, AURA remembered class scheduling and membership management, but said the target market was not known",claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-007,5,It also showed that draft documents aren’t necessarily treated as authoritative memory,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,
+F-007,6,and the voice interaction itself worked in the checks I made,claim,OBSERVATION,supported,Supported,yes,Supported,no,TN,,Qualifier kept (planted trap).
+F-007,7,This may matter because it suggests resumed context can surface some items correctly while other items from drafts or different contexts may not be treated as memory,claim,USER IMPACT,meaning_shifted,Needs Human Verification,?,Supported,no,not counted,,The judge's quote ('users may need to restate information...') supports only half of the claim; 'surface some items correctly' is not in the record.
+F-007,8,"one option is to make the source and scope of resumed context clearer, and tell users whether voice resumes only within the live Voice session",claim,RECOMMENDATION,supported,Supported,yes,Supported,no,TN,,
