@@ -1,0 +1,3 @@
+Did you ever try to tidy your documents by moving something to archive, only to see it stay where it is? In this test, archiving a document from Documents failed: the request returned 503, so the document stayed visible and did not show up in the archive.
+
+This may matter because users rely on archiving to organize their active list and remove items from view, but the action did not provide a clear result. A possible next step is to fix the archive action in the next release and provide a clear success or failure state so users aren’t left unsure about a document’s status.
