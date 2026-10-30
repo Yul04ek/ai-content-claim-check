@@ -1,0 +1,26 @@
+Result: NOT READY: 1 unsupported, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: All claims made in the draft are supported by the provided source record. The draft accurately conveys the test scenario, observed outcomes, and the provided recommendations.
+
+Problems (1)
+- Unsupported: quoted text "remembers" -- Quoted text does not appear in the record.
+
+Supported (7)
+- During testing, we used the Company DNA voice flow, paused it, and resumed with Continue with AURA. -- Record: "I used the Company DNA voice flow, paused it, and resumed through Continue with AURA."
+- The interface showed Resume context — Saved · Paused and Continue with AURA. -- Record: "The interface showed Resume context — Saved · Paused and Continue with AURA."
+- After resuming, AURA remembered class scheduling and membership management. -- Record: "After resuming, AURA remembered class scheduling and membership management"
+- AURA said the target market was not known. -- Record: "but said the target market was not known."
+- It also showed that draft documents aren’t necessarily treated as authoritative memory. -- Record: "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory."
+- The voice interaction itself worked in the checks I made. -- Record: "The voice interaction itself worked in the checks I made."
+- One option is to make the source and scope of resumed context clearer, and tell users whether voice resumes only within the live Voice session. -- Record: "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 1 ("remembers")
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 141 words
+Placeholders to fill: 2 ([Add: what surprised you?] [Add: what this taught us about building AURA])

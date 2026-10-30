@@ -4,6 +4,7 @@
 #
 # Usage (env: BASE_URL, API_KEY, MODEL_NAME as in claim_check/config.py):
 #   python lab/run_judge_lab.py --runs 3
+#   python lab/run_judge_lab.py --runs 3 --model gemini-3.5-flash-lite   # another model, saved in its own folder
 #   python lab/run_judge_lab.py --runs 1 --dry     # no model call: prints the prompt of the first case
 import argparse
 import csv
@@ -62,6 +63,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--model", default=None, help="model name; default: MODEL_NAME from the environment")
     args = ap.parse_args()
 
     records = load_records()
@@ -71,7 +73,7 @@ def main():
         return
 
     from claim_check.config import chat, get_client, get_env
-    client, model = get_client(), get_env("MODEL_NAME")
+    client, model = get_client(), args.model or get_env("MODEL_NAME")
     stamp = f"{model}_{datetime.date.today().isoformat()}"
     out_dir = ROOT / "lab" / "runs" / stamp
     out_dir.mkdir(parents=True, exist_ok=True)

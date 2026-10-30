@@ -1,0 +1,47 @@
+{
+  "claims": [
+    {
+      "claim": "In this test, I looked for a delete option but could not find one.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I could not find a delete option.",
+      "reason": "The claim matches the observation record exactly."
+    },
+    {
+      "claim": "I did not delete anything.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I did not delete a document.",
+      "reason": "This is a faithful paraphrase of the record."
+    },
+    {
+      "claim": "The intended product behavior and permissions around deletion are not clear.",
+      "finding": "supported",
+      "source_field": "SEVERITY",
+      "record_quote": "the intended product behavior and permissions are not clear.",
+      "reason": "The claim aligns with the severity assessment provided in the record."
+    },
+    {
+      "claim": "Users may be unsure how to remove an unwanted document or whether archiving is the only option.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users may not know how to remove an unwanted document or whether archiving is the only option.",
+      "reason": "The claim accurately reflects the potential user impact stated in the record."
+    },
+    {
+      "claim": "Unclear options can slow people down and raise questions about document management.",
+      "finding": "not_in_record",
+      "source_field": "none",
+      "record_quote": "",
+      "reason": "The record does not mention that unclear options slow people down or raise specific questions."
+    },
+    {
+      "claim": "We suggest clarifying whether deletion is supported, where it is available, and how it differs from archiving.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "reason": "The draft accurately presents the recommendation from the record."
+    }
+  ],
+  "summary": "Most of the draft is supported by the source record. However, the claim that unclear options slow people down is not in the record and appears to be an addition by the author."
+}

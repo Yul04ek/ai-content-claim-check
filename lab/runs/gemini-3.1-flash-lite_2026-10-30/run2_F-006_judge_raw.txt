@@ -1,0 +1,68 @@
+{
+  "claims": [
+    {
+      "claim": "A 40% working draft appeared and stayed after refresh.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "A 40% working draft appeared and remained after refresh",
+      "reason": "The draft accurately reflects the observation recorded in the source."
+    },
+    {
+      "claim": "The accepted Company DNA remained at 0%.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "accepted Company DNA stayed at 0%.",
+      "reason": "The claim matches the recorded observation."
+    },
+    {
+      "claim": "The approval was saved, but the final apply step failed.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The approval was saved, but the final apply step failed.",
+      "reason": "The claim matches the recorded observation."
+    },
+    {
+      "claim": "The same recovery action kept failing.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The same Finish applying recovery action returned the same failure again.",
+      "reason": "The claim matches the recorded observation regarding the failure of the recovery action."
+    },
+    {
+      "claim": "The screen showed Approved / Final apply pending.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The screen continued to show Approved / Final apply pending",
+      "reason": "The claim matches the recorded observation."
+    },
+    {
+      "claim": "The accepted version history indicated no completed final apply.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "accepted version history said no proposal had completed the final apply step.",
+      "reason": "The claim accurately paraphrases the record."
+    },
+    {
+      "claim": "Draft fields also contained prompt instructions like “Show me a draft for review” and “Please record only these two product areas,” instead of clean company facts.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The draft fields also contained AURA instructions such as “Show me a draft for review” and “Please record only these two product areas,” rather than only clean company facts.",
+      "reason": "The claim matches the recorded observation."
+    },
+    {
+      "claim": "This blocks updates and could place prompt instructions into company facts if applied as-is.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "The user cannot complete an approved Company DNA update and is sent back into a recovery loop. If applied without correction, the draft would also place prompt instructions in Company DNA fields.",
+      "reason": "The claim correctly conveys the user impact identified in the source record."
+    },
+    {
+      "claim": "We suggest exploring a reliable recovery path that completes the approved update, with a clear cancel/edit option and separation of draft prompts from company facts.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the recovery action reliably complete the already-approved update without requiring a new approval. Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts.",
+      "reason": "The claim accurately reflects the recommendations provided in the source record."
+    }
+  ],
+  "summary": "The draft accurately reflects all observations, impacts, and recommendations recorded in the source document. No factual discrepancies were found."
+}
