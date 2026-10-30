@@ -34,48 +34,61 @@ def load_labels():
         return list(csv.DictReader(f))
 
 
-def judged_verdict(index, sentences, rows):
-    """Worst verdict of the judge claims assigned to sentence `index`.
+def judged_verdicts(sentences, golds, rows):
+    """Verdict of the judge for every label sentence of one draft (None = not listed = passed).
 
-    Each judge claim is assigned to the sentence it covers best (at least MATCH_MIN of its words).
+    A judge claim is matched to a label sentence in two ways: most words of the claim are in the sentence
+    (the judge shortened the sentence), or most words of the sentence are in the claim (the judge joined
+    several label sentences into one claim, for example because of "so" or "but").
+    A flagged claim that covers several label sentences is a hit for the sentences whose gold verdict is not
+    Supported; it is a false alarm only when all the sentences it covers are Supported.
     Code findings (quoted text, numbers) go to the sentence that contains them.
     """
-    verdict = None
+    n = len(sentences)
+    verdicts = [None] * n
 
-    def add(v):
-        nonlocal verdict
-        if verdict is None or SEVERITY[v] > SEVERITY[verdict]:
-            verdict = v
+    def add(i, v):
+        if verdicts[i] is None or SEVERITY[v] > SEVERITY[verdicts[i]]:
+            verdicts[i] = v
 
     for r in rows:
         if r["kind"] == "claim":
-            scores = [coverage(r["text"], s) for s in sentences]
-            best = max(scores)
-            if best >= MATCH_MIN and scores.index(best) == index:
-                add(r["verdict"])
-        elif r["kind"] in ("quote", "number") and r["verdict"] and norm(r["text"]) in norm(sentences[index]):
-            add(r["verdict"])
-    return verdict or "Supported"  # not listed = passed
+            in_sentence = [coverage(r["text"], s) for s in sentences]
+            covered = {j for j in range(n) if coverage(sentences[j], r["text"]) >= MATCH_MIN}
+            best = max(in_sentence)
+            if best >= MATCH_MIN:
+                covered.add(in_sentence.index(best))
+            if not covered or r["verdict"] == "Supported":
+                continue
+            bad = [j for j in covered if golds[j] not in ("Supported", "not a claim")]
+            for j in (bad if len(covered) > 1 and bad else covered):
+                add(j, r["verdict"])
+        elif r["kind"] in ("quote", "number") and r["verdict"]:
+            for j in range(n):
+                if norm(r["text"]) in norm(sentences[j]):
+                    add(j, r["verdict"])
+    return verdicts
 
 
 def score(results_by_case):
     """results_by_case: {"F-003": [row, ...]}, row = {"kind", "text", "verdict"}. Returns (counts, details)."""
     counts, details = Counter(), []
     labels = load_labels()
-    for i, lab in enumerate(labels):
-        same = [(j, x) for j, x in enumerate(labels) if x["case"] == lab["case"]]
-        sentences = [x["draft sentence / claim"] for _, x in same]
-        gold = lab["gold verdict (proposed)"]
-        got = judged_verdict(sentences.index(lab["draft sentence / claim"]), sentences,
-                             results_by_case.get(lab["case"], []))
-        flagged = got != "Supported"
-        if gold in ("not a claim", "Supported"):
-            outcome = "FP" if flagged else "TN"
-        else:
-            outcome = "TP" if flagged else "FN"
-        counts[outcome] += 1
-        details.append({"case": lab["case"], "no": lab["no"], "outcome": outcome, "gold": gold, "judged": got,
-                        "expected_outcome": lab["outcome"]})
+    for case in dict.fromkeys(l["case"] for l in labels):
+        items = [l for l in labels if l["case"] == case]
+        sentences = [l["draft sentence / claim"] for l in items]
+        golds = [l["gold verdict (proposed)"] for l in items]
+        verdicts = judged_verdicts(sentences, golds, results_by_case.get(case, []))
+        for lab, gold, v in zip(items, golds, verdicts):
+            got = v or "Supported"
+            flagged = got != "Supported"
+            if gold in ("not a claim", "Supported"):
+                outcome = "FP" if flagged else "TN"
+            else:
+                outcome = "TP" if flagged else "FN"
+            counts[outcome] += 1
+            details.append({"case": case, "no": lab["no"], "outcome": outcome, "gold": gold, "judged": got,
+                            "expected_outcome": lab["outcome"]})
     return counts, details
 
 

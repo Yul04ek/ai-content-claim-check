@@ -1,23 +1,26 @@
 Baseline (Make, 29 Oct, labels v1.1): TP 4 / FP 2 / FN 3 / TN 33
 
 == gemini-3.1-flash-lite_2026-10-30
-  run 1: TP 3 / FP 2 / FN 4 / TN 33
+  run 1: TP 3 / FP 3 / FN 4 / TN 32
   run 2: TP 4 / FP 1 / FN 3 / TN 34
-  run 3: TP 4 / FP 1 / FN 3 / TN 34
+  run 3: TP 4 / FP 2 / FN 3 / TN 33
   sentences that differ from the baseline (base | outcome per run):
     F-003 s 6 | FN | FN TP FN  (We suggest exploring improvements in the archive a)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
     F-005 s 7 | TP | FN FN FN  (This test suggests the search and view actions can)
+    F-006 s 8 | TN | FP TN FP  (instead of clean company facts)
     F-006 s10 | TN | FP TN TN  (and could place prompt instructions into company f)
     F-006 s11 | FN | FN FN TP  (We suggest exploring a reliable recovery path that)
 
 == gemini-3.1-flash-lite_judge_prompt_v2a_2026-10-30
   run 1: TP 4 / FP 1 / FN 3 / TN 34
-  run 2: TP 4 / FP 1 / FN 3 / TN 34
-  run 3: TP 4 / FP 2 / FN 3 / TN 33
+  run 2: TP 4 / FP 3 / FN 3 / TN 32
+  run 3: TP 4 / FP 4 / FN 3 / TN 31
   sentences that differ from the baseline (base | outcome per run):
     F-003 s 6 | FN | FN TP TP  (We suggest exploring improvements in the archive a)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 2 | TN | TN FP FP  (In this test of the Documents library with 29 asse)
+    F-005 s 3 | TN | TN FP FP  (searching for StudioFlow returned 2 results)
     F-005 s 7 | TP | TP FN FN  (This test suggests the search and view actions can)
     F-007 s 8 | TN | TN TN FP  (one option is to make the source and scope of resu)
 
@@ -35,7 +38,7 @@ Baseline (Make, 29 Oct, labels v1.1): TP 4 / FP 2 / FN 3 / TN 33
 
 == gemini-3.1-flash-lite_judge_prompt_v2c_make_code_module_v2b_2026-10-30
   run 1: TP 6 / FP 1 / FN 1 / TN 34
-  run 2: TP 6 / FP 2 / FN 1 / TN 33
+  run 2: TP 6 / FP 3 / FN 1 / TN 32
   run 3: TP 6 / FP 0 / FN 1 / TN 35
   sentences that differ from the baseline (base | outcome per run):
     F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
@@ -43,30 +46,52 @@ Baseline (Make, 29 Oct, labels v1.1): TP 4 / FP 2 / FN 3 / TN 33
     F-004 s 6 | TN | TN FP TN  (which could leave users unsure how to remove an un)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
     F-005 s 6 | TN | TN FP TN  (and category filters plus “All documents” behaved )
+    F-006 s 8 | TN | TN FP TN  (instead of clean company facts)
     F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
     F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
 
 == gemini-3.1-flash-lite_judge_prompt_v2d_make_code_module_v2b_2026-10-30
-  run 1: TP 6 / FP 1 / FN 1 / TN 34
+  run 1: TP 6 / FP 3 / FN 1 / TN 32
   run 2: TP 6 / FP 1 / FN 1 / TN 34
   run 3: TP 6 / FP 1 / FN 1 / TN 34
   sentences that differ from the baseline (base | outcome per run):
     F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 2 | TN | FP TN TN  (In this test of the Documents library with 29 asse)
+    F-005 s 3 | TN | FP TN TN  (searching for StudioFlow returned 2 results)
     F-005 s 6 | TN | FP FP FP  (and category filters plus “All documents” behaved )
     F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
     F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
 
 == gemini-3.1-flash-lite_judge_prompt_v2e_make_code_module_v2b_2026-10-30
-  run 1: TP 6 / FP 1 / FN 1 / TN 34
-  run 2: TP 6 / FP 1 / FN 1 / TN 34
+  run 1: TP 6 / FP 5 / FN 1 / TN 30
+  run 2: TP 6 / FP 5 / FN 1 / TN 30
   run 3: TP 6 / FP 1 / FN 1 / TN 34
   sentences that differ from the baseline (base | outcome per run):
     F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-004 s 2 | TN | TN FP TN  (In this test, I looked for a delete option)
+    F-004 s 3 | TN | TN FP TN  (but could not find one)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 2 | TN | FP FP TN  (In this test of the Documents library with 29 asse)
+    F-005 s 3 | TN | FP FP TN  (searching for StudioFlow returned 2 results)
     F-005 s 6 | TN | FP FP FP  (and category filters plus “All documents” behaved )
+    F-006 s 9 | TN | FP TN TN  (This could matter because it blocks updates)
+    F-006 s10 | TN | FP TN TN  (and could place prompt instructions into company f)
     F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
     F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
+
+== gemini-3.1-flash-lite_judge_prompt_v2f_make_code_module_v2b_2026-10-30
+  run 1: TP 7 / FP 2 / FN 0 / TN 33
+  run 2: TP 6 / FP 0 / FN 1 / TN 35
+  run 3: TP 6 / FP 0 / FN 1 / TN 35
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
+    F-005 s 2 | TN | FP TN TN  (In this test of the Documents library with 29 asse)
+    F-005 s 3 | TN | FP TN TN  (searching for StudioFlow returned 2 results)
+    F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
+    F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
+    F-007 s 7 | FN | TP FN FN  (This may matter because it suggests resumed contex)
 
 == gemini-3.5-flash-lite_2026-10-30
   run 1: TP 4 / FP 1 / FN 3 / TN 34
@@ -127,6 +152,16 @@ Baseline (Make, 29 Oct, labels v1.1): TP 4 / FP 2 / FN 3 / TN 33
     F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
     F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
     F-005 s 6 | TN | FP TN FP  (and category filters plus “All documents” behaved )
+    F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
+    F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
+
+== gemini-3.5-flash-lite_judge_prompt_v2f_make_code_module_v2b_2026-10-30
+  run 1: TP 6 / FP 0 / FN 1 / TN 35
+  run 2: TP 6 / FP 0 / FN 1 / TN 35
+  run 3: TP 6 / FP 0 / FN 1 / TN 35
+  sentences that differ from the baseline (base | outcome per run):
+    F-003 s 6 | FN | TP TP TP  (We suggest exploring improvements in the archive a)
+    F-005 s 1 | FP | TN TN TN  (Have you ever tried finding a specific document in)
     F-006 s11 | FN | TP TP TP  (We suggest exploring a reliable recovery path that)
     F-007 s 1 | FP | TN TN TN  (Did you try picking up where you left off with a v)
 
