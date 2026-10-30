@@ -1,4 +1,4 @@
-# Score judge results against Yuliia's sentence-level labels (baseline-v1/golden/test_labels_v1.csv).
+# Score judge results against Yuliia's sentence-level labels (lab/labels/test_labels_v1_1.csv; see lab/labels/CHANGES.md).
 # Outcome rules (same as the "outcome" column of the Test_Labels sheet):
 #   gold "not a claim" or "Supported": judged Supported / not listed -> TN, otherwise FP
 #   any other gold verdict:            judged Supported / not listed -> FN, otherwise TP
@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent / "baseline-v1"
-LABELS = BASE / "golden" / "test_labels_v1.csv"
+LABELS = Path(__file__).resolve().parent / "labels" / "test_labels_v1_1.csv"  # v1.1; the frozen v1 file is in baseline-v1/golden/
 MATCH_MIN = 0.75  # minimum text similarity to treat a judge claim as "this sentence"
 SEVERITY = {"Supported": 0, "Needs Human Verification": 1, "Unsupported": 2}
 
@@ -108,7 +108,7 @@ def rows_from_check_file(path):
 
 
 if __name__ == "__main__":
-    # Offline self-test: the saved Make results of 29 Oct must give TP 3 / FP 3 / FN 3 / TN 33.
+    # Offline self-test: the saved Make results of 29 Oct must give the baseline of the label file (v1.1: TP 4 / FP 2 / FN 3 / TN 33).
     res = {}
     for p in sorted((BASE / "golden" / "judge_output_v1").glob("F-*_claim_check_v1.txt")):
         res[p.name[:5]] = rows_from_check_file(p)

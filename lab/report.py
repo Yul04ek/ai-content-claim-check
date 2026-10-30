@@ -14,8 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def main():
     labels = load_labels()
-    out = ["Baseline (Make, 29 Oct): TP 3 / FP 3 / FN 3 / TN 33", ""]
-    for folder in sorted(glob.glob(str(ROOT / "lab" / "runs" / "*"))):
+    base = {x: sum(l["outcome"] == x for l in labels) for x in ("TP", "FP", "FN", "TN")}
+    out = [f"Baseline (Make, 29 Oct, labels v1.1): TP {base['TP']} / FP {base['FP']} / FN {base['FN']} / TN {base['TN']}", ""]
+    runs_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "lab" / "runs"  # optional: another runs folder
+    for folder in sorted(glob.glob(str(runs_dir / "*"))):
         runs = []
         for k in (1, 2, 3, 4, 5):
             try:
