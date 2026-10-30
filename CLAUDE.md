@@ -72,7 +72,7 @@ Run: `python tests/test_claim_check.py`, `python -m claim_check --dry-run`, `pyt
   Tapiwa (26 Oct, 17:07): "Let me see if I can extend the paid Gemini to you. I believe I have a teams one. Will check tomorrow". Not verified: whether that plan gives a Gemini API key, which the script needs. Nothing is bought.
 - Credits of the Make runs are not recorded yet (check Make History: module 3 and module 4 separately).
 
-- Update 30 Oct: judge prompt v2f + code v2b accepted on the golden set (gemini-3.5-flash-lite 6/0/1/35 in 3 runs); drafting prompt v2 tested; all three pasted into the Make scenario (Inactive), first Run once at 15:12 is evaluated in `lab/QUALITY_CHECK.md`. Open: three judge failure modes seen in Make, draft prompt v3. The new task from 3 Nov (advertising campaign for AURA) needs new records, labels and rules. Frozen starting point: branch `baseline-v1`; lab work: branch `lab-step3`.
+- Update 30 Oct: judge prompt v2f + code v2b accepted on the golden set (gemini-3.5-flash-lite 6/0/1/35 in 3 runs); drafting prompt v2 tested; all three pasted into the Make scenario (Inactive), first Run once at 15:12 is evaluated in `lab/QUALITY_CHECK.md`. Open: three judge failure modes seen in Make, draft prompt v3. The new task from Monday 2 Nov (advertising campaign for AURA) needs new records, labels and rules. Frozen starting point: branch `baseline-v1`; lab work: branch `lab-step3`.
 
 ## Known limitations / TODO
 
