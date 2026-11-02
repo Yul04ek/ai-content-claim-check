@@ -28,6 +28,7 @@ approval (AI budget up to $10), Make scenarios stay Inactive (Run once only), no
 - `results/` saved runs (`results.csv` etc.). Keep the files of real runs; they are the test evidence.
 - `docs/make-prompt-history.md` the STYLE block of the Make prompt and what each version changed.
 - `claim_check_colab.ipynb` the user notebook for Colab.
+- `teaser_check/` separate judge for AURA opportunity teasers (task YL-004B, from 2 Nov). Own rubric `skills/teaser-judge.md`, evidence packs in `packs/`, 11 synthetic cases in `cases_teaser/`, tests in `tests/test_teaser_check.py`. `claim_check/` is not changed by it. See `TEASER_CHECK.md`. Rubric t1 is not calibrated yet.
 
 ## Environment
 

@@ -1,0 +1,32 @@
+{
+  "group_id": "Test_001",
+  "company_label": "Test Firma Demo GmbH",
+  "website": "https://example.com",
+  "fictional": true,
+  "sources": [
+    {"id": "S1", "url": "https://example.com", "date_read": "2026-11-02",
+     "excerpt": "We build scheduling software for small craft businesses."},
+    {"id": "S2", "url": "https://example.com/about", "date_read": "2026-11-02",
+     "excerpt": "Founded in Germany. Our team of about a dozen people supports customers in three countries."}
+  ],
+  "facts": [
+    {"id": "F1", "source": "S1", "text": "The company offers scheduling software for small craft businesses."},
+    {"id": "F2", "source": "S2", "text": "The company was founded in Germany."},
+    {"id": "F3", "source": "S2", "text": "The team is about a dozen people (approximate, as stated on the site)."},
+    {"id": "F4", "source": "S2", "text": "The company says it supports customers in three countries."}
+  ],
+  "unknowns": [
+    "Funding status, revenue and customer numbers",
+    "Growth or traction of any kind",
+    "How the company handles its business documents today",
+    "Which tools or software it already uses",
+    "Whether the founder is looking for AI support",
+    "Who the right contact person is"
+  ],
+  "approved_aura_offers_status": "TEST LIST ONLY. Not approved by Tapiwa. Replace with the approved list.",
+  "approved_aura_offers": [
+    {"id": "A1", "text": "Pitch Deck builder: turns company context into an investor-ready story."},
+    {"id": "A2", "text": "Documents library with AI-assisted drafting of founder documents."},
+    {"id": "A3", "text": "Company DNA tool: a structured company profile the founder can review and approve."}
+  ]
+}

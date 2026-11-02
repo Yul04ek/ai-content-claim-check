@@ -1,0 +1,12 @@
+INTERNAL REVIEW ONLY. Do not publish or send.
+
+AURA opportunity teaser: Test Firma Demo GmbH
+
+Who you are: Test Firma Demo GmbH builds scheduling software for small craft businesses (S1). The company was founded in Germany and has a team of about a dozen people serving customers in three countries (S2).
+
+Hypothesis 1: A clear one-page story of the product could help when talking to investors or partners (S1). How AURA could help: the Pitch Deck builder turns company context into an investor-ready story.
+
+Hypothesis 2: With customers in three countries, keeping documents consistent across markets may take time (S2). How AURA could help: the Documents library with AI-assisted drafting.
+Next step: sign up for AURA to view a preliminary company profile built only from your public website.
+Sources: S1 https://example.com, S2 https://example.com/about
+Unknown: funding, revenue, customer numbers, current tools, whether AI support is wanted.
