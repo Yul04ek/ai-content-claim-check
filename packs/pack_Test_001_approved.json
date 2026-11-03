@@ -77,9 +77,20 @@
   {
    "id": "O5",
    "name": "Investor-Ready Sprints and Managed Execution Services",
-   "match": "\\b(Investor-Ready Sprints?|Managed Execution)\\b",
    "not_customer_ready": true,
-   "text": "Investor-Ready Sprints and Managed Execution Services: part of the wider commercial model. Final customer-facing terms must be approved before they are advertised as available."
+   "text": "Investor-Ready Sprints and Managed Execution Services: part of the wider commercial model. Final customer-facing terms must be approved before they are advertised as available.",
+   "match_words": [
+    [
+     "investor",
+     "ready",
+     "sprint"
+    ],
+    [
+     "managed",
+     "execution"
+    ]
+   ],
+   "human_check_reason": "Additional commercial offer, not approved as available to customers yet. Needs a human check before it is mentioned (Tapiwa decides)."
   }
  ],
  "forbidden_terms": [

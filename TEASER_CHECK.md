@@ -31,7 +31,8 @@ are imported from `claim_check`.
 
 - `packs/pack_Test_001_approved.json`: the same evidence plus the five approved AURA offers (O1-O5, wording as relayed by Tapiwa) and `forbidden_terms`
   (IdealApp's own Company DNA, other test companies). The first suite still uses the old pack with the TEST list, so its baseline stays comparable.
-- Offer fields in the pack: `match` (regex for the offer name), `must_say` (Launchpad: "proposed"), `not_customer_ready` (Sprints / Managed Execution).
+- Offer fields in the pack: `match` (regex for the offer name) or `match_words` (word sets: the offer is named if the text contains all words of one set, whatever the hyphen, case, plural or order),
+  `must_say` (Launchpad: "proposed"), `not_customer_ready` with `human_check_reason` (Sprints / Managed Execution: any mention = Needs Human Verification, a person decides).
 - New code rules (layer 1): price not in the offer list = Unsupported; Launchpad without "proposed" = Needs Human Verification; Sprints/Managed Execution
   mentioned = Needs Human Verification; forbidden term = Unsupported; missing company snapshot, AURA help, sign-up invitation or source notes;
   Studio acceptance phrases; teaser longer than 450 words = flag. "H1".."H3" are no longer counted as numbers; a figure word in a sentence with

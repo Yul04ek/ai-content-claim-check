@@ -175,6 +175,25 @@ def test_sprints_and_managed_execution_are_not_available_yet():
     assert ("offer", "Investor-Ready Sprints and Managed Execution Services") in approved_findings("a2_sprints_available.txt")
 
 
+def test_sprints_are_found_whatever_the_spelling():
+    # Word sets, not an exact phrase: hyphen, spaces, case, singular/plural, word order and "Managed Execution Service(s)".
+    for text in ["Investor-Ready Sprints are available.", "We offer an investor ready sprint.", "INVESTOR READY SPRINTS",
+                 "Sprints for the ready investor.", "Managed Execution Services help you.", "managed execution"]:
+        rows = det.offer_checks(text, APACK, ARECORD)
+        assert [r["text"] for r in rows if r["kind"] == "offer"] == [
+            "Investor-Ready Sprints and Managed Execution Services"], text
+
+
+def test_normal_words_do_not_trigger_the_sprints_rule():
+    for text in ["AURA AI Pro has investor-readiness tools.", "The team is ready to execute.", "Managed by the founder."]:
+        assert det.offer_checks(text, APACK, ARECORD) == [], text
+
+
+def test_sprints_message_asks_for_a_human_check_not_a_verdict():
+    row = det.offer_checks("Investor-Ready Sprints exist.", APACK, ARECORD)[0]
+    assert row["verdict"] == "Needs Human Verification" and "human check" in row["reason"]
+
+
 def test_text_from_idealapp_dna_is_unsupported():
     rows = approved_rows("a3_idealapp_dna_leak.txt")
     assert any(r["kind"] == "scope" and r["verdict"] == "Unsupported" for r in rows)

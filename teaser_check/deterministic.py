@@ -115,6 +115,19 @@ def paragraphs(body: str) -> list[str]:
     return blocks if len(blocks) > 1 else [l for l in body.splitlines() if l.strip()]
 
 
+def words_of(text: str) -> set[str]:
+    """Lower-case words without a final 's', so 'Investor-Ready Sprints' and 'investor ready sprint' look the same."""
+    return {w[:-1] if len(w) > 3 and w.endswith("s") else w for w in re.findall(r"[a-z0-9]+", text.lower())}
+
+
+def mentions(block: str, offer: dict) -> bool:
+    """True if the block names the offer: by a regex ('match') or by word sets ('match_words'): any set with all its words."""
+    if offer.get("match") and re.search(offer["match"], block, re.I):
+        return True
+    found = words_of(block)
+    return any(all(w in found for w in word_set) for word_set in offer.get("match_words", []))
+
+
 def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
     """Rules about the approved AURA offer list (from the pack): prices, 'proposed', offers not yet available."""
     offers = pack.get("approved_aura_offers") or []
@@ -129,15 +142,15 @@ def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
             rows.append(make_row("price", price, "Unsupported", "not_in_pack", "none",
                                  reason="This price is not in the approved AURA offer list."))
     for offer in offers:
-        pattern = offer.get("match")
-        if not pattern:
+        if not (offer.get("match") or offer.get("match_words")):
             continue
-        blocks = [b for b in paragraphs(body) if re.search(pattern, b, re.I)]
+        blocks = [b for b in paragraphs(body) if mentions(b, offer)]
         if not blocks:
             continue
         if offer.get("not_customer_ready"):
-            rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
-                                 reason="Not approved as available to customers yet. Mention only after Tapiwa approves the terms."))
+            reason = offer.get("human_check_reason",
+                               "Not approved as available to customers yet. Mention only after Tapiwa approves the terms.")
+            rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"], reason=reason))
         word = offer.get("must_say")
         if word and not all(re.search(rf"\b{word}\b", b, re.I) for b in blocks):
             rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
