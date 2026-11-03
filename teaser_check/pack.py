@@ -26,7 +26,7 @@ def pack_to_text(pack: dict) -> str:
     offers = pack.get("approved_aura_offers") or []
     if offers:
         lines.append(f"AURA OFFER LIST STATUS: {pack.get('approved_aura_offers_status', 'unknown')}")
-        lines += [f"AURA OFFER {o['id']}: {o['text']}" for o in offers]
+        lines += [f"AURA OFFER {o['id']}: {o['text']}" for o in offers]  # name/match/rules fields are for code, not for the judge
     else:
         lines.append("AURA OFFER LIST: not provided")
     return "\n".join(lines)

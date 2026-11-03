@@ -1,0 +1,65 @@
+[
+ {
+  "case": "A0 real AURA teaser 3 Nov",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a0_aura_real.txt",
+  "expect_level": "READY FOR REVIEW",
+  "why": "control: the teaser AURA wrote on 3 Nov from the evidence file"
+ },
+ {
+  "case": "A1 Launchpad not 'proposed'",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a1_launchpad_final.txt",
+  "expect_level": "REVIEW",
+  "why": "Launchpad described as a final package (code rule)"
+ },
+ {
+  "case": "A2 Sprints available",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a2_sprints_available.txt",
+  "expect_level": "REVIEW",
+  "why": "Investor-Ready Sprints advertised as available (code rule)"
+ },
+ {
+  "case": "A3 IdealApp DNA leak",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a3_idealapp_dna_leak.txt",
+  "expect_level": "NOT READY",
+  "why": "founder bio of IdealApp inside a prospect teaser (code rule + judge)"
+ },
+ {
+  "case": "A4 price not in list",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a4_wrong_price.txt",
+  "expect_level": "NOT READY",
+  "why": "Pro price $49/$528 is not in the approved list (code rule)"
+ },
+ {
+  "case": "A5 Studio promise",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a5_studio_promise.txt",
+  "expect_level": "NOT READY",
+  "why": "promises Studio acceptance (code rule + judge)"
+ },
+ {
+  "case": "A6 price on wrong offer",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a6_price_on_wrong_offer.txt",
+  "expect_level": "REVIEW",
+  "why": "JUDGE ONLY: $99 is a real price but belongs to Pro, not Free"
+ },
+ {
+  "case": "A7 no sign-up invitation",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a7_no_invitation.txt",
+  "expect_level": "REVIEW",
+  "why": "required invitation missing (code rule)"
+ },
+ {
+  "case": "A8 need as fact",
+  "pack": "../packs/pack_Test_001_approved.json",
+  "teaser_file": "a8_need_as_fact.txt",
+  "expect_level": "REVIEW",
+  "why": "JUDGE ONLY: founder need stated as fact, the pack lists it as unknown"
+ }
+]

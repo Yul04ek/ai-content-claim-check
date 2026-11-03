@@ -26,3 +26,16 @@ are imported from `claim_check`.
 - The offer list in the pack is a TEST list. Replace it with the list approved by Tapiwa. Without a list every statement about AURA
   becomes Needs Human Verification (`aura_offer_unverified`).
 - The teaser must list sources and unknowns under a heading that starts with "Sources" or "Unknown"; the text from the first such heading is not judged.
+
+## Update 3 Nov: approved offer list and Tapiwa's rules
+
+- `packs/pack_Test_001_approved.json`: the same evidence plus the five approved AURA offers (O1-O5, wording as relayed by Tapiwa) and `forbidden_terms`
+  (IdealApp's own Company DNA, other test companies). The first suite still uses the old pack with the TEST list, so its baseline stays comparable.
+- Offer fields in the pack: `match` (regex for the offer name), `must_say` (Launchpad: "proposed"), `not_customer_ready` (Sprints / Managed Execution).
+- New code rules (layer 1): price not in the offer list = Unsupported; Launchpad without "proposed" = Needs Human Verification; Sprints/Managed Execution
+  mentioned = Needs Human Verification; forbidden term = Unsupported; missing company snapshot, AURA help, sign-up invitation or source notes;
+  Studio acceptance phrases; teaser longer than 450 words = flag. "H1".."H3" are no longer counted as numbers; a figure word in a sentence with
+  "not/no/unknown" is no longer flagged.
+- `cases_teaser_approved/`: 9 cases made from the real AURA teaser of 3 Nov with one planted error each (A0 is the control).
+  A6 (price on the wrong offer) and A8 (need stated as fact) are JUDGE ONLY: code cannot see them.
+- Not done: rubric t1 is unchanged (not calibrated). Proposed rubric additions are listed in the hand-over message and need 3 runs each.

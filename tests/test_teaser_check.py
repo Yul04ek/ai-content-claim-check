@@ -146,6 +146,72 @@ def test_suite_file_points_to_existing_files_and_levels():
         assert (CASES / c["teaser_file"]).exists() and (CASES / c["pack"]).exists()
         assert c["expect_level"] in pl.LEVELS
 
+# --- Approved offer list and Tapiwa's rules (3 Nov): pack_Test_001_approved.json, cases_teaser_approved/ ---
+APPROVED = ROOT / "cases_teaser_approved"
+APACK = load_pack(ROOT / "packs" / "pack_Test_001_approved.json")
+ARECORD = pack_to_text(APACK)
+
+
+def approved_rows(name):
+    text = (APPROVED / name).read_text(encoding="utf-8")
+    body, _ = det.split_teaser(text)
+    return det.deterministic_checks(text, body, APACK, ARECORD)
+
+
+def approved_findings(name):
+    return {(r["kind"], r["text"]) for r in approved_rows(name) if r["kind"] != "flag"}
+
+
+def test_real_aura_teaser_has_no_false_alarms_with_approved_list():
+    # Prices, "H1".."H3" and the negated words "revenue"/"traction" in an unknowns sentence are not findings.
+    assert approved_rows("a0_aura_real.txt") == []
+
+
+def test_launchpad_must_be_called_proposed():
+    assert ("offer", "AURA Startup Launchpad") in approved_findings("a1_launchpad_final.txt")
+
+
+def test_sprints_and_managed_execution_are_not_available_yet():
+    assert ("offer", "Investor-Ready Sprints and Managed Execution Services") in approved_findings("a2_sprints_available.txt")
+
+
+def test_text_from_idealapp_dna_is_unsupported():
+    rows = approved_rows("a3_idealapp_dna_leak.txt")
+    assert any(r["kind"] == "scope" and r["verdict"] == "Unsupported" for r in rows)
+
+
+def test_price_outside_the_offer_list_is_unsupported():
+    prices = {r["text"] for r in approved_rows("a4_wrong_price.txt") if r["kind"] == "price"}
+    assert prices == {"$49", "$528"}
+
+
+def test_studio_acceptance_is_a_promise():
+    assert ("promise", "will be accepted") in approved_findings("a5_studio_promise.txt")
+
+
+def test_price_on_the_wrong_offer_and_need_as_fact_are_left_to_the_judge():
+    # Code cannot see these: $99 is a real price, "clearly wants AI support" has no marker word. The judge must catch them.
+    assert approved_rows("a6_price_on_wrong_offer.txt") == []
+    assert approved_rows("a8_need_as_fact.txt") == []
+
+
+def test_missing_invitation_is_found():
+    assert ("rule", "sign-up invitation") in approved_findings("a7_no_invitation.txt")
+
+
+def test_offer_rules_do_nothing_when_the_pack_has_no_rules():
+    # The first suite (test offer list without rules) must behave exactly as before.
+    assert rows_for("t1_clean.txt") == []
+    assert not any(r["kind"] in ("offer", "price", "scope") for r in rows_for("t4_promise.txt"))
+
+
+def test_approved_suite_file_points_to_existing_files():
+    cases = json.loads((APPROVED / "cases.json").read_text(encoding="utf-8"))
+    assert len(cases) == 9
+    for c in cases:
+        assert (APPROVED / c["teaser_file"]).exists() and (APPROVED / c["pack"]).exists()
+        assert c["expect_level"] in pl.LEVELS
+
 
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]

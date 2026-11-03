@@ -1,0 +1,92 @@
+{
+ "group_id": "Test_001",
+ "company_label": "Test Firma Demo GmbH",
+ "website": "https://example.com",
+ "fictional": true,
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://example.com",
+   "date_read": "2026-11-02",
+   "excerpt": "We build scheduling software for small craft businesses."
+  },
+  {
+   "id": "S2",
+   "url": "https://example.com/about",
+   "date_read": "2026-11-02",
+   "excerpt": "Founded in Germany. Our team of about a dozen people supports customers in three countries."
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "text": "The company offers scheduling software for small craft businesses."
+  },
+  {
+   "id": "F2",
+   "source": "S2",
+   "text": "The company was founded in Germany."
+  },
+  {
+   "id": "F3",
+   "source": "S2",
+   "text": "The team is about a dozen people (approximate, as stated on the site)."
+  },
+  {
+   "id": "F4",
+   "source": "S2",
+   "text": "The company says it supports customers in three countries."
+  }
+ ],
+ "unknowns": [
+  "Funding status, revenue and customer numbers",
+  "Growth or traction of any kind",
+  "How the company handles its business documents today",
+  "Which tools or software it already uses",
+  "Whether the founder is looking for AI support",
+  "Who the right contact person is"
+ ],
+ "approved_aura_offers_status": "APPROVED reference list from Tapiwa, 3 Nov 2026 (wording as relayed by Yuliia). Rules: Launchpad is only 'proposed'; Equity Studio acceptance and equity terms are never promised; Sprints and Managed Execution are not described as available until terms are approved.",
+ "approved_aura_offers": [
+  {
+   "id": "O1",
+   "name": "AURA AI Free",
+   "match": "\\bAURA AI Free\\b",
+   "text": "AURA AI Free, $0: core founder workspace and AI assistance with an included usage allowance."
+  },
+  {
+   "id": "O2",
+   "name": "AURA AI Pro",
+   "match": "\\bAURA AI Pro\\b",
+   "text": "AURA AI Pro, $99/month or $828/year: Company DNA, pitch decks, financial planning, investor-readiness tools, Data Rooms, AI assistance and other advanced features."
+  },
+  {
+   "id": "O3",
+   "name": "AURA Startup Launchpad",
+   "match": "\\bLaunchpad\\b",
+   "must_say": "proposed",
+   "text": "AURA Startup Launchpad, proposed $5,000 package: a more hands-on service covering startup foundations, including a pitch deck, financial projections, lightweight website, business model review and go-to-market planning."
+  },
+  {
+   "id": "O4",
+   "name": "AURA Equity Studio",
+   "match": "\\bEquity Studio\\b",
+   "text": "AURA Equity Studio: a selective, application-based venture-building pathway where AURA may consider providing services in exchange for equity. About to be commercially live. Acceptance or equity terms must never be promised."
+  },
+  {
+   "id": "O5",
+   "name": "Investor-Ready Sprints and Managed Execution Services",
+   "match": "\\b(Investor-Ready Sprints?|Managed Execution)\\b",
+   "not_customer_ready": true,
+   "text": "Investor-Ready Sprints and Managed Execution Services: part of the wider commercial model. Final customer-facing terms must be approved before they are advertised as available."
+  }
+ ],
+ "forbidden_terms": [
+  "Koinonos",
+  "Entrepreneurship World Cup",
+  "GITEX",
+  "Morgenrot",
+  "Morgan Road"
+ ]
+}

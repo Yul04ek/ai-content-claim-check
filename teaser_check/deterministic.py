@@ -16,11 +16,23 @@ URL = re.compile(r"https?://[^\s)\]>,;]+")
 LIST_MARKER = re.compile(r"^\s*\d+[.)]\s", re.M)
 NUMBER = re.compile(r"\d+(?:[.,]\d+)?\s?%?")
 QUOTE = re.compile(r"[“\"]([^”\"]{3,}?)[”\"]")
+MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?")
+HYPOTHESIS_TAG = re.compile(r"\bH\d\b")  # "H1", "H2": labels of hypotheses, not figures
+NEGATION = re.compile(r"\b(not|no|unknown|without|unclear)\b", re.I)
+MAX_WORDS = 450  # rough size of "one readable page"; only a flag
+
+# Parts the handover PDF asks for (page 3). Each is a simple word test; whether the content is right is the judge's job.
+REQUIRED_PARTS = {
+    "company snapshot": re.compile(r"snapshot|who you are|company description|verified description", re.I),
+    "AURA help": re.compile(r"\bAURA\b.*\b(help|pathway|offer|support)", re.I | re.S),
+    "sign-up invitation": re.compile(r"sign[- ]?up", re.I),
+}
 
 # Promises the teaser must never make: Unsupported on sight.
 PROMISE = re.compile(
     r"\b(guarantee[sd]?|fast[- ]track\w*|(will|can) (invest|fund|introduce you|connect you)"
-    r"|(accepted|acceptance|admission) (in|into|to) (the )?studio|secure (an )?investment)\b", re.I)
+    r"|(accepted|acceptance|admission) (in|into|to) (the )?studio|secure (an )?investment"
+    r"|will be accepted|automatic(ally)? accept\w*|pre-?approved|you (qualify|are eligible))\b", re.I)
 # Words that usually mean an invented business figure: a flag for a human look, not a verdict.
 FIGURE_WORDS = re.compile(
     r"\b(revenue|turnover|valuation|ARR|MRR|traction|fast[- ]growing|rapid growth|raised|funded|profitable)\b", re.I)
@@ -57,6 +69,7 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
 
     # Numbers: a figure that is not in the pack may be invented. IDs and list markers are not figures.
     cleaned = re.sub(r"\bhypothesis\s*\d+", "hypothesis", LIST_MARKER.sub("", ID_REF.sub("", body)), flags=re.I)
+    cleaned = HYPOTHESIS_TAG.sub("hypothesis", cleaned)
     pack_numbers = {n.replace(" ", "") for n in NUMBER.findall(PACK_ID.sub("", record_text))}
     for number in dict.fromkeys(x.replace(" ", "") for x in NUMBER.findall(cleaned)):
         if number not in pack_numbers:
@@ -73,7 +86,15 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
         rows.append(make_row("promise", match.group(0), "Unsupported", "promise", "none",
                              reason="Promise of investment, introductions or Studio acceptance."))
     for match in FIGURE_WORDS.finditer(body):
+        start = max(body.rfind(".", 0, match.start()), body.rfind("\n", 0, match.start())) + 1
+        end = [i for i in (body.find(".", match.end()), body.find("\n", match.end())) if i != -1]
+        sentence = body[start:min(end) if end else len(body)]
+        if NEGATION.search(sentence):  # "revenue ... have not been established" states an unknown, it is not a figure
+            continue
         rows.append(make_row("flag", match.group(0), reason="Business-figure word. The pack contains no such figure."))
+
+    rows += offer_checks(body, pack, record_text)
+    rows += scope_checks(text, body, tail_text_of(text), pack)
 
     hypotheses = len(re.findall(r"\bhypothesis\b", body, re.I))
     if hypotheses < 2:
@@ -81,4 +102,64 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
                              "none", reason="The teaser needs 2-3 clearly labelled hypotheses."))
     elif hypotheses > 3:
         rows.append(make_row("flag", f"{hypotheses} labelled hypotheses", reason="More than 3 hypotheses."))
+    return rows
+
+
+def tail_text_of(text: str) -> str:
+    return split_teaser(text)[1]
+
+
+def paragraphs(body: str) -> list[str]:
+    """Blocks separated by blank lines; a single line is used when the text has no blank lines."""
+    blocks = [b for b in re.split(r"\n\s*\n", body) if b.strip()]
+    return blocks if len(blocks) > 1 else [l for l in body.splitlines() if l.strip()]
+
+
+def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
+    """Rules about the approved AURA offer list (from the pack): prices, 'proposed', offers not yet available."""
+    offers = pack.get("approved_aura_offers") or []
+    rows: list[dict] = []
+    if not offers:
+        return rows
+    # A price must exist in the offer list. Whether it belongs to the right offer is left to the judge.
+    offer_text = " ".join(o["text"] for o in offers)
+    known = {m.replace(" ", "") for m in MONEY.findall(offer_text)}
+    for price in dict.fromkeys(m.replace(" ", "") for m in MONEY.findall(body)):
+        if price not in known:
+            rows.append(make_row("price", price, "Unsupported", "not_in_pack", "none",
+                                 reason="This price is not in the approved AURA offer list."))
+    for offer in offers:
+        pattern = offer.get("match")
+        if not pattern:
+            continue
+        blocks = [b for b in paragraphs(body) if re.search(pattern, b, re.I)]
+        if not blocks:
+            continue
+        if offer.get("not_customer_ready"):
+            rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
+                                 reason="Not approved as available to customers yet. Mention only after Tapiwa approves the terms."))
+        word = offer.get("must_say")
+        if word and not all(re.search(rf"\b{word}\b", b, re.I) for b in blocks):
+            rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
+                                 reason=f"{offer['name']} must be described as '{word}' wherever it is mentioned."))
+    return rows
+
+
+def scope_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
+    """Rules about the shape of the teaser and about text that must not come from other companies."""
+    rows: list[dict] = []
+    for term in pack.get("forbidden_terms", []):
+        if re.search(re.escape(term), text, re.I):
+            rows.append(make_row("scope", term, "Unsupported", "not_in_pack", "none",
+                                 reason="Term from IdealApp's own Company DNA or another company. Prospect research must stay separate."))
+    for part, pattern in REQUIRED_PARTS.items():
+        if not pattern.search(body):
+            rows.append(make_row("rule", part, "Needs Human Verification", "rule_broken", "none",
+                                 reason=f"Required part is missing: {part}."))
+    if not re.search(r"\bS\d+\b", tail):
+        rows.append(make_row("rule", "source notes", "Needs Human Verification", "rule_broken", "none",
+                             reason="Source notes with source IDs are missing."))
+    words = len(text.split())
+    if words > MAX_WORDS:
+        rows.append(make_row("flag", f"{words} words", reason=f"Longer than about one page ({MAX_WORDS} words)."))
     return rows
