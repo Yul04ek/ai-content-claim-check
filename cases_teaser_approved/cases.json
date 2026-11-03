@@ -45,8 +45,8 @@
   "case": "A6 price on wrong offer",
   "pack": "../packs/pack_Test_001_approved.json",
   "teaser_file": "a6_price_on_wrong_offer.txt",
-  "expect_level": "REVIEW",
-  "why": "JUDGE ONLY: $99 is a real price but belongs to Pro, not Free"
+  "expect_level": "NOT READY",
+  "why": "JUDGE ONLY: $99 is a real price but belongs to Pro; on Free it contradicts the offer list ($0), like A4"
  },
  {
   "case": "A7 no sign-up invitation",
