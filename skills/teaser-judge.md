@@ -11,6 +11,8 @@ HYPOTHESES. The teaser must contain 2-3 opportunity hypotheses, each clearly lab
 - It must be labelled. If it is written as a plain statement ("Your investor story is unclear"), use hypothesis_unlabelled.
 - It must rest on a real fact of the pack. If the fact it is built on is not in the pack, use hypothesis_without_fact. A labelled hypothesis resting on a pack fact is supported.
 
+For a labelled hypothesis, record_quote must be the pack fact it rests on (the FACT line). For a statement that something is unknown or not established, record_quote must be the matching UNKNOWN line. The label line itself (for example "H1 - ... (hypothesis)") is a heading, not a claim: do not list it.
+
 For each claim choose exactly ONE finding:
 - supported: stated in the pack, or a faithful paraphrase with the same strength; or a labelled hypothesis that rests on a pack fact; or a statement about AURA that matches an approved offer.
 - not_in_pack: nothing in the pack says this (invented detail, number, place, customer, tool, cause, result). Business figures (revenue, funding, growth, traction, customers) are not_in_pack unless a fact states them.
