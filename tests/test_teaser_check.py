@@ -232,6 +232,15 @@ def test_approved_suite_file_points_to_existing_files():
         assert c["expect_level"] in pl.LEVELS
 
 
+def test_company_price_from_the_page_is_not_flagged_but_an_unknown_price_is():
+    from teaser_check.deterministic import offer_checks
+    pack = {"approved_aura_offers": [{"id": "A1", "name": "Pro", "text": "AURA AI Pro, $99/month"}],
+            "sources": [{"id": "S1", "url": "https://a.com", "excerpt": "Teams cost $12 per seat."}]}
+    body = "Their Teams plan is $12 per seat. AURA Pro is $99. Another plan costs $7."
+    flagged = [r["text"] for r in offer_checks(body, pack, "")]
+    assert flagged == ["$7"], flagged
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

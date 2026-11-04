@@ -137,8 +137,11 @@ def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
     # A price must exist in the offer list. Whether it belongs to the right offer is left to the judge.
     offer_text = " ".join(o["text"] for o in offers)
     known = {m.replace(" ", "") for m in MONEY.findall(offer_text)}
+    # A price that stands in the page text is the company's own price; whose price it is, is left to the judge.
+    source_text = " ".join(s.get("excerpt", "") for s in pack.get("sources", []))
+    company_prices = {m.replace(" ", "") for m in MONEY.findall(source_text)}
     for price in dict.fromkeys(m.replace(" ", "") for m in MONEY.findall(body)):
-        if price not in known:
+        if price not in known and price not in company_prices:
             rows.append(make_row("price", price, "Unsupported", "not_in_pack", "none",
                                  reason="This price is not in the approved AURA offer list."))
     for offer in offers:

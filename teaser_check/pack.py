@@ -7,9 +7,10 @@ from pathlib import Path
 
 def load_pack(path) -> dict:
     pack = json.loads(Path(path).read_text(encoding="utf-8"))
-    for key in ("group_id", "sources", "facts"):
+    for key in ("group_id", "sources"):
         if not pack.get(key):
             raise SystemExit(f"Pack {path}: field '{key}' is missing or empty")
+    pack.setdefault("facts", [])  # a pack made from page snapshots has sources only, no hand-written facts
     return pack
 
 
@@ -18,7 +19,8 @@ def pack_to_text(pack: dict) -> str:
     lines = [f"COMPANY: {pack.get('company_label', '')} (group {pack['group_id']})",
              f"WEBSITE: {pack.get('website', '')}"]
     for s in pack["sources"]:
-        lines.append(f"SOURCE {s['id']} ({s['url']}, read {s.get('date_read', '?')}): \"{s['excerpt']}\"")
+        page = f", page date {s['page_date']}" if s.get("page_date") else ""
+        lines.append(f"SOURCE {s['id']} ({s['url']}, read {s.get('date_read', '?')}{page}): \"{s['excerpt']}\"")
     for f in pack["facts"]:
         lines.append(f"FACT {f['id']} [{f['source']}]: {f['text']}")
     for u in pack.get("unknowns", []):

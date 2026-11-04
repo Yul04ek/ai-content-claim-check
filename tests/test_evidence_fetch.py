@@ -85,6 +85,33 @@ def test_rejects_http_404_and_pdf():
             pass
 
 
+def test_parse_and_build_pack():
+    from evidence_fetch.build_pack import build_pack, parse_make_evidence
+    text = ("SOURCE: https://a.com/about, read on 2026-11-04\nPAGE DATE: none shown (undated page)\nLine one\nLine two\n\n"
+            "SOURCE: https://a.com/post, read on 2026-11-04\nPAGE DATE: 2022-09-09\nPost text\n")
+    src = parse_make_evidence(text)
+    assert [s["url"] for s in src] == ["https://a.com/about", "https://a.com/post"]
+    assert src[0]["page_date"] == "" and src[1]["page_date"] == "2022-09-09"
+    assert src[0]["text"] == "Line one\nLine two"
+    pack = build_pack(src, "G1", "R1", "A Inc.", "https://a.com", {"approved_aura_offers": [{"id": "A1", "text": "x"}]})
+    assert pack["sources"][1]["id"] == "S2" and pack["facts"] == [] and pack["approved_aura_offers"][0]["id"] == "A1"
+
+
+def test_pack_without_facts_works_in_the_checker():
+    import json, tempfile
+    from teaser_check.pack import load_pack, pack_to_text
+    from teaser_check.pipeline import check_teaser
+    from teaser_check.judge import no_judge
+    pack = {"group_id": "G1", "sources": [{"id": "S1", "url": "https://a.com", "date_read": "2026-11-04",
+                                           "page_date": "2022-09-09", "excerpt": "We raised a seed round."}]}
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(pack, f)
+    loaded = load_pack(f.name)
+    assert loaded["facts"] == [] and "page date 2022-09-09" in pack_to_text(loaded)
+    rows, _ = check_teaser(loaded, "INTERNAL REVIEW ONLY\nA snapshot [S1]. Hypothesis 1. Hypothesis 2. Sign up for AURA help.\nSource notes\nS1", no_judge)
+    assert isinstance(rows, list)
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
