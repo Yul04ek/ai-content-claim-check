@@ -157,7 +157,7 @@ def main() -> None:
     p.add_argument("--repeats", type=int, default=3)
     p.add_argument("--model", help="overrides MODEL_NAME")
     p.add_argument("--store", help="MLflow folder (in Colab: on Google Drive). Without it only the table is written")
-    p.add_argument("--experiment", default="teaser-judge")
+    p.add_argument("--experiment", help="MLflow experiment name (default: teaser-judge; with --dry-run: teaser-code-rules)")
     p.add_argument("--dry-run", action="store_true", help="code rules only, no model call (tests the setup)")
     args = p.parse_args()
 
@@ -176,7 +176,8 @@ def main() -> None:
         factory = lambda rubric: (lambda rec, body: judge_with_llm(rec, body, client=client, model=model, rubric_path=rubric))
     print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, {sum(len(c['items']) for c in lab['cases'])} known errors. "
           f"Model {model}, repeats {args.repeats}, rubrics {[Path(r).stem for r in args.rubric]}")
-    run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=args.experiment, mlflow=mlflow)
+    name = args.experiment or ("teaser-code-rules" if args.dry_run else "teaser-judge")  # code rules and judge runs are kept apart
+    run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=name, mlflow=mlflow)
     print("Table: results/experiments.csv")
 
 
