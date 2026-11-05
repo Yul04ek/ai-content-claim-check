@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from claim_check.common import ROOT, make_row, norm
 from claim_check.config import chat, get_client, get_env
+from .roles import strip_tags, tag_hypotheses
 
 SKILL_FILE = ROOT / "skills" / "teaser-judge.md"
 
@@ -71,8 +72,12 @@ def judge_with_llm(record_text: str, body: str, client=None, model: str | None =
     """Ask the model to judge the claims of one teaser (or of one part of it). Returns (judgements, tokens)."""
     client = client or get_client()
     model = model or get_env("MODEL_NAME")
+    rubric_text = system_text or load_rubric(rubric_path)
+    tagged = "ROLE TAGS" in rubric_text  # the rubric asks for role tags on the hypothesis lines (see roles.py)
+    if tagged:
+        body = tag_hypotheses(body)
     messages = [
-        {"role": "system", "content": (system_text or load_rubric(rubric_path)) + "\n\n" + output_format()},
+        {"role": "system", "content": rubric_text + "\n\n" + output_format()},
         {"role": "user", "content": f"EVIDENCE PACK\n{record_text}\n\n{label}\n{body}"},
     ]
     tokens = {"input": 0, "output": 0}
@@ -83,7 +88,11 @@ def judge_with_llm(record_text: str, body: str, client=None, model: str | None =
         tokens["output"] += getattr(usage, "completion_tokens", 0) or 0
         content = reply.choices[0].message.content or ""
         try:
-            return parse_judgements(content), tokens
+            found = parse_judgements(content)
+            if tagged:
+                for j in found:
+                    j.claim = strip_tags(j.claim)
+            return found, tokens
         except ValueError as error:
             if attempt >= bad_json_retries:
                 raise ValueError(f"The judge did not return valid JSON: {str(error)[:300]}") from error

@@ -470,6 +470,20 @@ def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     assert not jd.quote_in_pack("based in Vienna... has a hundred people", record)
 
 
+def test_role_tags_mark_hypothesis_lines_and_are_stripped_from_claims():
+    from teaser_check.roles import tag_hypotheses, strip_tags
+    body = ("AURA Opportunity Teaser - X\nVerified company snapshot\n- X makes mail.\n"
+            "Opportunity hypotheses (clearly labelled)\n- H1: X could use AURA AI Pro\nWhat it maps to: Company DNA.\n"
+            "Rationale: X is based in Germany and serves founders.\nPreconditions/notes: No revenue claims.\n"
+            "AURA help and applicable offers\n- AURA AI Free, $0.\n")
+    tagged = tag_hypotheses(body).splitlines()
+    assert tagged[2] == "- X makes mail."  # outside the hypotheses: unchanged
+    assert tagged[4].startswith("[H1 | title]") and tagged[5].startswith("[H1 | aura side]")
+    assert tagged[6].startswith("[H1 | rationale]") and tagged[7].startswith("[H1 | test or note]")
+    assert tagged[9] == "- AURA AI Free, $0."
+    assert strip_tags("[H1 | rationale] X is based in Germany.") == "X is based in Germany."
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
