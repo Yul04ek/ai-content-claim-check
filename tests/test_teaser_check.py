@@ -330,6 +330,49 @@ def test_page_numbers_split_over_lines_numbered_hypotheses_and_crlf():
     assert not any("labelled hypothes" in t for t in texts)  # "1)" and "2)" count
 
 
+class FakeMlflow:
+    """Records what the experiment runner logs (the real package is not installed in the sandbox)."""
+    def __init__(self):
+        self.runs, self.stack, self.params, self.metrics = [], [], {}, {}
+    def set_tracking_uri(self, uri): self.uri = uri
+    def set_experiment(self, name): self.experiment = name
+    def start_run(self, run_name=None, nested=False):
+        self.stack.append(run_name); self.runs.append(run_name); me = self
+        class Ctx:
+            def __enter__(self): return self
+            def __exit__(self, *a): me.stack.pop()
+        return Ctx()
+    def end_run(self): self.stack.pop()
+    def log_params(self, d): self.params[self.stack[-1]] = d
+    def log_metrics(self, d): self.metrics.setdefault(self.stack[-1], {}).update(d)
+    def log_metric(self, k, v): self.metrics.setdefault(self.stack[-1], {})[k] = v
+    def log_artifacts(self, *a, **k): pass
+    def log_artifact(self, *a, **k): pass
+
+
+def test_experiment_runs_every_repeat_and_logs_table_and_mlflow():
+    import csv, json, tempfile
+    from pathlib import Path
+    from teaser_check.experiment import load_lab_set, run_experiment
+    from teaser_check.judge import no_judge
+    d = Path(tempfile.mkdtemp())
+    (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [],
+        "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "We started in 2011."}]}))
+    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe grew 40% last year.\nSign up to review.\n")
+    (d / "rubric.md").write_text("rubric")
+    (d / "lab.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt",
+        "items": [{"id": "X1", "match": "40%", "why": "invented"}, {"id": "X2", "match": "nothing like this", "why": "x"}]}]}))
+    fake = FakeMlflow()
+    out = run_experiment(load_lab_set(d / "lab.json"), [str(d / "rubric.md")], "m", 2, lambda r: no_judge,
+                         store="s", table=d / "t.csv", runs_dir=d / "runs", mlflow=fake)
+    rows = list(csv.DictReader(open(d / "t.csv", encoding="utf-8-sig")))
+    assert len(rows) == 2 and rows[0]["found"] == "1" and rows[0]["total"] == "2" and rows[0]["recall"] == "0.5"
+    assert fake.runs == ["rubric@m", "rubric@m r1", "rubric@m r2"]
+    assert fake.metrics["rubric@m r1"]["item_X1"] == 1 and fake.metrics["rubric@m r1"]["item_X2"] == 0
+    assert fake.metrics["rubric@m"]["recall_mean"] == 0.5 and fake.metrics["rubric@m"]["hit_rate_X1"] == 1.0
+    assert len(out[0]["summaries"]) == 2
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

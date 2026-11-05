@@ -2,6 +2,7 @@
 # quotes verified in code), but its own findings and its own rubric (skills/teaser-judge.md).
 # claim_check/ is not touched: the judge for story drafts stays exactly as calibrated.
 
+from pathlib import Path
 from typing import Literal, get_args
 
 from pydantic import BaseModel, Field
@@ -43,8 +44,8 @@ class JudgementList(BaseModel):
     claims: list[ClaimJudgement]
 
 
-def load_rubric() -> str:
-    text = SKILL_FILE.read_text(encoding="utf-8")
+def load_rubric(path=None) -> str:
+    text = Path(path or SKILL_FILE).read_text(encoding="utf-8")
     if text.startswith("---"):
         text = text.split("---", 2)[2]
     return text.strip()
@@ -64,12 +65,13 @@ def parse_judgements(text: str) -> list[ClaimJudgement]:
     return JudgementList.model_validate_json(text[start:end + 1]).claims
 
 
-def judge_with_llm(record_text: str, body: str, client=None, model: str | None = None, bad_json_retries: int = 1):
+def judge_with_llm(record_text: str, body: str, client=None, model: str | None = None, bad_json_retries: int = 1,
+                   rubric_path=None):
     """Ask the model to judge the claims of one teaser. Returns (judgements, tokens)."""
     client = client or get_client()
     model = model or get_env("MODEL_NAME")
     messages = [
-        {"role": "system", "content": load_rubric() + "\n\n" + output_format()},
+        {"role": "system", "content": load_rubric(rubric_path) + "\n\n" + output_format()},
         {"role": "user", "content": f"EVIDENCE PACK\n{record_text}\n\nTEASER\n{body}"},
     ]
     tokens = {"input": 0, "output": 0}
