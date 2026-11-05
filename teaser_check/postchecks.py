@@ -68,8 +68,9 @@ def coverage_checks(body: str, judgements) -> list[dict]:
     for line in body.splitlines():
         text = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
         words = words_of(text)
-        if len(text.split()) < 5 or text.endswith(":"):  # headings and labels are not statements
-            continue
+        n_words = len(text.split())
+        if n_words < 5 or text.endswith(":") or (n_words <= 9 and not text.endswith((".", "!", "?"))):
+            continue  # headings and labels (a short line without a full stop) are not statements
         if not any(c and len(c & words) / min(len(c), len(words)) >= 0.6 for c in claim_sets):
             rows.append(make_row("coverage", text[:160], "Needs Human Verification", "rule_broken", "none",
                                  reason="The judge returned no verdict for this statement."))
