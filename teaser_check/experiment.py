@@ -28,6 +28,7 @@ from claim_check.config import get_client, get_env
 from .judge import judge_with_llm, no_judge
 from .pack import load_pack
 from .pipeline import check_teaser, write_csv
+from .report import build_report
 from .sections import is_sectioned, judge_sections
 from .score import score_case
 
@@ -77,6 +78,9 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         tokens["input"] += tok["input"]
         tokens["output"] += tok["output"]
         write_csv([{"case": case["case"], "id": pack["group_id"], **r} for r in rows], out_dir / f"{case['case']}.csv")
+        if judge is not no_judge:  # a readable page per teaser (not for dry runs: no judge, nothing to show)
+            (out_dir / f"report_{case['case']}.html").write_text(
+                build_report([dict(r) for r in rows], text, f"Teaser {case['case']}"), encoding="utf-8")
         scored = score_case(case["items"], [{"case": case["case"], "id": pack["group_id"], **r} for r in rows])
         cases[case["case"]] = {"found": [i["id"] for i in scored["found"]], "missed": [i["id"] for i in scored["missed"]],
                                "extra": len(scored["extra"]), "recall": scored["recall"]}

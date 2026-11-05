@@ -376,6 +376,20 @@ def test_experiment_runs_every_repeat_and_logs_table_and_mlflow():
     assert fake.uri.startswith("sqlite:///") and fake.uri.endswith("mlflow.db") and fake.artifacts.startswith("file:///")
 
 
+def test_experiment_writes_a_readable_report_per_teaser_when_a_judge_ran():
+    import json, tempfile
+    from pathlib import Path
+    from teaser_check.experiment import load_lab_set, run_once
+    d = Path(tempfile.mkdtemp())
+    (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [],
+        "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "We started in 2011."}]}))
+    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe started in 2011 in Berlin.\nSign up to review.\n")
+    (d / "lab.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt", "items": []}]}))
+    judge = lambda rec, body: ([], {"input": 1, "output": 1})
+    run_once(load_lab_set(d / "lab.json"), judge, d / "out")
+    assert (d / "out" / "report_X.html").exists()
+
+
 def test_patient_judge_retries_after_a_failure_and_gives_up_in_the_end():
     from teaser_check.experiment import patient
     calls = []

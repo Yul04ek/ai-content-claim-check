@@ -4,12 +4,14 @@
 
 import argparse
 import os
+from pathlib import Path
 
 from claim_check.common import ROOT
 from claim_check.config import get_client, get_env
 
 from .judge import judge_with_llm, no_judge
 from .pack import load_pack
+from .report import build_report
 from .pipeline import check_teaser, overall, run_suite, write_csv
 
 
@@ -46,6 +48,10 @@ def main() -> None:
             if r["verdict"] != "Supported":
                 print(f"  [{r['verdict'] or r['kind'].upper()}] {r['text']}  -- {r['reason']}")
     write_csv(rows, args.out)
+    if not args.suite and not args.dry_run:  # readable page next to the CSV
+        page = Path(args.out).with_suffix(".html")
+        page.write_text(build_report([dict(r) for r in rows], text, Path(args.teaser).stem), encoding="utf-8")
+        print(f"Report  : {page}")
     print(f"\nSaved {len(rows)} rows to {args.out}")
     print(f"Tokens used: input {tokens['input']}, output {tokens['output']}")
     pin, pout = os.getenv("CLAIM_CHECK_PRICE_IN"), os.getenv("CLAIM_CHECK_PRICE_OUT")
