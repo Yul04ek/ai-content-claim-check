@@ -72,7 +72,7 @@ def _card(r: dict) -> str:
     return (
         f'<div class="card {CSS_CLASS[verdict]}"><div class="head"><span class="badge {CSS_CLASS[verdict]}">{LABEL[verdict]}</span> '
         f'<span class="what">{html.escape(finding)}</span></div>'
-        f'<div class="stmt">{html.escape(r["text"])}</div>'
+        f'<div class="stmt"><span class="lbl">Teaser:</span> {html.escape(r["text"])}</div>'
         f'<div class="why"><b>Why:</b> {reason}</div>{quote_html}'
         f'<div class="by">Found by: {SOURCE_TEXT[row_source(r)]}</div></div>'
     )
@@ -106,16 +106,16 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check") -> 
 
     def judge_card(r):
         quote = (r.get("record_quote") or "").strip()
-        q = f'<div class="q"><b>Judge quoted:</b> “{html.escape(quote)}”</div>' if quote else '<div class="q">The judge gave no quote.</div>'
+        q = f'<div class="q"><b>Evidence from the source (judge’s quote):</b> “{html.escape(quote)}”</div>' if quote else '<div class="q">The judge named no evidence from the source.</div>'
         return (f'<div class="card warn"><div class="head"><span class="badge warn">Needs attention</span> '
                 f'<span class="what">{html.escape(FINDING_TEXT.get(r["finding"], r["finding"]))}</span></div>'
-                f'<div class="stmt">{html.escape(r["text"])}</div>'
+                f'<div class="stmt"><span class="lbl">Teaser:</span> {html.escape(r["text"])}</div>'
                 f'<div class="why"><b>Why:</b> {html.escape(_clean_reason(r.get("reason")))}</div>{q}</div>')
 
     judge_cards = "".join(judge_card(r) for r in flagged) or "<p>The judge flagged nothing.</p>"
     code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
     ok_list = "".join(
-        f'<li>{html.escape(r["text"])}<div class="q">Judge quote: “{html.escape((r.get("record_quote") or "")[:300])}”</div></li>' for r in accepted
+        f'<li>{html.escape(r["text"])}<div class="q">Evidence from the source: “{html.escape((r.get("record_quote") or "")[:300])}”</div></li>' for r in accepted
     )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
@@ -124,7 +124,7 @@ h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
 .sum{{padding:12px 16px;border-radius:8px;border-left:6px solid #5b6b86;background:#eef1f6}}
 .card{{border:1px solid #d8dce3;border-left:5px solid;border-radius:6px;padding:10px 14px;margin:10px 0}} .card.bad{{border-left-color:#c0392b}} .card.warn{{border-left-color:#d68910}} .card.note{{border-left-color:#7f8c8d}}
 .badge{{font-size:.75rem;padding:2px 8px;border-radius:10px;color:#fff}} .badge.bad{{background:#c0392b}} .badge.warn{{background:#d68910}} .badge.note{{background:#7f8c8d}}
-.what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}}
+.lbl{{font-style:normal;font-size:.75rem;color:#4a5568;text-transform:uppercase}} .what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}}
 pre{{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:6px;font-family:inherit}} mark.bad{{background:#f8c9c4}} mark.warn{{background:#fde3a7}}
 @media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum{{background:#222833}} mark{{color:#111}}}}
 </style></head><body>
