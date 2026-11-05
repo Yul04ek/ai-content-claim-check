@@ -8,6 +8,7 @@ from claim_check.common import COLUMNS
 
 from .deterministic import deterministic_checks, split_teaser
 from .judge import apply_rules
+from .postchecks import citation_checks, coverage_checks, text_checks
 from .pack import load_pack, pack_to_text
 
 LEVELS = ["READY FOR REVIEW", "REVIEW", "NOT READY"]  # worst last
@@ -33,9 +34,11 @@ def overall(rows: list[dict], dry_run: bool) -> str:
 
 def check_teaser(pack: dict, teaser_text: str, judge) -> tuple[list[dict], dict]:
     record_text = pack_to_text(pack)
-    body, _tail = split_teaser(teaser_text)
-    rows = deterministic_checks(teaser_text, body, pack, record_text)
+    body, tail = split_teaser(teaser_text)
+    rows = deterministic_checks(teaser_text, body, pack, record_text) + text_checks(teaser_text, body, tail, pack)
     judgements, tokens = judge(record_text, body)
+    if judgements:  # with no judge (dry run) every line would be 'not judged'
+        rows += coverage_checks(body, judgements) + citation_checks(judgements, pack)
     return [apply_rules(j, record_text) for j in judgements] + rows, tokens
 
 

@@ -78,6 +78,8 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
 
     record_norm = norm(record_text)
     for quote in QUOTE.findall(body):
+        if len(quote.split()) < 4:  # a short term in quotation marks is a label, not a quotation
+            continue
         if norm(quote).rstrip("?.!,") not in record_norm:
             rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                  reason="Quoted text does not appear in the pack."))

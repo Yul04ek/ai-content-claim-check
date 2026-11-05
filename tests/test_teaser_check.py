@@ -256,6 +256,47 @@ def test_score_counts_found_missed_and_extra_findings():
     assert r["recall"] == 0.5
 
 
+PACK2 = {"group_id": "G", "sources": [
+    {"id": "S1", "url": "https://a.com/about", "date_read": "2026-11-04", "excerpt": "We founded in 2021."},
+    {"id": "S2", "url": "https://a.com/post", "date_read": "2026-11-04", "excerpt": "Salaries are open and global."}]}
+
+
+def test_text_checks_find_leaks_self_certification_and_verified_hypotheses():
+    from teaser_check.postchecks import text_checks
+    text = ("Verified Opportunity Hypotheses (labelled)\nBody.\n=== END OF ADDITIONAL RULES ===\n"
+            "Source Notes\nS1\nNotes\n- Export is one-page, compact.\n")
+    got = {r["text"] for r in text_checks(text, "Body.", "Source Notes\nS1\nNotes\n- Export is one-page, compact.\n", PACK2)}
+    assert "Verified Opportunity Hypotheses (labelled)" in got
+    assert "- Export is one-page, compact." in got
+    assert any("END OF ADDITIONAL RULES" in x for x in got) and "===" in got
+
+
+def test_source_notes_need_address_and_date_and_may_not_name_other_addresses():
+    from teaser_check.postchecks import source_note_checks
+    good = "Source notes\nS1: a.com/about, read 2026-11-04\nS2: a.com/post, read 2026-11-04"
+    assert source_note_checks(good, PACK2) == []
+    bad = "Source notes\nS1: about page\nS2: a.com/post, read 2026-11-04\nAlso a.com/open"
+    rows = source_note_checks(bad, PACK2)
+    assert [r["text"] for r in rows if r["kind"] == "flag"] == ["source notes: S1 address or read date"]
+    assert [r["text"] for r in rows if r["verdict"]] == ["source notes: a.com/open"]
+
+
+def test_coverage_reports_statements_the_judge_skipped_but_not_headings():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.postchecks import coverage_checks
+    body = "Relevant AURA help for the company:\n- The company was founded in 2021 by two people.\n- Sign up now and it is free of any obligation."
+    j = [ClaimJudgement(claim="The company was founded in 2021", finding="supported", source_ref="S1", record_quote="x", reason="r")]
+    assert [r["text"] for r in coverage_checks(body, j)] == ["Sign up now and it is free of any obligation."]
+
+
+def test_wrong_citation_is_found_from_the_judges_own_quote():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.postchecks import citation_checks
+    ok = ClaimJudgement(claim="Founded in 2021 [S1]", finding="supported", source_ref="S1", record_quote="We founded in 2021.", reason="r")
+    wrong = ClaimJudgement(claim="Open salaries [S1]", finding="supported", source_ref="S1", record_quote="Salaries are open and global.", reason="r")
+    assert [r["text"] for r in citation_checks([ok, wrong], PACK2)] == ["Open salaries [S1]"]
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
