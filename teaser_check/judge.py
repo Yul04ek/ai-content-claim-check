@@ -53,8 +53,11 @@ def load_rubric(path=None) -> str:
     return text.strip()
 
 
-def output_format() -> str:
-    findings = ", ".join(get_args(Finding))
+def output_format(rubric_text: str = "") -> str:
+    """The JSON shape. A rubric line 'NO FINDINGS: a, b' takes those findings out of the list the model may choose from."""
+    skip = re.search(r"^NO FINDINGS:\s*(.+)$", rubric_text, re.M)
+    skipped = {x.strip() for x in skip.group(1).split(",")} if skip else set()
+    findings = ", ".join(f for f in get_args(Finding) if f not in skipped)
     return ("Return ONLY one JSON object, with no other text and no code fences, in exactly this shape:\n"
             '{"claims": [{"claim": "...", "finding": "<one of: ' + findings + '>", '
             '"source_ref": "<S1, F2, A1 ... or none>", "record_quote": "...", "reason": "..."}]}')
@@ -77,7 +80,7 @@ def judge_with_llm(record_text: str, body: str, client=None, model: str | None =
     if tagged:
         body = tag_hypotheses(body)
     messages = [
-        {"role": "system", "content": rubric_text + "\n\n" + output_format()},
+        {"role": "system", "content": rubric_text + "\n\n" + output_format(rubric_text)},
         {"role": "user", "content": f"EVIDENCE PACK\n{record_text}\n\n{label}\n{body}"},
     ]
     tokens = {"input": 0, "output": 0}

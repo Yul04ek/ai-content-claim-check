@@ -484,6 +484,12 @@ def test_role_tags_mark_hypothesis_lines_and_are_stripped_from_claims():
     assert strip_tags("[H1 | rationale] X is based in Germany.") == "X is based in Germany."
 
 
+def test_rubric_can_take_a_finding_out_of_the_list_the_judge_may_choose_from():
+    assert "hypothesis_unlabelled" in jd.output_format("plain rubric")
+    out = jd.output_format("text\nNO FINDINGS: hypothesis_unlabelled, promise\n")
+    assert "hypothesis_unlabelled" not in out and "promise" not in out and "not_in_pack" in out
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
