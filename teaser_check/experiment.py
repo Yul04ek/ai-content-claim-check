@@ -111,14 +111,28 @@ def log_parent(mlflow, summaries: list[dict]) -> None:
         mlflow.log_metric(f"hit_rate_{item}", n / len(summaries))  # 1.0 = found every time, 0.33 = found once in 3 runs
 
 
+def setup_mlflow(mlflow, store: str, experiment: str) -> None:
+    """A folder becomes a SQLite database inside it (new MLflow versions refuse the plain file store).
+    A server address (http://...) or a database address (sqlite:///...) is used as it is."""
+    artifacts = None
+    if "://" not in store:
+        folder = Path(store)
+        folder.mkdir(parents=True, exist_ok=True)
+        store = f"sqlite:///{(folder / 'mlflow.db').resolve()}"
+        artifacts = (folder / "artifacts").resolve().as_uri()
+    mlflow.set_tracking_uri(store)
+    if artifacts and mlflow.get_experiment_by_name(experiment) is None:
+        mlflow.create_experiment(experiment, artifact_location=artifacts)  # keep the artifacts inside the folder too
+    mlflow.set_experiment(experiment)
+
+
 def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judge_factory, store=None,
                    experiment="teaser-judge", table=None, runs_dir=None, mlflow=None) -> list[dict]:
     """Every rubric x repeats. judge_factory(rubric_path) returns the judge function."""
     runs_dir = Path(runs_dir or ROOT / "results" / "experiment_runs")
     table = table or ROOT / "results" / "experiments.csv"
     if mlflow and store:
-        mlflow.set_tracking_uri(store)
-        mlflow.set_experiment(experiment)
+        setup_mlflow(mlflow, store, experiment)
     stamp = f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}"
     all_summaries = []
     for rubric in rubrics:

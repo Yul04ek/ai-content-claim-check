@@ -336,6 +336,8 @@ class FakeMlflow:
         self.runs, self.stack, self.params, self.metrics = [], [], {}, {}
     def set_tracking_uri(self, uri): self.uri = uri
     def set_experiment(self, name): self.experiment = name
+    def get_experiment_by_name(self, name): return None
+    def create_experiment(self, name, artifact_location=None): self.artifacts = artifact_location
     def start_run(self, run_name=None, nested=False):
         self.stack.append(run_name); self.runs.append(run_name); me = self
         class Ctx:
@@ -364,13 +366,14 @@ def test_experiment_runs_every_repeat_and_logs_table_and_mlflow():
         "items": [{"id": "X1", "match": "40%", "why": "invented"}, {"id": "X2", "match": "nothing like this", "why": "x"}]}]}))
     fake = FakeMlflow()
     out = run_experiment(load_lab_set(d / "lab.json"), [str(d / "rubric.md")], "m", 2, lambda r: no_judge,
-                         store="s", table=d / "t.csv", runs_dir=d / "runs", mlflow=fake)
+                         store=str(d / "ml"), table=d / "t.csv", runs_dir=d / "runs", mlflow=fake)
     rows = list(csv.DictReader(open(d / "t.csv", encoding="utf-8-sig")))
     assert len(rows) == 2 and rows[0]["found"] == "1" and rows[0]["total"] == "2" and rows[0]["recall"] == "0.5"
     assert fake.runs == ["rubric@m", "rubric@m r1", "rubric@m r2"]
     assert fake.metrics["rubric@m r1"]["item_X1"] == 1 and fake.metrics["rubric@m r1"]["item_X2"] == 0
     assert fake.metrics["rubric@m"]["recall_mean"] == 0.5 and fake.metrics["rubric@m"]["hit_rate_X1"] == 1.0
     assert len(out[0]["summaries"]) == 2
+    assert fake.uri.startswith("sqlite:///") and fake.uri.endswith("mlflow.db") and fake.artifacts.startswith("file:///")
 
 
 if __name__ == "__main__":
