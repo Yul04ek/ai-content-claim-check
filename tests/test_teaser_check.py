@@ -241,6 +241,21 @@ def test_company_price_from_the_page_is_not_flagged_but_an_unknown_price_is():
     assert flagged == ["$7"], flagged
 
 
+def test_score_counts_found_missed_and_extra_findings():
+    from teaser_check.score import score_case
+    rows = [{"kind": "claim", "text": "Open salaries are public [S1]", "verdict": "Needs Human Verification"},
+            {"kind": "claim", "text": "Founded in 2021", "verdict": "Supported"},
+            {"kind": "flag", "text": "514 words", "verdict": ""},
+            {"kind": "claim", "text": "Something odd", "verdict": "Unsupported"}]
+    items = [{"id": "1", "match": "open salaries"}, {"id": "2", "match": "founded in 2021"},
+             {"id": "3", "match": "words"}, {"id": "4", "match": "email visible"}]
+    r = score_case(items, rows)
+    assert [i["id"] for i in r["found"]] == ["1", "3"]       # a flag counts; a Supported row does not
+    assert [i["id"] for i in r["missed"]] == ["2", "4"]
+    assert [x["text"] for x in r["extra"]] == ["Something odd"]
+    assert r["recall"] == 0.5
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
