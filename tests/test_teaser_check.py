@@ -438,6 +438,18 @@ def test_teaser_without_headings_is_judged_whole_and_signup_is_not_a_coverage_ga
     assert coverage_checks(SECTIONED_BODY, []) and not any("Sign up" in r["text"] for r in coverage_checks(SECTIONED_BODY, []))
 
 
+def test_html_report():
+    from teaser_check.report import build_report
+    teaser = "Intro line here.\nTuta has 3 million users worldwide today.\nTuta runs on renewable energy."
+    rows = [
+        {"kind": "claim", "text": "Tuta has 3 million users worldwide today.", "verdict": "Unsupported", "finding": "not_in_pack", "record_quote": "", "reason": "Not stated."},
+        {"kind": "claim", "text": "Tuta runs on renewable energy.", "verdict": "Supported", "finding": "supported", "record_quote": "renewable energy", "reason": "ok"},
+    ]
+    page = build_report(rows, teaser, "Teaser X")
+    assert "Result: Not supported" in page and "<mark" in page and "Nothing in the evidence says this" in page
+    assert "Supported statements (1)" in page and "<script" not in page
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
