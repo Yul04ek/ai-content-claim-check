@@ -446,8 +446,8 @@ def test_html_report():
         {"kind": "claim", "text": "Tuta runs on renewable energy.", "verdict": "Supported", "finding": "supported", "record_quote": "renewable energy", "reason": "ok"},
     ]
     page = build_report(rows, teaser, "Teaser X")
-    assert "Result: Not supported" in page and "<mark" in page and "Nothing in the evidence says this" in page
-    assert "Supported statements (1)" in page and "<script" not in page
+    assert "<mark" in page and "Judge comments (model) (1)" in page and "Nothing in the evidence says this" in page
+    assert "Statements the judge accepted (1)" in page and "<script" not in page
 
 
 if __name__ == "__main__":

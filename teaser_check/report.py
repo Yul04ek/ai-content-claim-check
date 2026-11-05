@@ -26,7 +26,7 @@ FINDING_TEXT = {
     "hypothesis_unlabelled": "Possibility written as an established fact",
     "hypothesis_without_fact": "Hypothesis without a fact behind it",
     "aura_offer_unverified": "AURA offer not on the approved list",
-    "supported": "Judge says supported, but the proof is missing",
+    "supported": "Judge accepted it",
     "rule_broken": "Rule check (code)",
 }
 SOURCE_TEXT = {"judge": "the judge (model)", "code": "a code rule", "coverage": "coverage check: the judge gave no verdict for this line"}
@@ -78,39 +78,47 @@ def _card(r: dict) -> str:
     )
 
 
+def _judge_raw_ok(r: dict) -> bool:
+    """The judge itself said 'supported' (code may have downgraded it because the quote was missing)."""
+    return row_source(r) == "judge" and r.get("finding") == "supported"
+
+
 def build_report(rows: list[dict], teaser: str, title: str = "Teaser check") -> str:
     rows = [r for r in rows if r.get("text")]
     for r in rows:
         r.setdefault("verdict", "")
     pos = lambda r: (_find_span(teaser, r["text"]) or (10**9, 0))[0]
-    problems = sorted((r for r in rows if r["verdict"] != "Supported"), key=pos)
-    supported = [r for r in rows if r["verdict"] == "Supported"]
-    n_bad = sum(r["verdict"] == "Unsupported" for r in rows)
-    n_warn = sum(r["verdict"] == "Needs Human Verification" for r in rows)
-    result = "Not supported" if n_bad else ("Check by a human" if n_warn else "No problems found")
-    cls = "bad" if n_bad else ("warn" if n_warn else "ok")
-    by_src = {k: sum(row_source(r) == k and r["verdict"] != "Supported" for r in rows) for k in SOURCE_TEXT}
-    cards = "".join(_card(r) for r in problems) or "<p>No findings.</p>"
-    sup = "".join(
-        f'<li>{html.escape(r["text"])}<div class="q">“{html.escape((r.get("record_quote") or "")[:300])}”</div></li>' for r in supported
-    )
+    code_rows = sorted((r for r in rows if row_source(r) != "judge"), key=pos)
+    judge_rows = sorted((r for r in rows if row_source(r) == "judge" and not _judge_raw_ok(r)), key=pos)
+    judge_ok = [r for r in rows if _judge_raw_ok(r)]
+    flagged = code_rows + judge_rows
+    code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
+    judge_cards = "".join(_card(r) for r in judge_rows) or "<p>No findings.</p>"
+
+    def ok_item(r):
+        unverified = "NOT found in pack" in (r.get("reason") or "") or "no supporting quote" in (r.get("reason") or "")
+        tag = ' <span class="tag">code could not verify the quote</span>' if unverified else ""
+        return f'<li>{html.escape(r["text"])}{tag}<div class="q">Judge quote: “{html.escape((r.get("record_quote") or "")[:300])}”</div></li>'
+
+    sup = "".join(ok_item(r) for r in judge_ok)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
 h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
-.sum{{padding:12px 16px;border-radius:8px;border-left:6px solid}} .sum.bad{{background:#fdecec;border-color:#c0392b}} .sum.warn{{background:#fff4de;border-color:#d68910}} .sum.ok{{background:#e8f6ec;border-color:#2e8b57}}
+.sum{{padding:12px 16px;border-radius:8px;border-left:6px solid #5b6b86;background:#eef1f6}}
 .card{{border:1px solid #d8dce3;border-left:5px solid;border-radius:6px;padding:10px 14px;margin:10px 0}} .card.bad{{border-left-color:#c0392b}} .card.warn{{border-left-color:#d68910}} .card.note{{border-left-color:#7f8c8d}}
 .badge{{font-size:.75rem;padding:2px 8px;border-radius:10px;color:#fff}} .badge.bad{{background:#c0392b}} .badge.warn{{background:#d68910}} .badge.note{{background:#7f8c8d}}
-.what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}}
+.what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}} .tag{{font-size:.75rem;background:#e3e7ee;padding:1px 6px;border-radius:8px}}
 pre{{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:6px;font-family:inherit}} mark.bad{{background:#f8c9c4}} mark.warn{{background:#fde3a7}}
-@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum.bad{{background:#3a1d1b}} .sum.warn{{background:#3a2e14}} .sum.ok{{background:#173324}} mark{{color:#111}}}}
+@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum{{background:#222833}} .tag{{background:#2d3441}} mark{{color:#111}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
-<div class="sum {cls}"><b>Result: {result}</b><br>{n_bad} not supported · {n_warn} for a human to check · {len(supported)} supported<br>
-<small>Problems found by: judge {by_src['judge']} · code rules {by_src['code']} · coverage check {by_src['coverage']}. Review only: nothing is published or sent.</small></div>
-<h2>What to look at ({len(problems)})</h2>{cards}
-<h2>The teaser (problems marked)</h2><pre>{_highlight(teaser, problems)}</pre>
-<h2>Supported statements ({len(supported)})</h2><details><summary>Show them with the evidence quote</summary><ul>{sup}</ul></details>
+<div class="sum">Automatic checks (code): <b>{len(code_rows)}</b> · Judge comments: <b>{len(judge_rows)}</b> · Statements the judge accepted: {len(judge_ok)}<br>
+<small>Review only: nothing is published or sent. The two blocks below are what a reviewer would get next to the teaser.</small></div>
+<h2>The teaser (everything marked below is highlighted)</h2><pre>{_highlight(teaser, flagged)}</pre>
+<h2>1. Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}
+<h2>2. Judge comments (model) ({len(judge_rows)})</h2>{judge_cards}
+<h2>Statements the judge accepted ({len(judge_ok)})</h2><details><summary>Show them</summary><ul>{sup}</ul></details>
 </body></html>"""
 
 
