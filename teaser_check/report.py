@@ -83,26 +83,40 @@ def _judge_raw_ok(r: dict) -> bool:
     return row_source(r) == "judge" and r.get("finding") == "supported"
 
 
+def _clean_reason(text: str) -> str:
+    """Judge's own reason, without the notes our code appended."""
+    return (text or "").replace(" [quote NOT found in pack]", "").replace(" [no supporting quote given]", "").strip()
+
+
 def build_report(rows: list[dict], teaser: str, title: str = "Teaser check") -> str:
+    """Two blocks as the reviewer gets them: code checks and the judge's verdict, exactly as the judge gave it."""
     rows = [r for r in rows if r.get("text")]
     for r in rows:
         r.setdefault("verdict", "")
     pos = lambda r: (_find_span(teaser, r["text"]) or (10**9, 0))[0]
     code_rows = sorted((r for r in rows if row_source(r) != "judge"), key=pos)
-    judge_rows = sorted((r for r in rows if row_source(r) == "judge" and not _judge_raw_ok(r)), key=pos)
-    judge_ok = [r for r in rows if _judge_raw_ok(r)]
-    flagged = code_rows + judge_rows
-    code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
-    judge_cards = "".join(_card(r) for r in judge_rows) or "<p>No findings.</p>"
+    judged = [r for r in rows if row_source(r) == "judge"]
+    flagged = sorted((r for r in judged if r.get("finding") != "supported"), key=pos)
+    accepted = [r for r in judged if r.get("finding") == "supported"]
+    pct = round(100 * len(accepted) / len(judged)) if judged else 0
+    kinds = {}
+    for r in flagged:
+        kinds[r["finding"]] = kinds.get(r["finding"], 0) + 1
+    kinds_txt = " · ".join(f"{FINDING_TEXT.get(k, k)}: {n}" for k, n in sorted(kinds.items(), key=lambda x: -x[1])) or "none"
 
-    unverified = lambda r: "NOT found in pack" in (r.get("reason") or "") or "no supporting quote" in (r.get("reason") or "")
-    no_proof = [r for r in judge_ok if unverified(r)]
-    confirmed = len(judge_ok) - len(no_proof)
-    no_proof_cards = "".join(
-        f'<div class="card note"><div class="stmt">{html.escape(r["text"])}</div>'
-        f'<div class="q">The judge accepted it but gave no quote that can be found in the evidence'
-        f'{": “" + html.escape(r["record_quote"][:200]) + "”" if r.get("record_quote") else ""}.</div></div>' for r in no_proof
-    ) or "<p>None.</p>"
+    def judge_card(r):
+        quote = (r.get("record_quote") or "").strip()
+        q = f'<div class="q"><b>Judge quoted:</b> “{html.escape(quote)}”</div>' if quote else '<div class="q">The judge gave no quote.</div>'
+        return (f'<div class="card warn"><div class="head"><span class="badge warn">Needs attention</span> '
+                f'<span class="what">{html.escape(FINDING_TEXT.get(r["finding"], r["finding"]))}</span></div>'
+                f'<div class="stmt">{html.escape(r["text"])}</div>'
+                f'<div class="why"><b>Why:</b> {html.escape(_clean_reason(r.get("reason")))}</div>{q}</div>')
+
+    judge_cards = "".join(judge_card(r) for r in flagged) or "<p>The judge flagged nothing.</p>"
+    code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
+    ok_list = "".join(
+        f'<li>{html.escape(r["text"])}<div class="q">Judge quote: “{html.escape((r.get("record_quote") or "")[:300])}”</div></li>' for r in accepted
+    )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
@@ -110,17 +124,19 @@ h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
 .sum{{padding:12px 16px;border-radius:8px;border-left:6px solid #5b6b86;background:#eef1f6}}
 .card{{border:1px solid #d8dce3;border-left:5px solid;border-radius:6px;padding:10px 14px;margin:10px 0}} .card.bad{{border-left-color:#c0392b}} .card.warn{{border-left-color:#d68910}} .card.note{{border-left-color:#7f8c8d}}
 .badge{{font-size:.75rem;padding:2px 8px;border-radius:10px;color:#fff}} .badge.bad{{background:#c0392b}} .badge.warn{{background:#d68910}} .badge.note{{background:#7f8c8d}}
-.what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}} .tag{{font-size:.75rem;background:#e3e7ee;padding:1px 6px;border-radius:8px}}
+.what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}}
 pre{{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:6px;font-family:inherit}} mark.bad{{background:#f8c9c4}} mark.warn{{background:#fde3a7}}
-@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum{{background:#222833}} .tag{{background:#2d3441}} mark{{color:#111}}}}
+@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum{{background:#222833}} mark{{color:#111}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
-<div class="sum">Automatic checks (code): <b>{len(code_rows)}</b> · Judge comments: <b>{len(judge_rows)}</b> · Judge accepted {len(judge_ok)} statements: {confirmed} with a quote confirmed in the evidence, {len(no_proof)} without<br>
-<small>Review only: nothing is published or sent. What a reviewer would get next to the teaser: code checks, judge comments, and the statements the judge accepted without confirmed evidence.</small></div>
-<h2>The teaser (everything marked below is highlighted)</h2><pre>{_highlight(teaser, flagged)}</pre>
-<h2>1. Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}
-<h2>2. Judge comments (model) ({len(judge_rows)})</h2>{judge_cards}
-<h2>Accepted by the judge, but without confirmed evidence ({len(no_proof)})</h2>{no_proof_cards}
+<div class="sum"><b>Judge:</b> {len(judged)} statements checked, <b>{len(accepted)} supported ({pct}%)</b>, {len(flagged)} need attention.<br>
+<small>Needs attention by type: {html.escape(kinds_txt)}</small><br>
+<b>Automatic checks (code):</b> {len(code_rows)} findings.<br>
+<small>Review only: nothing is published or sent. The judge's verdict is shown as the judge gave it.</small></div>
+<h2>The teaser (flagged places highlighted)</h2><pre>{_highlight(teaser, code_rows + flagged)}</pre>
+<h2>1. Judge: statements that need attention ({len(flagged)})</h2>{judge_cards}
+<h2>2. Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}
+<h2>Judge: supported statements ({len(accepted)})</h2><details><summary>Show them with the judge's quote</summary><ul>{ok_list}</ul></details>
 </body></html>"""
 
 

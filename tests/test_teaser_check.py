@@ -446,8 +446,8 @@ def test_html_report():
         {"kind": "claim", "text": "Tuta runs on renewable energy.", "verdict": "Supported", "finding": "supported", "record_quote": "renewable energy", "reason": "ok"},
     ]
     page = build_report(rows, teaser, "Teaser X")
-    assert "<mark" in page and "Judge comments (model) (1)" in page and "Nothing in the evidence says this" in page
-    assert "1 with a quote confirmed in the evidence, 0 without" in page and "<script" not in page
+    assert "<mark" in page and "1 supported (50%)" in page and "Nothing in the evidence says this" in page
+    assert "need attention (1)" in page and "<script" not in page
 
 
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
