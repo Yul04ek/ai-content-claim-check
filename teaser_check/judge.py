@@ -66,13 +66,13 @@ def parse_judgements(text: str) -> list[ClaimJudgement]:
 
 
 def judge_with_llm(record_text: str, body: str, client=None, model: str | None = None, bad_json_retries: int = 1,
-                   rubric_path=None):
-    """Ask the model to judge the claims of one teaser. Returns (judgements, tokens)."""
+                   rubric_path=None, system_text=None, label="TEASER"):
+    """Ask the model to judge the claims of one teaser (or of one part of it). Returns (judgements, tokens)."""
     client = client or get_client()
     model = model or get_env("MODEL_NAME")
     messages = [
-        {"role": "system", "content": load_rubric(rubric_path) + "\n\n" + output_format()},
-        {"role": "user", "content": f"EVIDENCE PACK\n{record_text}\n\nTEASER\n{body}"},
+        {"role": "system", "content": (system_text or load_rubric(rubric_path)) + "\n\n" + output_format()},
+        {"role": "user", "content": f"EVIDENCE PACK\n{record_text}\n\n{label}\n{body}"},
     ]
     tokens = {"input": 0, "output": 0}
     for attempt in range(bad_json_retries + 1):

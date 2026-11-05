@@ -395,6 +395,49 @@ def test_patient_judge_retries_after_a_failure_and_gives_up_in_the_end():
         pass
 
 
+SECTIONED_BODY = ("AURA Opportunity Teaser - X\nVerified company snapshot\n- X makes mail.\n"
+                  "Opportunity hypotheses (labelled)\n1) H one\n- Rationale: a long enough statement about X here.\n"
+                  "AURA help and applicable offers\n- AURA AI Free, $0.\nSign-up invitation to review\n- Sign up to review the DNA of X.\n")
+
+
+def test_teaser_is_split_into_its_parts():
+    from teaser_check.sections import split_sections, section_of_lines
+    parts = split_sections(SECTIONED_BODY)
+    assert list(parts) == ["start", "snapshot", "hypotheses", "aura_help", "signup"]
+    assert "X makes mail" in parts["snapshot"] and "Rationale" in parts["hypotheses"] and "Free" in parts["aura_help"]
+    assert dict(section_of_lines(SECTIONED_BODY))["- Sign up to review the DNA of X."] == "signup"
+
+
+def test_sectioned_rubric_is_detected_and_each_part_gets_its_own_rule():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.sections import is_sectioned, judge_sections
+    import teaser_check.judge as judge_module
+    root = judge_module.SKILL_FILE.parent
+    assert is_sectioned(root / "experiments" / "s1.md") and not is_sectioned(root / "teaser-judge.md")
+    calls = []
+    def fake(record, text, client=None, model=None, system_text=None, label=None):
+        calls.append((label, system_text))
+        return [ClaimJudgement(claim=label, finding="supported", source_ref="S1", record_quote="q", reason="r")], {"input": 2, "output": 1}
+    got, tokens = judge_sections("pack", SECTIONED_BODY, rubric_path=root / "experiments" / "s1.md", call=fake)
+    assert [c[0] for c in calls] == ["TEASER PART (snapshot)", "TEASER PART (hypotheses)", "TEASER PART (aura_help)"]
+    assert "company snapshot" in calls[0][1] and "opportunity hypotheses" in calls[1][1] and "what AURA offers" in calls[2][1]
+    assert "company snapshot" not in calls[1][1] and tokens == {"input": 6, "output": 3} and len(got) == 3
+
+
+def test_teaser_without_headings_is_judged_whole_and_signup_is_not_a_coverage_gap():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.postchecks import coverage_checks
+    from teaser_check.sections import judge_sections
+    import teaser_check.judge as judge_module
+    root = judge_module.SKILL_FILE.parent
+    seen = []
+    def fake(record, text, client=None, model=None, system_text=None, label=None):
+        seen.append(label); return [], {"input": 0, "output": 0}
+    judge_sections("pack", "Just some plain text without any heading in it at all.", rubric_path=root / "experiments" / "s1.md", call=fake)
+    assert seen == ["TEASER PART (whole teaser)"]
+    assert coverage_checks(SECTIONED_BODY, []) and not any("Sign up" in r["text"] for r in coverage_checks(SECTIONED_BODY, []))
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

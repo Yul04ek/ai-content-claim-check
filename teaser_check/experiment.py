@@ -28,6 +28,7 @@ from claim_check.config import get_client, get_env
 from .judge import judge_with_llm, no_judge
 from .pack import load_pack
 from .pipeline import check_teaser, write_csv
+from .sections import is_sectioned, judge_sections
 from .score import score_case
 
 TABLE_COLUMNS = ["time", "lab_set", "rubric", "rubric_sha", "model", "repeat", "found", "total", "recall",
@@ -220,7 +221,9 @@ def main() -> None:
     else:
         client = get_client()
         model = args.model or get_env("MODEL_NAME")
-        factory = lambda rubric: (lambda rec, body: judge_with_llm(rec, body, client=client, model=model, rubric_path=rubric))
+        def factory(rubric):  # a rubric with '## SECTION' blocks is applied part by part
+            call = judge_sections if is_sectioned(rubric) else judge_with_llm
+            return lambda rec, body: call(rec, body, client=client, model=model, rubric_path=rubric)
     print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, {sum(len(c['items']) for c in lab['cases'])} known errors. "
           f"Model {model}, repeats {args.repeats}, rubrics {[Path(r).stem for r in args.rubric]}")
     name = args.experiment or ("teaser-code-rules" if args.dry_run else "teaser-judge")  # code rules and judge runs are kept apart

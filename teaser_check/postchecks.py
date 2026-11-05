@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from claim_check.common import make_row, norm
 
 from .deterministic import ID_REF, words_of
+from .sections import section_of_lines
 
 LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}|\([^)\n]*clearly labelled[^)\n]*\)"
                   r"|^[^\w\n]*(important )?disclosures?\b.*$|^[^\w\n]*preconditions?\b.*$|^[-\t ]*do not\b.*$", re.I | re.M)
@@ -65,7 +66,9 @@ def coverage_checks(body: str, judgements) -> list[dict]:
     """Every sentence of the teaser must have been judged. A line no judged claim overlaps is reported."""
     claim_sets = [words_of(j.claim) for j in judgements]
     rows = []
-    for line in body.splitlines():
+    for line, part in section_of_lines(body):
+        if part == "signup":  # required template text, not a claim
+            continue
         text = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
         words = words_of(text)
         n_words = len(text.split())
