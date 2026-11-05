@@ -50,7 +50,7 @@ def main() -> None:
     write_csv(rows, args.out)
     if not args.suite and not args.dry_run:  # readable page next to the CSV
         page = Path(args.out).with_suffix(".html")
-        page.write_text(build_report([dict(r) for r in rows], text, Path(args.teaser).stem), encoding="utf-8")
+        page.write_text(build_report([dict(r) for r in rows], text, Path(args.teaser).stem, pack), encoding="utf-8")
         print(f"Report  : {page}")
     print(f"\nSaved {len(rows)} rows to {args.out}")
     print(f"Tokens used: input {tokens['input']}, output {tokens['output']}")

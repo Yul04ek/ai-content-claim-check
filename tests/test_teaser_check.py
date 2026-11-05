@@ -452,16 +452,94 @@ def test_teaser_without_headings_is_judged_whole_and_signup_is_not_a_coverage_ga
     assert coverage_checks(SECTIONED_BODY, []) and not any("Sign up" in r["text"] for r in coverage_checks(SECTIONED_BODY, []))
 
 
+def test_experiment_writes_a_readable_report_per_teaser_when_a_judge_ran():
+    import json, tempfile
+    from pathlib import Path
+    from teaser_check.experiment import load_lab_set, run_once
+    d = Path(tempfile.mkdtemp())
+    (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [],
+        "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "We started in 2011."}]}))
+    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe started in 2011 in Berlin.\nSign up to review.\n")
+    (d / "lab.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt", "items": []}]}))
+    judge = lambda rec, body: ([], {"input": 1, "output": 1})
+    run_once(load_lab_set(d / "lab.json"), judge, d / "out")
+    assert (d / "out" / "report_X.html").exists()
+
+
+def test_patient_judge_retries_after_a_failure_and_gives_up_in_the_end():
+    from teaser_check.experiment import patient
+    calls = []
+    def flaky(rec, body):
+        calls.append(1)
+        if len(calls) < 3:
+            raise RuntimeError("503")
+        return [], {"input": 1, "output": 1}
+    waits = []
+    assert patient(flaky, tries=5, wait=7, sleep=waits.append)("r", "b") == ([], {"input": 1, "output": 1})
+    assert len(calls) == 3 and waits == [7, 7]
+    def always(rec, body): raise RuntimeError("503")
+    try:
+        patient(always, tries=2, wait=0, sleep=lambda s: None)("r", "b")
+        assert False
+    except RuntimeError:
+        pass
+
+
+SECTIONED_BODY = ("AURA Opportunity Teaser - X\nVerified company snapshot\n- X makes mail.\n"
+                  "Opportunity hypotheses (labelled)\n1) H one\n- Rationale: a long enough statement about X here.\n"
+                  "AURA help and applicable offers\n- AURA AI Free, $0.\nSign-up invitation to review\n- Sign up to review the DNA of X.\n")
+
+
+def test_teaser_is_split_into_its_parts():
+    from teaser_check.sections import split_sections, section_of_lines
+    parts = split_sections(SECTIONED_BODY)
+    assert list(parts) == ["start", "snapshot", "hypotheses", "aura_help", "signup"]
+    assert "X makes mail" in parts["snapshot"] and "Rationale" in parts["hypotheses"] and "Free" in parts["aura_help"]
+    assert dict(section_of_lines(SECTIONED_BODY))["- Sign up to review the DNA of X."] == "signup"
+
+
+def test_sectioned_rubric_is_detected_and_each_part_gets_its_own_rule():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.sections import is_sectioned, judge_sections
+    import teaser_check.judge as judge_module
+    root = judge_module.SKILL_FILE.parent
+    assert is_sectioned(root / "experiments" / "s1.md") and not is_sectioned(root / "teaser-judge.md")
+    calls = []
+    def fake(record, text, client=None, model=None, system_text=None, label=None):
+        calls.append((label, system_text))
+        return [ClaimJudgement(claim=label, finding="supported", source_ref="S1", record_quote="q", reason="r")], {"input": 2, "output": 1}
+    got, tokens = judge_sections("pack", SECTIONED_BODY, rubric_path=root / "experiments" / "s1.md", call=fake)
+    assert [c[0] for c in calls] == ["TEASER PART (snapshot)", "TEASER PART (hypotheses)", "TEASER PART (aura_help)"]
+    assert "company snapshot" in calls[0][1] and "opportunity hypotheses" in calls[1][1] and "what AURA offers" in calls[2][1]
+    assert "company snapshot" not in calls[1][1] and tokens == {"input": 6, "output": 3} and len(got) == 3
+
+
+def test_teaser_without_headings_is_judged_whole_and_signup_is_not_a_coverage_gap():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.postchecks import coverage_checks
+    from teaser_check.sections import judge_sections
+    import teaser_check.judge as judge_module
+    root = judge_module.SKILL_FILE.parent
+    seen = []
+    def fake(record, text, client=None, model=None, system_text=None, label=None):
+        seen.append(label); return [], {"input": 0, "output": 0}
+    judge_sections("pack", "Just some plain text without any heading in it at all.", rubric_path=root / "experiments" / "s1.md", call=fake)
+    assert seen == ["TEASER PART (whole teaser)"]
+    assert coverage_checks(SECTIONED_BODY, []) and not any("Sign up" in r["text"] for r in coverage_checks(SECTIONED_BODY, []))
+
+
 def test_html_report():
     from teaser_check.report import build_report
-    teaser = "Intro line here.\nTuta has 3 million users worldwide today.\nTuta runs on renewable energy."
+    teaser = "Verified snapshot\nTuta has 3 million users worldwide today.\nTuta runs on renewable energy since the start.\nThis line was never looked at by the judge at all."
     rows = [
-        {"kind": "claim", "text": "Tuta has 3 million users worldwide today.", "verdict": "Unsupported", "finding": "not_in_pack", "record_quote": "", "reason": "Not stated."},
-        {"kind": "claim", "text": "Tuta runs on renewable energy.", "verdict": "Supported", "finding": "supported", "record_quote": "renewable energy", "reason": "ok"},
+        {"kind": "claim", "text": "Tuta has 3 million users worldwide today.", "verdict": "Unsupported", "finding": "not_in_pack", "source_field": "none", "record_quote": "", "reason": "Not stated."},
+        {"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "renewable energy", "reason": "ok"},
     ]
-    page = build_report(rows, teaser, "Teaser X")
-    assert "<mark" in page and "1 supported (50%)" in page and "Nothing in the evidence says this" in page
-    assert "need attention (1)" in page and "<script" not in page
+    pack = {"sources": [{"id": "S1", "url": "https://tuta.com/team", "date_read": "2026-11-05"}]}
+    page = build_report(rows, teaser, "Teaser X", pack)
+    assert "1 verified (50%)" in page and "1 flagged" in page and "1 lines were not checked" in page
+    assert "Evidence: S1, https://tuta.com/team, read 2026-11-05" in page and "Nothing in the evidence says this" in page
+    assert "renewable energy\u201d" not in page and "<script" not in page  # no duplicated quote, no script
 
 
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():

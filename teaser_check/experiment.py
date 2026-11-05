@@ -80,7 +80,7 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         write_csv([{"case": case["case"], "id": pack["group_id"], **r} for r in rows], out_dir / f"{case['case']}.csv")
         if judge is not no_judge:  # a readable page per teaser (not for dry runs: no judge, nothing to show)
             (out_dir / f"report_{case['case']}.html").write_text(
-                build_report([dict(r) for r in rows], text, f"Teaser {case['case']}"), encoding="utf-8")
+                build_report([dict(r) for r in rows], text, f"Teaser {case['case']}", pack), encoding="utf-8")
         scored = score_case(case["items"], [{"case": case["case"], "id": pack["group_id"], **r} for r in rows])
         cases[case["case"]] = {"found": [i["id"] for i in scored["found"]], "missed": [i["id"] for i in scored["missed"]],
                                "extra": len(scored["extra"]), "recall": scored["recall"]}
