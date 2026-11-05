@@ -95,12 +95,14 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check") -> 
     code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
     judge_cards = "".join(_card(r) for r in judge_rows) or "<p>No findings.</p>"
 
-    def ok_item(r):
-        unverified = "NOT found in pack" in (r.get("reason") or "") or "no supporting quote" in (r.get("reason") or "")
-        tag = ' <span class="tag">code could not verify the quote</span>' if unverified else ""
-        return f'<li>{html.escape(r["text"])}{tag}<div class="q">Judge quote: “{html.escape((r.get("record_quote") or "")[:300])}”</div></li>'
-
-    sup = "".join(ok_item(r) for r in judge_ok)
+    unverified = lambda r: "NOT found in pack" in (r.get("reason") or "") or "no supporting quote" in (r.get("reason") or "")
+    no_proof = [r for r in judge_ok if unverified(r)]
+    confirmed = len(judge_ok) - len(no_proof)
+    no_proof_cards = "".join(
+        f'<div class="card note"><div class="stmt">{html.escape(r["text"])}</div>'
+        f'<div class="q">The judge accepted it but gave no quote that can be found in the evidence'
+        f'{": “" + html.escape(r["record_quote"][:200]) + "”" if r.get("record_quote") else ""}.</div></div>' for r in no_proof
+    ) or "<p>None.</p>"
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
@@ -113,12 +115,12 @@ pre{{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:6px;font
 @media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} pre{{background:#1d2128}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .sum{{background:#222833}} .tag{{background:#2d3441}} mark{{color:#111}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
-<div class="sum">Automatic checks (code): <b>{len(code_rows)}</b> · Judge comments: <b>{len(judge_rows)}</b> · Statements the judge accepted: {len(judge_ok)}<br>
-<small>Review only: nothing is published or sent. The two blocks below are what a reviewer would get next to the teaser.</small></div>
+<div class="sum">Automatic checks (code): <b>{len(code_rows)}</b> · Judge comments: <b>{len(judge_rows)}</b> · Judge accepted {len(judge_ok)} statements: {confirmed} with a quote confirmed in the evidence, {len(no_proof)} without<br>
+<small>Review only: nothing is published or sent. What a reviewer would get next to the teaser: code checks, judge comments, and the statements the judge accepted without confirmed evidence.</small></div>
 <h2>The teaser (everything marked below is highlighted)</h2><pre>{_highlight(teaser, flagged)}</pre>
 <h2>1. Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}
 <h2>2. Judge comments (model) ({len(judge_rows)})</h2>{judge_cards}
-<h2>Statements the judge accepted ({len(judge_ok)})</h2><details><summary>Show them</summary><ul>{sup}</ul></details>
+<h2>Accepted by the judge, but without confirmed evidence ({len(no_proof)})</h2>{no_proof_cards}
 </body></html>"""
 
 

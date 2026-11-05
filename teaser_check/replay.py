@@ -16,8 +16,9 @@ def judgements_from_csv(path) -> list[ClaimJudgement]:
     """The judge's claims of an earlier run (rows of kind 'claim'), rebuilt as the judge would return them."""
     with open(path, encoding="utf-8-sig", newline="") as f:
         rows = [r for r in csv.DictReader(f) if r["kind"] == "claim"]
+    strip = lambda t: t.replace(" [quote NOT found in pack]", "").replace(" [no supporting quote given]", "")
     return [ClaimJudgement(claim=r["text"], finding=r["finding"], source_ref=r["source_field"] or "none",
-                           record_quote=r["record_quote"], reason=r["reason"]) for r in rows]
+                           record_quote=r["record_quote"], reason=strip(r["reason"])) for r in rows]
 
 
 def main() -> None:

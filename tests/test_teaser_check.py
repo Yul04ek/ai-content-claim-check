@@ -447,7 +447,13 @@ def test_html_report():
     ]
     page = build_report(rows, teaser, "Teaser X")
     assert "<mark" in page and "Judge comments (model) (1)" in page and "Nothing in the evidence says this" in page
-    assert "Statements the judge accepted (1)" in page and "<script" not in page
+    assert "1 with a quote confirmed in the evidence, 0 without" in page and "<script" not in page
+
+
+def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
+    record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
+    assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)
+    assert not jd.quote_in_pack("based in Vienna... has a hundred people", record)
 
 
 if __name__ == "__main__":

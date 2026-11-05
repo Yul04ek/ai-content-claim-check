@@ -2,6 +2,7 @@
 # quotes verified in code), but its own findings and its own rubric (skills/teaser-judge.md).
 # claim_check/ is not touched: the judge for story drafts stays exactly as calibrated.
 
+import re
 from pathlib import Path
 from typing import Literal, get_args
 
@@ -96,11 +97,19 @@ def no_judge(record_text: str, body: str):
     return [], {"input": 0, "output": 0}
 
 
+def quote_in_pack(quote: str, record_text: str) -> bool:
+    """True if the quote is in the pack. A quote joined with '...' is checked piece by piece (every piece must be there)."""
+    if norm(quote) in norm(record_text):
+        return True
+    pieces = [norm(p) for p in re.split(r"\.{3}|\u2026", quote) if len(norm(p).split()) >= 2]
+    return bool(pieces) and all(p in norm(record_text) for p in pieces)
+
+
 def apply_rules(j: ClaimJudgement, record_text: str) -> dict:
     """Finding -> verdict, and the judge's quote is verified against the pack."""
     verdict = FINDING_TO_VERDICT[j.finding]
     reason = j.reason
-    if j.record_quote and norm(j.record_quote) not in norm(record_text):
+    if j.record_quote and not quote_in_pack(j.record_quote, record_text):
         reason += " [quote NOT found in pack]"
         if verdict == "Supported":
             verdict = "Needs Human Verification"
