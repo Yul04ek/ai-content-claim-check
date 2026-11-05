@@ -8,7 +8,8 @@ from claim_check.common import make_row, norm
 
 from .deterministic import ID_REF, words_of
 
-LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}", re.I)
+LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}|\(clearly labelled\)"
+                  r"|^[^\w\n]*(important )?disclosures?\b.*$|^[^\w\n]*preconditions?\b.*$|^[-\t ]*do not\b.*$", re.I | re.M)
 SELF_CERT = re.compile(r"\bthis (teaser|document|export) (uses|contains|follows|is|has)\b|\bexport is\b|\bno invented\b", re.I)
 VERIFIED_HYPOTHESES = re.compile(r"^[^\n]*\bverified\b[^\n]*hypothes[^\n]*$", re.I | re.M)
 ADDRESS = re.compile(r"\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[\w./-]*[\w-]", re.I)
@@ -29,7 +30,7 @@ def line_of(text: str, match) -> str:
 
 def text_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
     rows = []
-    for m in dict.fromkeys(x.group(0) for x in LEAK.finditer(text)):
+    for m in dict.fromkeys(x.group(0).strip() for x in LEAK.finditer(text)):
         rows.append(make_row("rule", m, "Needs Human Verification", "rule_broken", "none",
                              reason="Text from the instructions or a template field leaked into the teaser."))
     for m in dict.fromkeys(line_of(text, x) for x in SELF_CERT.finditer(text)):  # the whole text: a 'Notes' block sits in the tail

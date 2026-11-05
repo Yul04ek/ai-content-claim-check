@@ -297,6 +297,26 @@ def test_wrong_citation_is_found_from_the_judges_own_quote():
     assert [r["text"] for r in citation_checks([ok, wrong], PACK2)] == ["Open salaries [S1]"]
 
 
+def test_negated_promise_and_h_tags_and_created_line():
+    from teaser_check.deterministic import deterministic_checks, split_teaser
+    pack = {"group_id": "G", "facts": [], "unknowns": [], "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "x"}]}
+    text = ("Created: 2026-11-05 12:06\nINTERNAL REVIEW ONLY\n- H1: first\n- H2: second\n"
+            "Studio terms are not guaranteed.\nSign up to review.\n")
+    body, _ = split_teaser(text)
+    rows = deterministic_checks(text, body, pack, "")
+    texts = [r["text"] for r in rows]
+    assert "guaranteed" not in texts                      # negated, no promise
+    assert not any("labelled hypothes" in t for t in texts)  # H1/H2 count as hypotheses
+    assert "12" not in texts and "06" not in texts        # the Created line is not teaser text
+
+
+def test_instruction_text_in_the_teaser_is_a_leak():
+    from teaser_check.postchecks import text_checks
+    text = "Opportunity hypotheses (clearly labelled)\nImportant disclosures\n- Do not promise investment.\n"
+    got = {r["text"] for r in text_checks(text, text, "", PACK2)}
+    assert {"(clearly labelled)", "Important disclosures", "- Do not promise investment."} <= got
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

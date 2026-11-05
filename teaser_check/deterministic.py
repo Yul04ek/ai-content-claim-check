@@ -46,7 +46,11 @@ def split_teaser(text: str) -> tuple[str, str]:
     return re.sub(r"[ \t]+", " ", body).strip(), tail
 
 
+WRAPPER = re.compile(r"^Created: \d{4}-\d{2}-\d{2}[ \d:]*$", re.M)  # line added by the Make Google Docs module
+
+
 def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> list[dict]:
+    text, body = WRAPPER.sub("", text), WRAPPER.sub("", body)
     rows: list[dict] = []
 
     if not HEADER.search(text):
@@ -85,6 +89,8 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
                                  reason="Quoted text does not appear in the pack."))
 
     for match in PROMISE.finditer(body):
+        if NEGATION.search(body[max(0, match.start() - 30):match.start()]):  # "terms are not guaranteed" is no promise
+            continue
         rows.append(make_row("promise", match.group(0), "Unsupported", "promise", "none",
                              reason="Promise of investment, introductions or Studio acceptance."))
     for match in FIGURE_WORDS.finditer(body):
@@ -98,7 +104,8 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
     rows += offer_checks(body, pack, record_text)
     rows += scope_checks(text, body, tail_text_of(text), pack)
 
-    hypotheses = len(re.findall(r"\bhypothesis\b", body, re.I))
+    tags = set(re.findall(r"^\W*(H\d)\b", body, re.M))  # "H1: ..." counts as a labelled hypothesis
+    hypotheses = max(len(re.findall(r"\bhypothesis\b", body, re.I)), len(tags))
     if hypotheses < 2:
         rows.append(make_row("rule", f"{hypotheses} labelled hypothesis", "Needs Human Verification", "rule_broken",
                              "none", reason="The teaser needs 2-3 clearly labelled hypotheses."))
