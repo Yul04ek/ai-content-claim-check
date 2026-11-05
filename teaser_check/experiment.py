@@ -31,7 +31,7 @@ from .pipeline import check_teaser, write_csv
 from .score import score_case
 
 TABLE_COLUMNS = ["time", "lab_set", "rubric", "rubric_sha", "model", "repeat", "found", "total", "recall",
-                 "other_findings", "tokens_in", "tokens_out", "per_case"]
+                 "found_code", "found_judge", "found_not_judged", "other_findings", "tokens_in", "tokens_out", "per_case"]
 
 
 def load_lab_set(path) -> dict:
@@ -68,6 +68,7 @@ def run_once(lab: dict, judge, out_dir) -> dict:
     out_dir = Path(out_dir)
     cases, tokens = {}, {"input": 0, "output": 0}
     found = total = extra = 0
+    by_source = {"code": 0, "judge": 0, "coverage": 0}
     for case in lab["cases"]:
         pack = load_pack(lab["base"] / case["pack"])
         text = (lab["base"] / case["teaser"]).read_text(encoding="utf-8")
@@ -78,28 +79,39 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         scored = score_case(case["items"], [{"case": case["case"], "id": pack["group_id"], **r} for r in rows])
         cases[case["case"]] = {"found": [i["id"] for i in scored["found"]], "missed": [i["id"] for i in scored["missed"]],
                                "extra": len(scored["extra"]), "recall": scored["recall"]}
+        for k, n in scored["sources"].items():
+            by_source[k] += n
         found += len(scored["found"])
         total += len(case["items"])
         extra += len(scored["extra"])
     return {"cases": cases, "found": found, "total": total, "recall": found / total if total else 1.0,
-            "extra": extra, "tokens": tokens}
+            "extra": extra, "tokens": tokens, "by_source": by_source}
 
 
 def append_table(path, row: dict) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    new = not path.exists()
-    with open(path, "a", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=TABLE_COLUMNS)
-        if new:
-            writer.writeheader()
-        writer.writerow(row)
+    old = []
+    if path.exists():
+        with open(path, encoding="utf-8-sig", newline="") as f:
+            reader = csv.DictReader(f)
+            old = list(reader) if reader.fieldnames != TABLE_COLUMNS else None
+    if old is None:  # same columns: just add the row
+        with open(path, "a", newline="", encoding="utf-8-sig") as f:
+            csv.DictWriter(f, fieldnames=TABLE_COLUMNS).writerow(row)
+        return
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:  # new file, or an older table with other columns
+        writer = csv.DictWriter(f, fieldnames=TABLE_COLUMNS, restval="")
+        writer.writeheader()
+        writer.writerows(old + [row])
 
 
 def log_child(mlflow, summary: dict, params: dict, out_dir: Path, rubric: str) -> None:
     """One MLflow run for one repeat."""
     mlflow.log_params(params)
     mlflow.log_metrics({"found": summary["found"], "total": summary["total"], "recall": summary["recall"],
+                        "found_code": summary["by_source"]["code"], "found_judge": summary["by_source"]["judge"],
+                        "found_not_judged": summary["by_source"]["coverage"],
                         "other_findings": summary["extra"], "tokens_in": summary["tokens"]["input"],
                         "tokens_out": summary["tokens"]["output"]})
     for name, case in summary["cases"].items():
@@ -170,10 +182,13 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
                 "time": datetime.datetime.now().isoformat(timespec="seconds"), "lab_set": params["lab_set"],
                 "rubric": rname, "rubric_sha": sha, "model": model, "repeat": repeat, "found": summary["found"],
                 "total": summary["total"], "recall": round(summary["recall"], 3), "other_findings": summary["extra"],
+                "found_code": summary["by_source"]["code"], "found_judge": summary["by_source"]["judge"],
+                "found_not_judged": summary["by_source"]["coverage"],
                 "tokens_in": summary["tokens"]["input"], "tokens_out": summary["tokens"]["output"],
                 "per_case": "; ".join(f"{k} {len(v['found'])}/{len(v['found']) + len(v['missed'])}" for k, v in summary["cases"].items())})
             print(f"{rname} r{repeat}: found {summary['found']} of {summary['total']} "
-                  f"(recall {summary['recall']:.0%}), other findings {summary['extra']}, "
+                  f"(recall {summary['recall']:.0%}: code {summary['by_source']['code']}, judge {summary['by_source']['judge']}, "
+                  f"not judged {summary['by_source']['coverage']}), other findings {summary['extra']}, "
                   f"tokens {summary['tokens']['input']}/{summary['tokens']['output']}")
         if parent:
             log_parent(mlflow, summaries)

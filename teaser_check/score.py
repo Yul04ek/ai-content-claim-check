@@ -23,19 +23,31 @@ def is_finding(row: dict) -> bool:
     return row["verdict"] in ("Needs Human Verification", "Unsupported") or row["kind"] == "flag"
 
 
+def row_source(row: dict) -> str:
+    """Which layer made a row: the judge's own verdict on a claim, the 'not judged' check, or the code rules."""
+    if row.get("kind") == "claim":
+        return "judge"
+    if row.get("reason", "").startswith("The judge returned no verdict"):
+        return "coverage"
+    return "code"
+
+
 def score_case(items: list[dict], rows: list[dict]) -> dict:
     findings = [r for r in rows if is_finding(r)]
     found, missed, used = [], [], set()
+    sources = {"code": 0, "judge": 0, "coverage": 0}  # an item counts once: code first, then judge, then 'not judged'
     for item in items:
         needle = norm(item["match"])
-        hit = next((i for i, r in enumerate(findings) if needle in norm(r["text"])), None)
-        if hit is None:
+        hits = [i for i, r in enumerate(findings) if needle in norm(r["text"])]
+        if not hits:
             missed.append(item)
         else:
             found.append(item)
-            used.add(hit)
+            used.add(hits[0])
+            kinds = {row_source(findings[i]) for i in hits}
+            sources[next(k for k in ("code", "judge", "coverage") if k in kinds)] += 1
     extra = [r for i, r in enumerate(findings) if i not in used]  # findings nobody listed: a human decides if they are noise
-    return {"found": found, "missed": missed, "extra": extra,
+    return {"found": found, "missed": missed, "extra": extra, "sources": sources,
             "recall": len(found) / len(items) if items else 1.0}
 
 
