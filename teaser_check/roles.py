@@ -2,7 +2,6 @@
 Pure code, no model. A line under the hypotheses heading gets a prefix like [H2 | rationale]. Other lines are left as they are."""
 import re
 
-from .sections import section_of_lines
 
 HEAD = re.compile(r"^\s*(?:[-*•]\s*)?(?:H(\d)\b|(\d+)[.)]\s)", re.I)
 LABELS = [
@@ -15,6 +14,7 @@ TAG = re.compile(r"\[H\d+ \| [^\]]*\]\s*")
 
 
 def tag_hypotheses(body: str) -> str:
+    from .sections import section_of_lines  # here, not at the top: sections imports judge, judge imports roles
     out, index = [], 0
     for line, part in section_of_lines(body):
         if part != "hypotheses" or not line.strip():
