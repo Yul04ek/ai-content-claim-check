@@ -49,8 +49,22 @@ def split_teaser(text: str) -> tuple[str, str]:
 WRAPPER = re.compile(r"^Created: \d{4}-\d{2}-\d{2}[ \d:]*$", re.M)  # line added by the Make Google Docs module
 
 
+def numbered_items_under_hypotheses(body: str) -> int:
+    """Count '1)' / '2.' items after a heading that contains 'hypothes', until the next unindented non-list line."""
+    count, inside = 0, False
+    for line in body.splitlines():
+        if not inside:
+            inside = bool(re.search(r"hypothes", line, re.I)) and not line.lstrip().startswith("-")
+            continue
+        if re.match(r"\s*\d+[.)]\s", line):
+            count += 1
+        elif line.strip() and not re.match(r"\s*[-•]", line) and count:
+            break
+    return count
+
+
 def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> list[dict]:
-    text, body = WRAPPER.sub("", text), WRAPPER.sub("", body)
+    text, body = WRAPPER.sub("", text.replace("\r", "")), WRAPPER.sub("", body.replace("\r", ""))  # Windows line ends too
     rows: list[dict] = []
 
     if not HEADER.search(text):
@@ -74,8 +88,8 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
     # Numbers: a figure that is not in the pack may be invented. IDs and list markers are not figures.
     cleaned = re.sub(r"\bhypothesis\s*\d+", "hypothesis", LIST_MARKER.sub("", ID_REF.sub("", body)), flags=re.I)
     cleaned = HYPOTHESIS_TAG.sub("hypothesis", cleaned)
-    pack_numbers = {n.replace(" ", "") for n in NUMBER.findall(PACK_ID.sub("", record_text))}
-    for number in dict.fromkeys(x.replace(" ", "") for x in NUMBER.findall(cleaned)):
+    pack_numbers = {re.sub(r"\s", "", n) for n in NUMBER.findall(PACK_ID.sub("", record_text))}  # "12\n/month" is 12
+    for number in dict.fromkeys(re.sub(r"\s", "", x) for x in NUMBER.findall(cleaned)):
         if number not in pack_numbers:
             rows.append(make_row("number", number, "Needs Human Verification", "not_in_pack", "none",
                                  reason="Number does not appear in the pack. Check that it is not invented."))
@@ -105,7 +119,7 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
     rows += scope_checks(text, body, tail_text_of(text), pack)
 
     tags = set(re.findall(r"^\W*(H\d)\b", body, re.M))  # "H1: ..." counts as a labelled hypothesis
-    hypotheses = max(len(re.findall(r"\bhypothesis\b", body, re.I)), len(tags))
+    hypotheses = max(len(re.findall(r"\bhypothesis\b", body, re.I)), len(tags), numbered_items_under_hypotheses(body))
     if hypotheses < 2:
         rows.append(make_row("rule", f"{hypotheses} labelled hypothesis", "Needs Human Verification", "rule_broken",
                              "none", reason="The teaser needs 2-3 clearly labelled hypotheses."))
@@ -145,11 +159,11 @@ def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
         return rows
     # A price must exist in the offer list. Whether it belongs to the right offer is left to the judge.
     offer_text = " ".join(o["text"] for o in offers)
-    known = {m.replace(" ", "") for m in MONEY.findall(offer_text)}
+    known = {re.sub(r"\s", "", m) for m in MONEY.findall(offer_text)}
     # A price that stands in the page text is the company's own price; whose price it is, is left to the judge.
     source_text = " ".join(s.get("excerpt", "") for s in pack.get("sources", []))
-    company_prices = {m.replace(" ", "") for m in MONEY.findall(source_text)}
-    for price in dict.fromkeys(m.replace(" ", "") for m in MONEY.findall(body)):
+    company_prices = {re.sub(r"\s", "", m) for m in MONEY.findall(source_text)}  # "$\n12" on a page is $12
+    for price in dict.fromkeys(re.sub(r"\s", "", m) for m in MONEY.findall(body)):
         if price not in known and price not in company_prices:
             rows.append(make_row("price", price, "Unsupported", "not_in_pack", "none",
                                  reason="This price is not in the approved AURA offer list."))

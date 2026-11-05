@@ -8,10 +8,10 @@ from claim_check.common import make_row, norm
 
 from .deterministic import ID_REF, words_of
 
-LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}|\(clearly labelled\)"
+LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}|\([^)\n]*clearly labelled[^)\n]*\)"
                   r"|^[^\w\n]*(important )?disclosures?\b.*$|^[^\w\n]*preconditions?\b.*$|^[-\t ]*do not\b.*$", re.I | re.M)
 SELF_CERT = re.compile(r"\bthis (teaser|document|export) (uses|contains|follows|is|has)\b|\bexport is\b|\bno invented\b", re.I)
-VERIFIED_HYPOTHESES = re.compile(r"^[^\n]*\bverified\b[^\n]*hypothes[^\n]*$", re.I | re.M)
+VERIFIED_HYPOTHESES = re.compile(r"^[^\n]*\bverified\b[^\n]*hypothes[^\n]*$|^[^\w\n]*verified\b[^\n.]{0,60}$", re.I | re.M)  # also a short heading "Verified ..."
 ADDRESS = re.compile(r"\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[\w./-]*[\w-]", re.I)
 
 

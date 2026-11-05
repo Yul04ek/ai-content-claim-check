@@ -317,6 +317,19 @@ def test_instruction_text_in_the_teaser_is_a_leak():
     assert {"(clearly labelled)", "Important disclosures", "- Do not promise investment."} <= got
 
 
+def test_page_numbers_split_over_lines_numbered_hypotheses_and_crlf():
+    from teaser_check.deterministic import deterministic_checks, split_teaser
+    pack = {"group_id": "G", "facts": [], "unknowns": [],
+            "sources": [{"id": "S1", "url": "https://a.com/p", "date_read": "2026-11-05", "excerpt": "Plus $\n12\n/month"}],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "match": "AURA AI Free", "text": "AURA AI Free, $0: workspace."}]}
+    text = ("Created: 2026-11-05 12:25\r\nINTERNAL REVIEW ONLY\r\nOpportunity hypotheses\r\n1) First\r\n- Rationale: x\r\n"
+            "2) Second\r\nPlus costs $12/month.\r\nSign up to review.\r\n")
+    body, _ = split_teaser(text.replace("\r", ""))
+    texts = [r["text"] for r in deterministic_checks(text, body, pack, "Plus $\n12\n/month")]
+    assert "$12" not in texts and "12" not in texts       # the page price is not an invention
+    assert not any("labelled hypothes" in t for t in texts)  # "1)" and "2)" count
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
