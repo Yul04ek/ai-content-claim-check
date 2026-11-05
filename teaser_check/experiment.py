@@ -45,6 +45,24 @@ def sha_of(path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:8]
 
 
+def patient(judge, tries: int = 5, wait: int = 120, sleep=None):
+    """Wraps a judge: if the model stays unavailable after chat()'s own retries (503 for minutes), wait and try the
+    same teaser again, so one busy period does not throw away the whole repeat."""
+    import time
+    sleep = sleep or time.sleep
+
+    def run(record_text, body):
+        for attempt in range(1, tries + 1):
+            try:
+                return judge(record_text, body)
+            except Exception as error:  # the API client raises its own error types; any failure here is retried
+                if attempt == tries:
+                    raise
+                print(f"Judge failed ({type(error).__name__}), waiting {wait} s, then try {attempt + 1} of {tries} ...")
+                sleep(wait)
+    return run
+
+
 def run_once(lab: dict, judge, out_dir) -> dict:
     """One pass over all teasers of the lab set. Returns the summary; result CSVs go to out_dir."""
     out_dir = Path(out_dir)
@@ -137,7 +155,7 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
     all_summaries = []
     for rubric in rubrics:
         rname, sha = Path(rubric).stem, sha_of(rubric)
-        judge = judge_factory(rubric)
+        judge = patient(judge_factory(rubric))
         parent = mlflow.start_run(run_name=f"{rname}@{model}") if mlflow and store else None
         summaries = []
         for repeat in range(1, repeats + 1):

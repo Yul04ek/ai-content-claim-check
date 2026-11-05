@@ -376,6 +376,25 @@ def test_experiment_runs_every_repeat_and_logs_table_and_mlflow():
     assert fake.uri.startswith("sqlite:///") and fake.uri.endswith("mlflow.db") and fake.artifacts.startswith("file:///")
 
 
+def test_patient_judge_retries_after_a_failure_and_gives_up_in_the_end():
+    from teaser_check.experiment import patient
+    calls = []
+    def flaky(rec, body):
+        calls.append(1)
+        if len(calls) < 3:
+            raise RuntimeError("503")
+        return [], {"input": 1, "output": 1}
+    waits = []
+    assert patient(flaky, tries=5, wait=7, sleep=waits.append)("r", "b") == ([], {"input": 1, "output": 1})
+    assert len(calls) == 3 and waits == [7, 7]
+    def always(rec, body): raise RuntimeError("503")
+    try:
+        patient(always, tries=2, wait=0, sleep=lambda s: None)("r", "b")
+        assert False
+    except RuntimeError:
+        pass
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
