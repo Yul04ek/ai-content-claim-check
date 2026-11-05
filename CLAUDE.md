@@ -32,6 +32,19 @@ approval (AI budget up to $10), Make scenarios stay Inactive (Run once only), no
 - `teaser_check/` separate judge for AURA opportunity teasers (task YL-004B, from 2 Nov). Own rubric `skills/teaser-judge.md`, evidence packs in `packs/`, 11 synthetic cases in `cases_teaser/`, tests in `tests/test_teaser_check.py`. `claim_check/` is not changed by it. See `TEASER_CHECK.md`. Rubric t1 is not calibrated yet.
 - `teaser_check/experiment.py` controlled experiments for the teaser judge (5 Nov): a lab set (teasers + packs + lists of known errors, kept OUTSIDE the repo), one change at a time (`--rubric a.md b.md`), `--repeats 3`, every run in `results/experiments.csv` and, with `--store` and the package `mlflow`, in MLflow (parent run per rubric@model, child run per repeat, hit rate per error). Notebook `teaser_experiment_colab.ipynb` (MLflow folder on Google Drive). The MLflow part is NOT tested (no package in the sandbox); the table and the logging calls are tested with a fake. `--dry-run` tests the setup without a model.
 
+## Colab notebooks (which one for what)
+
+| Notebook | Task | Use it to | Needs |
+|---|---|---|---|
+| `claim_check_colab.ipynb` | YL-004 story drafts | check an AI story draft against its source finding (nine test cases, one real run) | `GEMINI_API_KEY` |
+| `teaser_check_colab.ipynb` | YL-004B teasers | the synthetic teaser suite (A0-A8, approved offer list) and one teaser against a pack | `GEMINI_API_KEY` |
+| `evidence_fetch_colab.ipynb` | YL-004B lab, no AI | turn company page addresses into a dated text snapshot, `make_evidence.txt` for the Make field `evidence` | nothing (public pages only) |
+| `teaser_lab_colab.ipynb` | YL-004B lab | run the judge once on your own pack + teaser files, free checks first | `GEMINI_API_KEY` |
+| `teaser_experiment_colab.ipynb` | YL-004B lab | controlled experiments: the lab set, one change at a time, 3 repeats, MLflow on Google Drive | `GEMINI_API_KEY`, `lab_set_v1.zip` |
+
+Order of the lab work: `evidence_fetch` (snapshot) -> Make generator (teaser) -> `teaser_lab` (one run) -> `teaser_experiment` (compare versions).
+`teaser_lab` and `teaser_experiment` overlap; once the experiment notebook is proven, `teaser_lab` can be dropped.
+
 ## Environment
 
 Variables (Colab: the notebook sets them from Secrets): `BASE_URL` (Gemini OpenAI-compatible endpoint),

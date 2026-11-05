@@ -55,3 +55,16 @@ false claims (an invented number and a fix described as finished; a dropped limi
 * The data is a fictional test copy. Do not put real investor or company data into an external model.
 
 The Make drafting prompt and its history are in `docs/make-prompt-history.md`.
+
+## Colab notebooks (which one for what)
+
+| Notebook | Task | Use it to | Needs |
+|---|---|---|---|
+| `claim_check_colab.ipynb` | YL-004 story drafts | check an AI story draft against its source finding (nine test cases, one real run) | `GEMINI_API_KEY` |
+| `teaser_check_colab.ipynb` | YL-004B teasers | the synthetic teaser suite (A0-A8, approved offer list) and one teaser against a pack | `GEMINI_API_KEY` |
+| `evidence_fetch_colab.ipynb` | YL-004B lab, no AI | turn company page addresses into a dated text snapshot, `make_evidence.txt` for the Make field `evidence` | nothing (public pages only) |
+| `teaser_lab_colab.ipynb` | YL-004B lab | run the judge once on your own pack + teaser files, free checks first | `GEMINI_API_KEY` |
+| `teaser_experiment_colab.ipynb` | YL-004B lab | controlled experiments: the lab set, one change at a time, 3 repeats, MLflow on Google Drive | `GEMINI_API_KEY`, `lab_set_v1.zip` |
+
+Order of the lab work: `evidence_fetch` (snapshot) -> Make generator (teaser) -> `teaser_lab` (one run) -> `teaser_experiment` (compare versions).
+`teaser_lab` and `teaser_experiment` overlap; once the experiment notebook is proven, `teaser_lab` can be dropped.
