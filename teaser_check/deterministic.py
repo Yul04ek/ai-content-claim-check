@@ -197,7 +197,7 @@ def scope_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
                                  reason=f"Required part is missing: {part}."))
     if not re.search(r"\bS\d+\b", tail):
         rows.append(make_row("rule", "source notes", "Needs Human Verification", "rule_broken", "none",
-                             reason="Source notes with source IDs are missing."))
+                             reason="The source notes section has no source IDs (S1, S2, ...)."))
     words = len(text.split())
     if words > MAX_WORDS:
         rows.append(make_row("flag", f"{words} words", reason=f"Longer than about one page ({MAX_WORDS} words)."))
