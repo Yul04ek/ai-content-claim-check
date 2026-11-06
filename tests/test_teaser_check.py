@@ -271,6 +271,20 @@ def test_text_checks_find_leaks_self_certification_and_verified_hypotheses():
     assert any("END OF ADDITIONAL RULES" in x for x in got) and "===" in got
 
 
+def test_distribution_restriction_is_not_self_certification_but_accuracy_claims_are():
+    from teaser_check.postchecks import text_checks
+    keep = ["This teaser is for internal AURA review only and not for publication or external distribution.",
+            "Internal-use only: This teaser is for review purposes and should not be published or shared externally."]
+    flag = ["This teaser uses only the supplied evidence and approved AURA offers.",
+            "No invented revenue, funding or traction.",
+            "Export is one-page, compact, and suitable for internal AURA review."]
+    got = {r["text"] for r in text_checks("\n".join(keep + flag), "", "", PACK2) if r["finding"] == "rule_broken"}
+    for line in keep:
+        assert line not in got
+    for line in flag:
+        assert line in got
+
+
 def test_source_notes_need_address_and_date_and_may_not_name_other_addresses():
     from teaser_check.postchecks import source_note_checks
     good = "Source notes\nS1: a.com/about, read 2026-11-04\nS2: a.com/post, read 2026-11-04"
