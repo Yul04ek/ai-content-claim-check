@@ -568,6 +568,57 @@ def test_rubric_can_take_a_finding_out_of_the_list_the_judge_may_choose_from():
     assert "hypothesis_unlabelled" not in out and "promise" not in out and "not_in_pack" in out
 
 
+def _gold_case():
+    row = lambda text, typ, verdict, by, prob="", part="Snapshot": {"part": part, "text": text, "type": typ, "verdict": verdict,
+                                                                   "by": by, "err": "", "prob": prob, "note": ""}
+    return {"title": "X", "whole": [["X9", "700 words", "code"]], "rows": [
+        row("We started in 2011 in Berlin", "statement", "Supported", "judge"),
+        row("We have 500 customers worldwide", "statement", "Unsupported", "judge", "error"),
+        row("Founders always need investors", "statement", "Unsupported", "judge", "error"),
+        row("Each founder may like it", "statement", "Needs human", "judge"),
+        row("Preconditions: do not promise results", "instruction", "not a claim", "code", "error", "Hypotheses"),
+    ]}
+
+
+def test_v2_scores_what_the_judge_read_found_and_flagged_wrongly():
+    from teaser_check.score_v2 import score_case_v2
+    rows = [
+        {"kind": "claim", "text": "We started in 2011 in Berlin", "finding": "not_in_pack"},      # fine line, flagged: false flag
+        {"kind": "claim", "text": "We have 500 customers worldwide", "finding": "not_in_pack"},   # error found
+        {"kind": "claim", "text": "Founders always need investors", "finding": "supported"},      # error missed
+        {"kind": "rule", "text": "Preconditions: do not promise results", "finding": "rule_broken"},
+        {"kind": "flag", "text": "700 words", "finding": ""},
+        {"kind": "coverage", "text": "Each founder may like it", "finding": "rule_broken"},        # code row, not a judge answer
+    ]
+    s = score_case_v2(_gold_case(), rows)
+    assert (s["meant"], s["read"], s["errors"], s["found"], s["false_flags"]) == (4, 3, 2, 1, 1)
+    assert s["decided"] == 3 and s["right"] == 1  # the Needs-human line was not read, the other two: 1 right of 3
+    assert s["code_n"] == 2 and s["code_found"] == 2 and s["missed"] == ["Founders always need investors"]
+
+
+def test_v2_table_is_per_teaser_and_experiment_writes_it_when_gold_v2_is_there():
+    import csv, json, tempfile
+    from pathlib import Path
+    from teaser_check.experiment import load_lab_set, run_experiment
+    from teaser_check.judge import no_judge
+    d = Path(tempfile.mkdtemp())
+    (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [],
+        "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "We started in 2011."}]}))
+    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe started in 2011 in Berlin.\nSign up to review.\n")
+    (d / "rubric.md").write_text("rubric")
+    (d / "lab_set.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt", "items": []}]}))
+    (d / "gold_v2.json").write_text(json.dumps({"X": _gold_case()}))
+    lab = load_lab_set(d / "lab_set.json")
+    assert lab["gold_v2"] is not None
+    run_experiment(lab, [str(d / "rubric.md")], "m", 2, lambda r: no_judge, table=d / "t.csv", runs_dir=d / "runs")
+    rows = list(csv.DictReader(open(d / "experiments_v2.csv", encoding="utf-8-sig")))
+    assert len(rows) == 2 and rows[0]["case"] == "X" and rows[0]["meant"] == "4" and rows[0]["read"] == "0"
+    from teaser_check.score_v2 import format_table
+    text = format_table("X", "X", {"r": [{"meant": 4, "errors": 2, "code_n": 2, "read": 3, "found": 1, "false_flags": 0,
+                                           "right": 2, "decided": 3, "code_found": 2}]})
+    assert "the judge is given 4 statements, 2 of them are errors" in text and text.splitlines()[-1].lstrip().startswith("r ")
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

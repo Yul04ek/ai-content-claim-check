@@ -31,7 +31,10 @@ from .pipeline import check_teaser, write_csv
 from .report import build_report
 from .sections import is_sectioned, judge_sections
 from .score import score_case
+from .score_v2 import format_table, load_gold, score_case_v2
 
+V2_COLUMNS = ["time", "rubric", "rubric_sha", "model", "repeat", "case", "meant", "read", "errors", "found", "decided",
+              "right", "false_flags", "nonclaim_flags", "unmatched", "hyp_unlabelled", "code_n", "code_found"]
 TABLE_COLUMNS = ["time", "lab_set", "rubric", "rubric_sha", "model", "repeat", "found", "total", "recall",
                  "found_code", "found_judge", "found_not_judged", "other_findings", "tokens_in", "tokens_out", "per_case"]
 
@@ -40,6 +43,8 @@ def load_lab_set(path) -> dict:
     path = Path(path)
     lab = json.loads(path.read_text(encoding="utf-8"))
     lab["base"] = path.parent
+    gold = path.parent / "gold_v2.json"  # the standard v2 (by sentence); if it is there, the v2 statistics are written
+    lab["gold_v2"] = load_gold(gold) if gold.exists() else None
     return lab
 
 
@@ -70,6 +75,7 @@ def run_once(lab: dict, judge, out_dir) -> dict:
     out_dir = Path(out_dir)
     cases, tokens = {}, {"input": 0, "output": 0}
     found = total = extra = 0
+    v2 = {}
     by_source = {"code": 0, "judge": 0, "coverage": 0}
     for case in lab["cases"]:
         pack = load_pack(lab["base"] / case["pack"])
@@ -81,6 +87,8 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         if judge is not no_judge:  # a readable page per teaser (not for dry runs: no judge, nothing to show)
             (out_dir / f"report_{case['case']}.html").write_text(
                 build_report([dict(r) for r in rows], text, f"Teaser {case['case']}", pack), encoding="utf-8")
+        if lab.get("gold_v2") and case["case"] in lab["gold_v2"]:
+            v2[case["case"]] = score_case_v2(lab["gold_v2"][case["case"]], rows)
         scored = score_case(case["items"], [{"case": case["case"], "id": pack["group_id"], **r} for r in rows])
         cases[case["case"]] = {"found": [i["id"] for i in scored["found"]], "missed": [i["id"] for i in scored["missed"]],
                                "extra": len(scored["extra"]), "recall": scored["recall"]}
@@ -90,7 +98,7 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         total += len(case["items"])
         extra += len(scored["extra"])
     return {"cases": cases, "found": found, "total": total, "recall": found / total if total else 1.0,
-            "extra": extra, "tokens": tokens, "by_source": by_source}
+            "extra": extra, "tokens": tokens, "by_source": by_source, "v2": v2}
 
 
 def append_table(path, row: dict) -> None:
@@ -111,6 +119,21 @@ def append_table(path, row: dict) -> None:
         writer.writerows(old + [row])
 
 
+def append_v2(path, rubric: str, sha: str, model: str, repeat: int, v2: dict) -> None:
+    """Statistics against the standard v2: one row per teaser and run."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new = not path.exists()
+    with open(path, "a", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=V2_COLUMNS)
+        if new:
+            writer.writeheader()
+        for case, v in v2.items():
+            writer.writerow({"time": datetime.datetime.now().isoformat(timespec="seconds"), "rubric": rubric,
+                             "rubric_sha": sha, "model": model, "repeat": repeat, "case": case,
+                             **{k: v[k] for k in V2_COLUMNS[6:]}})
+
+
 def log_child(mlflow, summary: dict, params: dict, out_dir: Path, rubric: str) -> None:
     """One MLflow run for one repeat."""
     mlflow.log_params(params)
@@ -125,6 +148,9 @@ def log_child(mlflow, summary: dict, params: dict, out_dir: Path, rubric: str) -
             mlflow.log_metric(f"item_{item}", 1)
         for item in case["missed"]:
             mlflow.log_metric(f"item_{item}", 0)
+    for name, v in summary.get("v2", {}).items():
+        for key in ("read", "found", "false_flags", "right", "decided", "code_found"):
+            mlflow.log_metric(f"v2_{name}_{key}", v[key])
     mlflow.log_artifacts(str(out_dir), artifact_path="results")
     mlflow.log_artifact(rubric, artifact_path="rubric")
 
@@ -191,10 +217,16 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
                 "found_not_judged": summary["by_source"]["coverage"],
                 "tokens_in": summary["tokens"]["input"], "tokens_out": summary["tokens"]["output"],
                 "per_case": "; ".join(f"{k} {len(v['found'])}/{len(v['found']) + len(v['missed'])}" for k, v in summary["cases"].items())})
-            print(f"{rname} r{repeat}: found {summary['found']} of {summary['total']} "
-                  f"(recall {summary['recall']:.0%}: code {summary['by_source']['code']}, judge {summary['by_source']['judge']}, "
-                  f"not judged {summary['by_source']['coverage']}), other findings {summary['extra']}, "
-                  f"tokens {summary['tokens']['input']}/{summary['tokens']['output']}")
+            if summary["v2"]:
+                append_v2(Path(table).with_name("experiments_v2.csv"), rname, sha, model, repeat, summary["v2"])
+                print(f"{rname} r{repeat}: " + "; ".join(
+                    f"{c} read {v['read']}/{v['meant']}, errors found {v['found']}/{v['errors']}, false flags {v['false_flags']}"
+                    for c, v in summary["v2"].items()) + f"; tokens {summary['tokens']['input']}/{summary['tokens']['output']}")
+            else:  # no standard v2 next to the lab set: the old count (error list v1)
+                print(f"{rname} r{repeat}: found {summary['found']} of {summary['total']} "
+                      f"(recall {summary['recall']:.0%}: code {summary['by_source']['code']}, judge {summary['by_source']['judge']}, "
+                      f"not judged {summary['by_source']['coverage']}), other findings {summary['extra']}, "
+                      f"tokens {summary['tokens']['input']}/{summary['tokens']['output']}")
         if parent:
             log_parent(mlflow, summaries)
             mlflow.end_run()
@@ -228,10 +260,18 @@ def main() -> None:
         def factory(rubric):  # a rubric with '## SECTION' blocks is applied part by part
             call = judge_sections if is_sectioned(rubric) else judge_with_llm
             return lambda rec, body: call(rec, body, client=client, model=model, rubric_path=rubric)
-    print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, {sum(len(c['items']) for c in lab['cases'])} known errors. "
+    standard = "standard v2 (by sentence)" if lab.get("gold_v2") else f"{sum(len(c['items']) for c in lab['cases'])} known errors (list v1)"
+    print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, {standard}. "
           f"Model {model}, repeats {args.repeats}, rubrics {[Path(r).stem for r in args.rubric]}")
     name = args.experiment or ("teaser-code-rules" if args.dry_run else "teaser-judge")  # code rules and judge runs are kept apart
-    run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=name, mlflow=mlflow)
+    done = run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=name, mlflow=mlflow)
+    if lab.get("gold_v2"):
+        print()
+        for case, gold_case in sorted(lab["gold_v2"].items()):  # per teaser first
+            by_rubric = {d["rubric"]: [s["v2"][case] for s in d["summaries"] if case in s["v2"]] for d in done}
+            if any(by_rubric.values()):
+                print(format_table(case, gold_case.get("title", case), {k: v for k, v in by_rubric.items() if v}), "\n")
+        print("Table per run and teaser: results/experiments_v2.csv")
     print("Table: results/experiments.csv")
 
 
