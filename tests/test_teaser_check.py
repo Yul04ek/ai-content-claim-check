@@ -646,6 +646,25 @@ def test_v2_table_is_per_teaser_and_experiment_writes_it_when_gold_v2_is_there()
     assert "the judge is given 4 statements, 2 of them are errors" in text and text.splitlines()[-1].lstrip().startswith("r ")
 
 
+def test_rubrics_without_hypothesis_unlabelled_do_not_offer_it_to_the_model():
+    import teaser_check.judge as judge_module
+    from teaser_check.judge import output_format
+    from teaser_check.sections import parse_sectioned_rubric
+    root = judge_module.SKILL_FILE.parent / "experiments"
+    for name in ("t2n", "t3n", "t4bn"):  # whole-teaser rubrics
+        assert "hypothesis_unlabelled" not in output_format((root / f"{name}.md").read_text(encoding="utf-8")), name
+        assert "hypothesis_without_fact" in output_format((root / f"{name}.md").read_text(encoding="utf-8")), name
+    common, blocks = parse_sectioned_rubric(root / "s1n.md")  # part-by-part rubric: every call gets common + one block
+    assert blocks and all("hypothesis_unlabelled" not in output_format(common + "\n\n" + b) for b in blocks.values())
+    assert all("hypothesis_unlabelled" not in b for b in blocks.values())  # and the rule text is gone too
+    for name in ("t2", "s1"):  # the originals still offer it (control)
+        text = (root / f"{name}.md").read_text(encoding="utf-8")
+        if name == "s1":
+            common, blocks = parse_sectioned_rubric(root / "s1.md")
+            text = common + "\n\n" + blocks["hypotheses"]
+        assert "hypothesis_unlabelled" in output_format(text), name
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
