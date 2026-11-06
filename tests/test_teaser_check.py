@@ -352,28 +352,55 @@ class FakeMlflow:
     def log_artifact(self, *a, **k): pass
 
 
-def test_experiment_runs_every_repeat_and_logs_table_and_mlflow():
-    import csv, json, tempfile
+def _lab_dir(with_gold=True):
+    """A tiny lab set (one teaser, one pack, optional gold v2) in a temporary folder."""
+    import json, tempfile
     from pathlib import Path
-    from teaser_check.experiment import load_lab_set, run_experiment
-    from teaser_check.judge import no_judge
     d = Path(tempfile.mkdtemp())
     (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [],
         "sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05", "excerpt": "We started in 2011."}]}))
-    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe grew 40% last year.\nSign up to review.\n")
+    (d / "t.txt").write_text("INTERNAL REVIEW ONLY\nWe started in 2011 in Berlin.\nSign up to review.\n")
     (d / "rubric.md").write_text("rubric")
-    (d / "lab.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt",
-        "items": [{"id": "X1", "match": "40%", "why": "invented"}, {"id": "X2", "match": "nothing like this", "why": "x"}]}]}))
+    (d / "lab_set.json").write_text(json.dumps({"name": "lab", "cases": [{"case": "X", "pack": "p.json", "teaser": "t.txt"}]}))
+    if with_gold:
+        (d / "gold_v2.json").write_text(json.dumps({"X": _gold_case()}))
+    return d
+
+
+def test_experiment_runs_every_repeat_and_logs_v2_table_and_mlflow():
+    import csv
+    from teaser_check.experiment import load_lab_set, run_experiment
+    from teaser_check.judge import no_judge
+    d = _lab_dir()
     fake = FakeMlflow()
-    out = run_experiment(load_lab_set(d / "lab.json"), [str(d / "rubric.md")], "m", 2, lambda r: no_judge,
-                         store=str(d / "ml"), table=d / "t.csv", runs_dir=d / "runs", mlflow=fake)
-    rows = list(csv.DictReader(open(d / "t.csv", encoding="utf-8-sig")))
-    assert len(rows) == 2 and rows[0]["found"] == "1" and rows[0]["total"] == "2" and rows[0]["recall"] == "0.5"
+    out = run_experiment(load_lab_set(d / "lab_set.json"), [str(d / "rubric.md")], "m", 2, lambda r: no_judge,
+                         store=str(d / "ml"), out_dir=d / "res", mlflow=fake)
+    rows = list(csv.DictReader(open(d / "res" / "experiments_v2.csv", encoding="utf-8-sig")))
+    assert len(rows) == 2 and rows[0]["case"] == "X" and rows[0]["model"] == "m" and rows[0]["code_n"] == "2"
+    assert not (d / "res" / "experiments.csv").exists()  # the old count (list v1) is gone
     assert fake.runs == ["rubric@m", "rubric@m r1", "rubric@m r2"]
-    assert fake.metrics["rubric@m r1"]["item_X1"] == 1 and fake.metrics["rubric@m r1"]["item_X2"] == 0
-    assert fake.metrics["rubric@m"]["recall_mean"] == 0.5 and fake.metrics["rubric@m"]["hit_rate_X1"] == 1.0
+    assert fake.metrics["rubric@m r1"]["v2_X_code_n"] == 2 and fake.metrics["rubric@m r1"]["v2_X_meant"] == 4
+    assert fake.metrics["rubric@m"]["v2_X_code_found_mean"] == 0 and fake.metrics["rubric@m"]["repeats"] == 2
+    assert "recall_mean" not in fake.metrics["rubric@m"]
     assert len(out[0]["summaries"]) == 2
+    assert (d / "res" / "experiment_runs").is_dir()
     assert fake.uri.startswith("sqlite:///") and fake.uri.endswith("mlflow.db") and fake.artifacts.startswith("file:///")
+
+
+def test_dry_run_writes_nothing_and_a_missing_gold_v2_stops_the_run():
+    from teaser_check.experiment import load_lab_set, run_experiment
+    from teaser_check.judge import no_judge
+    d = _lab_dir()
+    fake = FakeMlflow()
+    run_experiment(load_lab_set(d / "lab_set.json"), [str(d / "rubric.md")], "dry-run", 1, lambda r: no_judge,
+                   store=str(d / "ml"), out_dir=d / "res", mlflow=fake, dry_run=True)
+    assert not (d / "res").exists() and fake.runs == []  # no table, no run folders, no MLflow
+    d2 = _lab_dir(with_gold=False)
+    try:
+        run_experiment(load_lab_set(d2 / "lab_set.json"), [str(d2 / "rubric.md")], "m", 1, lambda r: no_judge, out_dir=d2 / "res")
+        raise AssertionError("expected SystemExit")
+    except SystemExit as stop:
+        assert "gold_v2.json" in str(stop)
 
 
 def test_experiment_writes_a_readable_report_per_teaser_when_a_judge_ran():
@@ -610,7 +637,7 @@ def test_v2_table_is_per_teaser_and_experiment_writes_it_when_gold_v2_is_there()
     (d / "gold_v2.json").write_text(json.dumps({"X": _gold_case()}))
     lab = load_lab_set(d / "lab_set.json")
     assert lab["gold_v2"] is not None
-    run_experiment(lab, [str(d / "rubric.md")], "m", 2, lambda r: no_judge, table=d / "t.csv", runs_dir=d / "runs")
+    run_experiment(lab, [str(d / "rubric.md")], "m", 2, lambda r: no_judge, out_dir=d)
     rows = list(csv.DictReader(open(d / "experiments_v2.csv", encoding="utf-8-sig")))
     assert len(rows) == 2 and rows[0]["case"] == "X" and rows[0]["meant"] == "4" and rows[0]["read"] == "0"
     from teaser_check.score_v2 import format_table
