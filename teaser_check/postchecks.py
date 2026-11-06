@@ -7,12 +7,13 @@ from urllib.parse import urlparse
 from claim_check.common import make_row, norm
 
 from .deterministic import ID_REF, words_of
-from .sections import section_of_lines
+from .sections import heading_name, section_of_lines
 
 LEAK = re.compile(r"={3,}|ADDITIONAL RULES|END OF (THE )?(ADDITIONAL )?RULES|\{\{|\}\}|\([^)\n]*clearly labelled[^)\n]*\)"
                   r"|^[^\w\n]*(important )?disclosures?\b.*$|^[^\w\n]*preconditions?\b.*$|^[-\t ]*do not\b.*$", re.I | re.M)
 SELF_CERT = re.compile(r"\bthis (teaser|document|export) (uses|contains|follows|is|has)\b|\bexport is\b|\bno invented\b", re.I)
-VERIFIED_HYPOTHESES = re.compile(r"^[^\n]*\bverified\b[^\n]*hypothes[^\n]*$|^[^\w\n]*verified\b[^\n.]{0,60}$", re.I | re.M)  # also a short heading "Verified ..."
+VERIFIED_HYPOTHESES = re.compile(r"^[^\n]*\bverified\b[^\n]*hypothes[^\n]*$", re.I | re.M)
+VERIFIED_HEADING = re.compile(r"^[^\w\n]*verified\b[^\n.]{0,60}$", re.I)  # a short heading "Verified ...": wrong only above hypotheses
 # A line that only restricts distribution ("internal review only") is not self-certification (Tapiwa, 6 Nov).
 DISTRIBUTION = re.compile(r"\binternal[\s-]+(\w+\s+)?(use|review)\b|\bfor (internal|review)\b|\bnot (be )?(published|shared|distributed)\b"
                           r"|\bnot for (publication|distribution|external)\b|\b(do not|don't) (publish|send|share|distribute)\b", re.I)
@@ -42,7 +43,9 @@ def text_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
     for m in dict.fromkeys(x for x in self_cert if not (DISTRIBUTION.search(x) and not ACCURACY.search(x))):
         rows.append(make_row("rule", m, "Needs Human Verification", "rule_broken", "none",
                              reason="The teaser vouches for itself. Only the check can say whether it is accurate."))
-    for m in dict.fromkeys(x.group(0).strip()[:160] for x in VERIFIED_HYPOTHESES.finditer(text)):
+    verified = [x.group(0).strip()[:160] for x in VERIFIED_HYPOTHESES.finditer(text)]
+    verified += [line.strip()[:160] for line, part in section_of_lines(text) if part == "hypotheses" and VERIFIED_HEADING.match(line)]
+    for m in dict.fromkeys(verified):  # "Verified Company Snapshot" is a snapshot heading, not a hypothesis
         rows.append(make_row("rule", m, "Needs Human Verification", "rule_broken", "none",
                              reason="Hypotheses cannot be called verified."))
     rows += source_note_checks(tail, pack)
@@ -77,7 +80,7 @@ def coverage_checks(body: str, judgements) -> list[dict]:
         text = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
         words = words_of(text)
         n_words = len(text.split())
-        if n_words < 5 or text.endswith(":") or (n_words <= 9 and not text.endswith((".", "!", "?"))):
+        if heading_name(line) or n_words < 5 or text.endswith(":") or (n_words <= 9 and not text.endswith((".", "!", "?"))):
             continue  # headings and labels (a short line without a full stop) are not statements
         if not any(c and len(c & words) / min(len(c), len(words)) >= 0.6 for c in claim_sets):
             rows.append(make_row("coverage", text[:160], "Needs Human Verification", "rule_broken", "none",

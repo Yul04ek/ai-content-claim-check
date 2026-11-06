@@ -285,6 +285,20 @@ def test_distribution_restriction_is_not_self_certification_but_accuracy_claims_
         assert line in got
 
 
+def test_verified_snapshot_heading_is_not_a_wrong_label_and_part_headings_are_not_statements():
+    from teaser_check.judge import ClaimJudgement
+    from teaser_check.postchecks import coverage_checks, text_checks
+    from teaser_check.report import _line_kind
+    text = "Verified Company Snapshot\n- Founded in 2021.\nOpportunity Hypotheses\nVerified outcome of the test\n"
+    got = {r["text"] for r in text_checks(text, "", "", PACK2) if r["finding"] == "rule_broken"}
+    assert "Verified Company Snapshot" not in got
+    assert "Verified outcome of the test" in got  # a short "Verified ..." line inside the hypotheses part is still wrong
+    heads = ["AURA Help \u2014 What we can offer (approved AURA offers)", "Opportunity Hypotheses (2\u20133 clearly labelled)"]
+    j = [ClaimJudgement(claim="Founded in 2021", finding="supported", source_ref="S1", record_quote="x", reason="r")]
+    assert coverage_checks("\n".join(heads + ["- Founded in 2021."]), j) == []
+    assert [_line_kind(h, "hypotheses") for h in heads] == ["skip", "skip"]
+
+
 def test_source_notes_need_address_and_date_and_may_not_name_other_addresses():
     from teaser_check.postchecks import source_note_checks
     good = "Source notes\nS1: a.com/about, read 2026-11-04\nS2: a.com/post, read 2026-11-04"

@@ -54,7 +54,8 @@ def _words(text: str) -> set[str]:
 
 def _line_kind(line: str, part: str) -> str:
     """'skip' for headings and empty lines, 'template' for parts the judge does not read, else 'claim'."""
-    if len(re.findall(r"\w+", line)) < 5 or line.strip().endswith(":"):
+    from .sections import heading_name  # here, not at the top: sections imports judge
+    if len(re.findall(r"\w+", line)) < 5 or line.strip().endswith(":") or heading_name(line):
         return "skip"
     if re.match(r"^\s*(?:H\d|\d+[.)])\s*[^.:;]*$", line) and len(line.split()) <= 12:
         return "skip"  # a numbered title such as "1) Privacy-first niche" is a heading
