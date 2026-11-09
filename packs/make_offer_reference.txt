@@ -1,0 +1,37 @@
+AURA OFFER REFERENCE (the only offers you may mention)
+1. Offer line: AURA AI Free ($0)
+   Purpose: Free entry point for founders to begin planning and using AURA.
+   Features: AURA chat and guidance; core workspace; Company DNA; pitch and document workflows; Investor Matching; included monthly AI usage.
+   Limits: Monthly AI usage limits. Data Rooms, investor pipeline, analytics, Meeting Copilot and custom agents are Pro-only. No guaranteed funding.
+   Wording: describe only what the published plan includes; never say usage is unlimited or promise investor outcomes.
+2. Offer line: AURA AI Pro ($99 per user/month, or $828 per user/year)
+   Purpose: Paid founder workspace for building a company and managing investor-readiness workflows.
+   Features: Everything in Free, plus investor pipeline and introduction workflow, Data Rooms, analytics, Meeting Copilot, custom agents and higher included AI usage.
+   Limits: Usage remains limited. Does not automatically include managed services or guarantee investor introductions, meetings or funding.
+   Wording: never say usage is unlimited; never promise investor introductions, meetings or funding.
+3. Offer line: AURA Startup Launchpad (proposed, $5,000 before tax and third-party costs; not open for purchase)
+   Purpose: Proposed hands-on startup foundation service; not currently for sale.
+   Features: Planned: business/market review, financial projections, branded pitch deck, lightweight marketing website, go-to-market plan and handover.
+   Limits: Not open for purchase. Excludes bespoke apps, incorporation, paid ads, regulated advice and guaranteed fundraising. This is NOT an investment in IdealApp.
+   Wording: always say proposed or in development; never say open for purchase, fixed delivery dates or guaranteed results.
+4. Offer line: AURA Equity Studio (proposed; applications are not open)
+   Purpose: Proposed selective services-for-future-equity pathway for eligible startups.
+   Features: Concept: company and founder assessment, identity/ownership checks, independent review and potential counsel-approved service agreement.
+   Limits: Applications are NOT open. No automatic acceptance, equity issuance, investment, returns or exits.
+   Wording: describe only as proposed; never imply applications are open or promise equity terms.
+5. Offer line: Investor-Ready Sprints (planned, not available)
+   Purpose: Planned short specialist-supported investor-readiness service; not currently orderable.
+   Features: Indicative only: readiness-gap review, investor-materials support and prioritised action plan. Exact scope not finalised.
+   Limits: Availability, deliverables, turnaround times and commercial terms are unapproved. No guaranteed introductions or funding.
+   Wording: say planned and not available; no price, availability or outcome promises.
+6. Offer line: Managed Execution Services (planned, not available)
+   Purpose: Planned ongoing hands-on support beyond AURA software subscriptions.
+   Features: Indicative only: agreed founder tasks, delivery coordination, follow-through and evidence checks. Exact services are still under review.
+   Limits: Not automatically included with Free or Pro. Availability, service levels and terms are not approved.
+   Wording: say planned and not available; no price, availability or service-level promises.
+7. Offer line: AURA AI Enterprise (contact-led, custom pricing)
+   Purpose: Contact-led plan for larger teams requiring tailored workspaces and commercial arrangements.
+   Features: Everything in Pro; tailored workspace configuration, expanded collaboration and enterprise implementation/support.
+   Limits: No standard public quote, guaranteed service level or specific integration commitment; details depend on contract.
+   Wording: may say it is offered on a contact-led basis; no quotes or contractual commitments.
+Do not mention any other AURA offer or service.

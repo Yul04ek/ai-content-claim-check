@@ -751,6 +751,15 @@ def test_source_notes_need_a_source_but_not_a_source_id():
     assert rows and "no source address" not in rows[0]["reason"] and "names no source" in rows[0]["reason"]
 
 
+def test_offer_files_are_built_from_the_table_and_up_to_date():
+    from teaser_check import offers_build as ob
+    for name, text in ob.build().items():
+        assert (ROOT / "packs" / name).read_text(encoding="utf-8") == text, name + ": run python -m teaser_check.offers_build"
+    offers = json.loads((ROOT / "packs" / "aura_offers_v2.json").read_text(encoding="utf-8"))["offers"]
+    assert [o["id"] for o in offers] == ["O1", "O2", "O3", "O4", "O5", "O6", "O7"]
+    assert V2PACK["approved_aura_offers"] == offers
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
