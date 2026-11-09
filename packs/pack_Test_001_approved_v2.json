@@ -1,0 +1,127 @@
+{
+ "group_id": "Test_001",
+ "company_label": "Test Firma Demo GmbH",
+ "website": "https://example.com",
+ "fictional": true,
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://example.com",
+   "date_read": "2026-11-02",
+   "excerpt": "We build scheduling software for small craft businesses."
+  },
+  {
+   "id": "S2",
+   "url": "https://example.com/about",
+   "date_read": "2026-11-02",
+   "excerpt": "Founded in Germany. Our team of about a dozen people supports customers in three countries."
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "text": "The company offers scheduling software for small craft businesses."
+  },
+  {
+   "id": "F2",
+   "source": "S2",
+   "text": "The company was founded in Germany."
+  },
+  {
+   "id": "F3",
+   "source": "S2",
+   "text": "The team is about a dozen people (approximate, as stated on the site)."
+  },
+  {
+   "id": "F4",
+   "source": "S2",
+   "text": "The company says it supports customers in three countries."
+  }
+ ],
+ "unknowns": [
+  "Funding status, revenue and customer numbers",
+  "Growth or traction of any kind",
+  "How the company handles its business documents today",
+  "Which tools or software it already uses",
+  "Whether the founder is looking for AI support",
+  "Who the right contact person is"
+ ],
+ "approved_aura_offers_status": "Tapiwa's table 'AURA offer cards', filled in 9 Nov 2026 (Google Sheet, sheet Offers). Rules: Launchpad, Equity Studio, Sprints and Managed Execution are proposed/planned, never available; no guaranteed funding, introductions or results; no unlimited usage; every offer except Free needs a human check before it is mentioned.",
+ "approved_aura_offers": [
+  {
+   "id": "O1",
+   "name": "AURA AI Free",
+   "match": "\\bAURA AI Free\\b",
+   "text": "AURA AI Free ($0, ongoing Free plan): free entry point for founders to begin planning and using AURA. Features: AURA chat and guidance; core workspace; Company DNA; pitch and document workflows; Investor Matching; included monthly AI usage. Limits: monthly AI usage limits; Data Rooms, investor pipeline, analytics, Meeting Copilot and custom agents are Pro-only; no guaranteed funding."
+  },
+  {
+   "id": "O2",
+   "name": "AURA AI Pro",
+   "match": "\\bAURA AI Pro\\b",
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): verify exact features, price and billing cadence; reject guaranteed results and unlimited-use claims; human review before external messaging.",
+   "text": "AURA AI Pro ($99 per user/month, or $828 per user/year, $69/month equivalent billed annually): paid founder workspace for building a company and managing investor-readiness workflows. Features: everything in Free, plus investor pipeline and introduction workflow, Data Rooms, analytics, Meeting Copilot, custom agents and higher included AI usage. Limits: usage remains limited; does not automatically include managed services or guarantee investor introductions, meetings or funding."
+  },
+  {
+   "id": "O3",
+   "name": "AURA Startup Launchpad",
+   "match": "\\bLaunchpad\\b",
+   "must_say": "proposed|in development",
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): Launchpad is proposed and not open for purchase; human commercial approval required.",
+   "text": "AURA Startup Launchpad (proposed, not currently for sale): proposed hands-on startup foundation service. Planned features: business/market review, financial projections, branded pitch deck, lightweight marketing website, go-to-market plan and handover. Price: proposed $5,000 before applicable tax, third-party costs and scope changes. Limits: not open for purchase; excludes bespoke apps, incorporation, paid ads, regulated advice and guaranteed fundraising; this is NOT an investment in IdealApp. Never claim open checkout, fixed delivery dates or guaranteed results."
+  },
+  {
+   "id": "O4",
+   "name": "AURA Equity Studio",
+   "match": "\\bEquity Studio\\b",
+   "must_say": "proposed",
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): Equity Studio is proposed, applications are not open; human and legal approval required.",
+   "text": "AURA Equity Studio (proposed): proposed selective services-for-future-equity pathway for eligible startups. Concept: company and founder assessment, identity/ownership checks, independent review and potential counsel-approved service agreement. No approved public price, equity percentage or standard terms. Limits: applications are NOT open; no automatic acceptance, equity issuance, investment, returns or exits. Do not imply applications are open or promise equity terms."
+  },
+  {
+   "id": "O5",
+   "name": "Investor-Ready Sprints",
+   "match_words": [
+    [
+     "investor",
+     "ready",
+     "sprint"
+    ]
+   ],
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): Investor-Ready Sprints are an internal concept, not orderable; any external mention needs human review.",
+   "text": "Investor-Ready Sprints (planned, not currently orderable): planned short specialist-supported investor-readiness service. Indicative only: readiness-gap review, investor-materials support and prioritised action plan; exact scope not finalised. No approved public price. Availability, deliverables, turnaround times and commercial terms are unapproved; no guaranteed introductions or funding."
+  },
+  {
+   "id": "O6",
+   "name": "Managed Execution Services",
+   "match_words": [
+    [
+     "managed",
+     "execution"
+    ]
+   ],
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): Managed Execution Services are an internal concept; any external mention needs human review.",
+   "text": "Managed Execution Services / Desk (planned): planned ongoing hands-on support beyond AURA software subscriptions. Indicative only: agreed founder tasks, delivery coordination, follow-through and evidence checks; exact services still under review. No approved public retainer or contract rate. Not automatically included with Free or Pro; availability, service levels and terms are not approved."
+  },
+  {
+   "id": "O7",
+   "name": "AURA AI Enterprise",
+   "match": "\\bAURA (AI )?Enterprise\\b",
+   "human_review": true,
+   "human_check_reason": "Human review required (Tapiwa's table): Enterprise may be described as contact-led; specific quotes and contractual commitments need human approval.",
+   "text": "AURA AI Enterprise (contact-led): plan for larger teams requiring tailored workspaces and commercial arrangements. Features: everything in Pro; tailored workspace configuration, expanded collaboration and enterprise implementation/support. Custom pricing, contact IdealApp. Limits: no standard public quote, guaranteed service level or specific integration commitment; details depend on contract."
+  }
+ ],
+ "forbidden_terms": [
+  "Koinonos",
+  "Entrepreneurship World Cup",
+  "GITEX",
+  "Morgenrot",
+  "Morgan Road"
+ ]
+}

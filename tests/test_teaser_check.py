@@ -707,6 +707,42 @@ def test_rubrics_without_hypothesis_unlabelled_do_not_offer_it_to_the_model():
         assert "hypothesis_unlabelled" in output_format(text), name
 
 
+# --- Offer list v2 (Tapiwa's table, 9 Nov): packs/aura_offers_v2.json, human review kept even when the facts are right ---
+V2PACK = load_pack(ROOT / "packs" / "pack_Test_001_approved_v2.json")
+V2RECORD = pack_to_text(V2PACK)
+
+
+def v2_offer_rows(text):
+    return {(r["text"], r["verdict"]) for r in det.offer_checks(text, V2PACK, V2RECORD) if r["kind"] == "offer"}
+
+
+def test_v2_free_needs_no_human_check_but_pro_does_even_when_right():
+    assert v2_offer_rows("AURA AI Free ($0) gives a core workspace.") == set()
+    assert ("AURA AI Pro", "Needs Human Verification") in v2_offer_rows("AURA AI Pro ($99 per user/month) adds Data Rooms.")
+
+
+def test_v2_launchpad_and_equity_studio_must_say_proposed_or_in_development():
+    assert ("AURA Startup Launchpad", "Needs Human Verification") in v2_offer_rows("AURA Startup Launchpad costs $5,000.")
+    rows = det.offer_checks("AURA Startup Launchpad is proposed at $5,000.", V2PACK, V2RECORD)
+    assert [r["reason"] for r in rows if "must be described" in r["reason"]] == []
+    rows = det.offer_checks("The Launchpad is in development.", V2PACK, V2RECORD)
+    assert [r["reason"] for r in rows if "must be described" in r["reason"]] == []
+    rows = det.offer_checks("AURA Equity Studio accepts founders.", V2PACK, V2RECORD)
+    assert any("must be described as 'proposed'" in r["reason"] for r in rows)
+
+
+def test_v2_sprints_managed_execution_and_enterprise_are_separate_offers_with_human_check():
+    assert v2_offer_rows("Investor-Ready Sprints help you.") == {("Investor-Ready Sprints", "Needs Human Verification")}
+    assert v2_offer_rows("Managed Execution Services help you.") == {("Managed Execution Services", "Needs Human Verification")}
+    assert v2_offer_rows("AURA AI Enterprise is contact-led.") == {("AURA AI Enterprise", "Needs Human Verification")}
+
+
+def test_v2_prices_from_the_table_are_known_and_others_are_not():
+    body = "AURA AI Pro costs $99 per user/month or $828 per user/year. The Launchpad (proposed) is $5,000."
+    assert [r["text"] for r in det.offer_checks(body, V2PACK, V2RECORD) if r["kind"] == "price"] == []
+    assert [r["text"] for r in det.offer_checks("AURA AI Pro costs $149.", V2PACK, V2RECORD) if r["kind"] == "price"] == ["$149"]
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

@@ -173,14 +173,15 @@ def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
         blocks = [b for b in paragraphs(body) if mentions(b, offer)]
         if not blocks:
             continue
-        if offer.get("not_customer_ready"):
+        if offer.get("human_review") or offer.get("not_customer_ready"):  # "human_review": mention is fine only after a person checks it
             reason = offer.get("human_check_reason",
                                "Not approved as available to customers yet. Mention only after Tapiwa approves the terms.")
             rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"], reason=reason))
         word = offer.get("must_say")
-        if word and not all(re.search(rf"\b{word}\b", b, re.I) for b in blocks):
+        if word and not all(re.search(rf"\b(?:{word})\b", b, re.I) for b in blocks):
+            said = word.replace("|", "' or '")  # "proposed|in development" -> proposed' or 'in development
             rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
-                                 reason=f"{offer['name']} must be described as '{word}' wherever it is mentioned."))
+                                 reason=f"{offer['name']} must be described as '{said}' wherever it is mentioned."))
     return rows
 
 
