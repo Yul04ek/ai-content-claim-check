@@ -207,7 +207,9 @@ def evidence_line_checks(body: str, pack: dict) -> list[dict]:
             rows.append(make_row("rule", line.strip()[:100], "Needs Human Verification", "rule_broken", "none",
                                  reason="The Evidence line has no quotation (at least 3 words) from the company's sources."))
         for quote in quotes:
-            if norm(quote).rstrip("?.!,") not in source_norm:
+            # "a ... b": each part must stand in the sources on its own (the quote may skip words)
+            parts = [p for p in re.split(r"\.{3}|…", quote) if norm(p)]
+            if any(norm(p).rstrip("?.!,") not in source_norm for p in parts):
                 rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                      reason="The evidence quotation does not appear in the company's sources."))
     return rows

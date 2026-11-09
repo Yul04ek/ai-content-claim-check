@@ -774,6 +774,14 @@ def test_evidence_line_needs_a_quote_from_the_company_sources_not_from_the_offer
     assert det.evidence_line_checks("Hypothesis 1: old format, no Offer lines", pack) == []
 
 
+def test_evidence_quote_with_dots_is_checked_part_by_part():
+    pack = {"sources": [{"id": "S1", "url": "https://a.com", "excerpt": "We publish revenue and growth. Our team metrics are open for everyone."}]}
+    skipped = 'Offer: X\nEvidence: "publish revenue ... team metrics are open"\nCompany need: y'
+    assert det.evidence_line_checks(skipped, pack) == []
+    wrong = 'Offer: X\nEvidence: "publish revenue ... secret plans are open"\nCompany need: y'
+    assert [r["kind"] for r in det.evidence_line_checks(wrong, pack)] == ["quote"]
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
