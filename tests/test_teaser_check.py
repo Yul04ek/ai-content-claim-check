@@ -743,6 +743,14 @@ def test_v2_prices_from_the_table_are_known_and_others_are_not():
     assert [r["text"] for r in det.offer_checks("AURA AI Pro costs $149.", V2PACK, V2RECORD) if r["kind"] == "price"] == ["$149"]
 
 
+def test_source_notes_need_a_source_but_not_a_source_id():
+    tail = "Source notes\nhttps://cal.com/about, read on 2026-11-04"
+    assert [r for r in det.scope_checks("x", "x", tail, {}) if r["text"] == "source notes"] == []
+    assert [r for r in det.scope_checks("x", "x", "Source notes\nS1, S2", {}) if r["text"] == "source notes"] == []
+    rows = [r for r in det.scope_checks("x", "x", "Source notes\nthe company page", {}) if r["text"] == "source notes"]
+    assert rows and "no source address" not in rows[0]["reason"] and "names no source" in rows[0]["reason"]
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

@@ -196,9 +196,11 @@ def scope_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
         if not pattern.search(text):  # whole text: the fixed sign-up invitation may stand after the source notes
             rows.append(make_row("rule", part, "Needs Human Verification", "rule_broken", "none",
                                  reason=f"Required part is missing: {part}."))
-    if not re.search(r"\bS\d+\b", tail):
+    # The teaser does not need source IDs (Yuliia, 9 Nov: AURA makes its own snapshot from a link, its IDs are unknown).
+    # The source notes must name at least one source: an address or an ID. Address and date per source: source_note_checks.
+    if not re.search(r"https?://|\b[a-z0-9-]+\.[a-z]{2,}\b|\bS\d+\b", tail, re.I):
         rows.append(make_row("rule", "source notes", "Needs Human Verification", "rule_broken", "none",
-                             reason="The source notes section has no source IDs (S1, S2, ...)."))
+                             reason="The source notes section names no source (no address and no source ID)."))
     words = len(text.split())
     if words > MAX_WORDS:
         rows.append(make_row("flag", f"{words} words", reason=f"Longer than about one page ({MAX_WORDS} words)."))
