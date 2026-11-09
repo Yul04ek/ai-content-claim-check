@@ -2,14 +2,17 @@
 
 import csv
 import json
+import re
 from pathlib import Path
 
-from claim_check.common import COLUMNS
+from claim_check.common import COLUMNS, make_row
 
 from .deterministic import deterministic_checks, split_teaser
 from .judge import apply_rules
 from .postchecks import citation_checks, coverage_checks, text_checks
 from .pack import load_pack, pack_to_text
+
+PLACEHOLDER = re.compile(r"\[Add:[^\]]*\]")  # the model writes it where the offer reference has no information
 
 LEVELS = ["READY FOR REVIEW", "REVIEW", "NOT READY"]  # worst last
 
@@ -35,7 +38,11 @@ def overall(rows: list[dict], dry_run: bool) -> str:
 def check_teaser(pack: dict, teaser_text: str, judge) -> tuple[list[dict], dict]:
     record_text = pack_to_text(pack)
     body, tail = split_teaser(teaser_text)
-    rows = deterministic_checks(teaser_text, body, pack, record_text) + text_checks(teaser_text, body, tail, pack)
+    # Lines with a placeholder are not claims: the judge does not see them, a person must fill them in
+    placeholders = PLACEHOLDER.findall(body)
+    body = "\n".join(line for line in body.splitlines() if not PLACEHOLDER.search(line))
+    rows = [make_row("placeholder", p, reason="A person must fill this in before approval.") for p in placeholders]
+    rows += deterministic_checks(teaser_text, body, pack, record_text) + text_checks(teaser_text, body, tail, pack)
     judgements, tokens = judge(record_text, body)
     if judgements:  # with no judge (dry run) every line would be 'not judged'
         rows += coverage_checks(body, judgements) + citation_checks(judgements, pack)

@@ -128,6 +128,20 @@ def test_dry_run_never_says_ready():
     assert "NOT a verdict" in pl.overall([], dry_run=True)
 
 
+def test_placeholder_line_is_reported_for_a_person_and_hidden_from_the_judge():
+    seen = {}
+
+    def judge(record_text, body):
+        seen["body"] = body
+        return [], {"input": 0, "output": 0}
+
+    text = teaser("t9_overgeneralised.txt").replace(
+        "\n\n", "\n\nLimits: [Add: more information needed - AURA AI Free, limits]\n\n", 1)
+    rows, _ = pl.check_teaser(PACK, text, judge)
+    assert [r["text"] for r in rows if r["kind"] == "placeholder"] == ["[Add: more information needed - AURA AI Free, limits]"]
+    assert "Add:" not in seen["body"] and "Limits:" not in seen["body"]
+
+
 def test_full_flow_with_fake_judge_planted_findings():
     # T9: the judge reports 'overgeneralised' -> REVIEW. T10: 'not_in_pack' -> NOT READY.
     rows, _ = pl.check_teaser(PACK, teaser("t9_overgeneralised.txt"),
