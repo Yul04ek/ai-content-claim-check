@@ -192,7 +192,7 @@ def scope_checks(text: str, body: str, tail: str, pack: dict) -> list[dict]:
             rows.append(make_row("scope", term, "Unsupported", "not_in_pack", "none",
                                  reason="Term from IdealApp's own Company DNA or another company. Prospect research must stay separate."))
     for part, pattern in REQUIRED_PARTS.items():
-        if not pattern.search(body):
+        if not pattern.search(text):  # whole text: the fixed sign-up invitation may stand after the source notes
             rows.append(make_row("rule", part, "Needs Human Verification", "rule_broken", "none",
                                  reason=f"Required part is missing: {part}."))
     if not re.search(r"\bS\d+\b", tail):
