@@ -19,7 +19,7 @@ QUOTE = re.compile(r"[“\"]([^”\"]{3,}?)[”\"]")
 MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?")
 HYPOTHESIS_TAG = re.compile(r"\bH\d\b")  # "H1", "H2": labels of hypotheses, not figures
 NEGATION = re.compile(r"\b(not|no|unknown|without|unclear)\b", re.I)
-MAX_WORDS = 450  # rough size of "one readable page"; only a flag
+MAX_WORDS = 500  # rough size of "one readable page", all headings and fixed lines included (Yuliia, 9 Nov; was 450); only a flag
 
 # Parts the handover PDF asks for (page 3). Each is a simple word test; whether the content is right is the judge's job.
 REQUIRED_PARTS = {

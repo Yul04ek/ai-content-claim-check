@@ -35,7 +35,7 @@ are imported from `claim_check`.
   `must_say` (Launchpad: "proposed"), `not_customer_ready` with `human_check_reason` (Sprints / Managed Execution: any mention = Needs Human Verification, a person decides).
 - New code rules (layer 1): price not in the offer list = Unsupported; Launchpad without "proposed" = Needs Human Verification; Sprints/Managed Execution
   mentioned = Needs Human Verification; forbidden term = Unsupported; missing company snapshot, AURA help, sign-up invitation or source notes;
-  Studio acceptance phrases; teaser longer than 450 words = flag. "H1".."H3" are no longer counted as numbers; a figure word in a sentence with
+  Studio acceptance phrases; teaser longer than 500 words = flag (450 until 9 Nov). "H1".."H3" are no longer counted as numbers; a figure word in a sentence with
   "not/no/unknown" is no longer flagged.
 - `cases_teaser_approved/`: 9 cases made from the real AURA teaser of 3 Nov with one planted error each (A0 is the control).
   A6 (price on the wrong offer) and A8 (need stated as fact) are JUDGE ONLY: code cannot see them.
