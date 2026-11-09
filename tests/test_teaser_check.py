@@ -760,6 +760,20 @@ def test_offer_files_are_built_from_the_table_and_up_to_date():
     assert V2PACK["approved_aura_offers"] == offers
 
 
+def test_evidence_line_needs_a_quote_from_the_company_sources_not_from_the_offer_list():
+    pack = {"sources": [{"id": "S1", "url": "https://a.com", "excerpt": "We publish revenue, growth and team metrics for everyone."}],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "text": "AURA AI Free: a free entry point for founders to begin planning."}]}
+    ok = 'Offer: X\nEvidence: "publish revenue, growth and team metrics"\nCompany need: y'
+    assert det.evidence_line_checks(ok, pack) == []
+    from_offer = 'Offer: X\nEvidence: "a free entry point for founders to begin planning"\nCompany need: y'
+    assert [r["kind"] for r in det.evidence_line_checks(from_offer, pack)] == ["quote"]
+    no_quote = "Offer: X\nEvidence: the company is open about its metrics\nCompany need: y"
+    assert [r["kind"] for r in det.evidence_line_checks(no_quote, pack)] == ["rule"]
+    missing = "Offer: X\nHypothesis: z\nOffer: Y\nEvidence: \"publish revenue, growth and team metrics\""
+    assert [r["kind"] for r in det.evidence_line_checks(missing, pack)] == ["rule"]
+    assert det.evidence_line_checks("Hypothesis 1: old format, no Offer lines", pack) == []
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

@@ -102,6 +102,8 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
             rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                  reason="Quoted text does not appear in the pack."))
 
+    rows += evidence_line_checks(body, pack)
+
     for match in PROMISE.finditer(body):
         if NEGATION.search(body[max(0, match.start() - 30):match.start()]):  # "terms are not guaranteed" is no promise
             continue
@@ -182,6 +184,32 @@ def offer_checks(body: str, pack: dict, record_text: str) -> list[dict]:
             said = word.replace("|", "' or '")  # "proposed|in development" -> proposed' or 'in development
             rows.append(make_row("offer", offer["name"], "Needs Human Verification", "rule_broken", offer["id"],
                                  reason=f"{offer['name']} must be described as '{said}' wherever it is mentioned."))
+    return rows
+
+
+EVIDENCE_LINE = re.compile(r"^\W*Evidence:(.*)$", re.I | re.M)
+OFFER_LINE = re.compile(r"^\W*Offer:", re.I | re.M)
+
+
+def evidence_line_checks(body: str, pack: dict) -> list[dict]:
+    """Every hypothesis with an 'Offer:' line needs an 'Evidence:' line with a quotation from the COMPANY's sources
+    (not from the AURA offer list: the quote must not be the offer talking about itself)."""
+    rows: list[dict] = []
+    lines = EVIDENCE_LINE.findall(body)
+    offers = len(OFFER_LINE.findall(body))
+    if offers > len(lines):
+        rows.append(make_row("rule", f"{offers} offers, {len(lines)} evidence lines", "Needs Human Verification", "rule_broken", "none",
+                             reason="Every hypothesis needs an Evidence line with a quotation from the company's sources."))
+    source_norm = norm(" ".join(src.get("excerpt", "") for src in pack.get("sources", [])))
+    for line in lines:
+        quotes = [q for q in QUOTE.findall(line) if len(q.split()) >= 3]
+        if not quotes:
+            rows.append(make_row("rule", line.strip()[:100], "Needs Human Verification", "rule_broken", "none",
+                                 reason="The Evidence line has no quotation (at least 3 words) from the company's sources."))
+        for quote in quotes:
+            if norm(quote).rstrip("?.!,") not in source_norm:
+                rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
+                                     reason="The evidence quotation does not appear in the company's sources."))
     return rows
 
 
