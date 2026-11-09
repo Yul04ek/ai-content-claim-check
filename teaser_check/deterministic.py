@@ -103,6 +103,7 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
                                  reason="Quoted text does not appear in the pack."))
 
     rows += evidence_line_checks(body, pack)
+    rows += offer_block_checks(body, pack)
 
     for match in PROMISE.finditer(body):
         if NEGATION.search(body[max(0, match.start() - 30):match.start()]):  # "terms are not guaranteed" is no promise
@@ -212,6 +213,83 @@ def evidence_line_checks(body: str, pack: dict) -> list[dict]:
             if any(norm(p).rstrip("?.!,") not in source_norm for p in parts):
                 rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                      reason="The evidence quotation does not appear in the company's sources."))
+    return rows
+
+
+OFFER_START = re.compile(r"^\W*Offer:\s*(.*)$", re.I)
+BLOCK_LINE = re.compile(r"^\W*(Evidence|Company need|How AURA helps|Limits|Hypothesis):\s*(.*)$", re.I)
+ODD_PLACEHOLDER = re.compile(r"\[(?!Add:)[^\]\n]{12,}\]")  # a made-up placeholder: only '[Add: ...]' is the agreed form
+STOP = {"a", "an", "the", "and", "to", "for", "of", "in", "with", "on", "or", "is", "as", "by", "its", "their"}
+
+
+def offer_blocks(body: str) -> list[dict]:
+    """Split the hypotheses part into one block per 'Offer:' line; each block holds its lines by name (lower case)."""
+    blocks: list[dict] = []
+    for line in body.splitlines():
+        start = OFFER_START.match(line)
+        if start:
+            blocks.append({"offer": start.group(1).strip()})
+            continue
+        field = BLOCK_LINE.match(line)
+        if field and blocks:
+            blocks[-1][field.group(1).lower()] = field.group(2).strip()
+    return blocks
+
+
+def shared_run(text: str, source: str, size: int = 3) -> str:
+    """The first run of at least `size` words (not only filler words) that the text takes over from the source."""
+    words = re.findall(r"[a-z0-9]+(?:['-][a-z0-9]+)*", norm(text))
+    src = " ".join(re.findall(r"[a-z0-9]+(?:['-][a-z0-9]+)*", norm(source)))
+    for i in range(len(words) - size + 1):
+        run = words[i:i + size]
+        if not set(run) <= STOP and " ".join(run) in src:
+            return " ".join(run)
+    return ""
+
+
+def offer_block_checks(body: str, pack: dict) -> list[dict]:
+    """The lines of every offer block are checked against the offer table (Tapiwa's), where code can do it exactly:
+    the Offer line and the Limits word for word, the entry offer first, the need not copied from the offer, no made-up placeholder.
+    A mismatch row carries the table's own text as the quote. Offers without table fields (old packs) are skipped."""
+    rows: list[dict] = []
+    offers = [o for o in pack.get("approved_aura_offers", []) if o.get("offer_line")]
+    blocks = offer_blocks(body)
+    if not offers or not blocks:
+        return rows
+    flagged_lines: set[str] = set()
+    matched = []
+    for block in blocks:
+        line = block["offer"]
+        offer = next((o for o in offers if norm(o["offer_line"]) == norm(line)), None)
+        if offer is None:  # not word for word: find the offer by its name
+            offer = next((o for o in offers if norm(o["name"]) in norm(line)), None)
+            if offer is not None:
+                rows.append(make_row("rule", f"Offer: {line}", "Needs Human Verification", "rule_broken", "none", offer["offer_line"],
+                                     "The Offer line is not word for word the Offer line of the table."))
+        matched.append(offer)
+        if offer is None:
+            continue
+        limits = block.get("limits", "").strip().strip('"“”').strip()
+        if not limits or limits.startswith("[Add:"):
+            rows.append(make_row("rule", f"{offer['name']}: Limits line missing", "Needs Human Verification", "rule_broken", "none", offer["limits"],
+                                 "The table has limits for this offer; the teaser must give them word for word."))
+        elif norm(limits) != norm(offer["limits"]):
+            flagged_lines.add(block.get("limits", ""))
+            rows.append(make_row("rule", f"Limits: {limits[:140]}", "Unsupported", "not_in_pack", "none", offer["limits"],
+                                 "The Limits line is not word for word the Limits of the table. A changed limit can turn into a benefit."))
+        run = shared_run(block.get("company need", ""), f"{offer['purpose']} {offer['features']}")
+        if run:
+            rows.append(make_row("rule", f"Company need: ... {run} ...", "Needs Human Verification", "rule_broken", "none", "",
+                                 "The Company need repeats the wording of the offer's Purpose or Features. A need must come from the company's evidence."))
+    defaults = [o for o in offers if o.get("default")]
+    if defaults and (not matched or matched[0] is None or not matched[0].get("default")):
+        rows.append(make_row("rule", "first offer", "Needs Human Verification", "rule_broken", "none", defaults[0]["offer_line"],
+                             f"{defaults[0]['name']} is the entry offer and must be the first offer of the teaser."))
+    for m in ODD_PLACEHOLDER.finditer(body):
+        if any(m.group(0) in line for line in flagged_lines):
+            continue  # already reported as a changed Limits line
+        rows.append(make_row("placeholder", m.group(0), "Needs Human Verification", "rule_broken", "none", "",
+                             "Text in square brackets that is not '[Add: ...]'. Missing information is marked only in that form."))
     return rows
 
 

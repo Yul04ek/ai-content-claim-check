@@ -4,6 +4,7 @@
   "id": "O1",
   "status": "published",
   "offer_line": "AURA AI Free ($0)",
+  "default": true,
   "match": "\\bAURA AI Free\\b",
   "human_review": false,
   "wording": "describe only what the published plan includes; never say usage is unlimited or promise investor outcomes."

@@ -782,6 +782,41 @@ def test_evidence_quote_with_dots_is_checked_part_by_part():
     assert [r["kind"] for r in det.evidence_line_checks(wrong, pack)] == ["quote"]
 
 
+def _block(offer_name, need="Needs a way to keep its plans in order.", limits=None, line=None):
+    o = next(x for x in V2PACK["approved_aura_offers"] if x["name"] == offer_name)
+    return (f"Offer: {line or o['offer_line']}\nEvidence: \"we build scheduling software\"\nCompany need: {need}\n"
+            f"How AURA helps: x\nLimits: {limits if limits is not None else o['limits']}\nHypothesis: y\n")
+
+
+def test_offer_block_is_checked_against_the_table_word_for_word():
+    ok = _block("AURA AI Free") + "\n" + _block("AURA AI Pro")
+    assert det.offer_block_checks(ok, V2PACK) == []
+    changed = _block("AURA AI Free", limits="Included monthly AI usage; no guaranteed funding.")
+    rows = det.offer_block_checks(changed, V2PACK)
+    assert [(r["verdict"], r["record_quote"]) for r in rows] == [("Unsupported", next(o for o in V2PACK["approved_aura_offers"] if o["name"] == "AURA AI Free")["limits"])]
+    assert [r["verdict"] for r in det.offer_block_checks(_block("AURA AI Free", limits='"' + next(o for o in V2PACK["approved_aura_offers"] if o["name"] == "AURA AI Free")["limits"] + '"'), V2PACK)] == []
+    gone = det.offer_block_checks(_block("AURA AI Free", limits="[Add: more information needed - Free, Limits]"), V2PACK)
+    assert [r["verdict"] for r in gone] == ["Needs Human Verification"]
+    short = det.offer_block_checks(_block("AURA AI Pro", line="AURA AI Pro ($99)") , V2PACK)
+    assert any("not word for word" in r["reason"] for r in short)
+
+
+def test_entry_offer_must_come_first_and_the_need_must_not_copy_the_offer():
+    pro_first = _block("AURA AI Pro") + "\n" + _block("AURA AI Free")
+    assert [r["text"] for r in det.offer_block_checks(pro_first, V2PACK)] == ["first offer"]
+    assert [r["text"] for r in det.offer_block_checks(_block("AURA AI Pro"), V2PACK)] == ["first offer"]
+    copied = _block("AURA AI Enterprise", need="A team with tailored workspace configuration and security needs.")
+    rows = det.offer_block_checks(_block("AURA AI Free") + "\n" + copied, V2PACK)
+    assert [r["text"] for r in rows] == ["Company need: ... tailored workspace configuration ..."]
+
+
+def test_made_up_placeholder_is_reported_and_old_packs_are_skipped():
+    body = _block("AURA AI Free") + "How AURA helps: [No data in the reference for this field]\n"
+    assert [r["kind"] for r in det.offer_block_checks(body, V2PACK)] == ["placeholder"]
+    assert [r["kind"] for r in det.offer_block_checks("Offer: [Add: more information needed - Free, Offer]", V2PACK)] == ["rule"]  # only "first offer": the agreed form is no placeholder row
+    assert det.offer_block_checks(_block("AURA AI Free"), {"approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "text": "x"}]}) == []
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

@@ -26,7 +26,10 @@ def offer_for_code(card: dict, extra: dict) -> dict:
     name = extra.get("name", card["Offer"])
     text = (f"{name} ({card['Pricing'].rstrip('.')}): {card['Purpose (what it is for)']} Features: {card['Features']} "
             f"Limits: {card['Limitations']} Review requirements: {card['Review requirements']}")
-    offer = {"id": extra["id"], "name": name}
+    offer = {"id": extra["id"], "name": name, "offer_line": extra["offer_line"], "purpose": card["Purpose (what it is for)"],
+             "features": card["Features"], "limits": card["Limitations"]}
+    if extra.get("default"):
+        offer["default"] = True  # the entry offer: it must be the first offer of every teaser
     for key in ("match", "match_words", "must_say"):
         if key in extra:
             offer[key] = extra[key]
