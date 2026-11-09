@@ -38,6 +38,12 @@ FIGURE_WORDS = re.compile(
     r"\b(revenue|turnover|valuation|ARR|MRR|traction|fast[- ]growing|rapid growth|raised|funded|profitable)\b", re.I)
 
 
+def loose(text: str) -> str:
+    """Letters and digits only, lower case. A quotation is compared with the page text this way, because the snapshot
+    often has line breaks and a space before a full stop ("open-source\n. This") that a copied quotation does not have."""
+    return re.sub(r"[\W_]+", "", norm(text))
+
+
 def split_teaser(text: str) -> tuple[str, str]:
     """Return (body for the judge, tail with sources/unknowns). The header line is removed from the body."""
     match = TAIL_HEADING.search(text)
@@ -94,19 +100,22 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
             rows.append(make_row("number", number, "Needs Human Verification", "not_in_pack", "none",
                                  reason="Number does not appear in the pack. Check that it is not invented."))
 
-    record_norm = norm(record_text)
     for quote in QUOTE.findall(body):
         if len(quote.split()) < 4:  # a short term in quotation marks is a label, not a quotation
             continue
-        if norm(quote).rstrip("?.!,") not in record_norm:
+        if loose(quote) not in loose(record_text):
             rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                  reason="Quoted text does not appear in the pack."))
 
     rows += evidence_line_checks(body, pack)
     rows += offer_block_checks(body, pack)
 
-    for match in PROMISE.finditer(body):
-        if NEGATION.search(body[max(0, match.start() - 30):match.start()]):  # "terms are not guaranteed" is no promise
+    promise_body = body
+    if any(o.get("limits") for o in pack.get("approved_aura_offers", [])):
+        # A Limits line is table text ("Does not ... guarantee ..."); a changed one is reported by offer_block_checks.
+        promise_body = "\n".join(line for line in body.splitlines() if not re.match(r"^\W*Limits:", line, re.I))
+    for match in PROMISE.finditer(promise_body):
+        if NEGATION.search(promise_body[max(0, match.start() - 30):match.start()]):  # "terms are not guaranteed" is no promise
             continue
         rows.append(make_row("promise", match.group(0), "Unsupported", "promise", "none",
                              reason="Promise of investment, introductions or Studio acceptance."))
@@ -201,7 +210,7 @@ def evidence_line_checks(body: str, pack: dict) -> list[dict]:
     if offers > len(lines):
         rows.append(make_row("rule", f"{offers} offers, {len(lines)} evidence lines", "Needs Human Verification", "rule_broken", "none",
                              reason="Every hypothesis needs an Evidence line with a quotation from the company's sources."))
-    source_norm = norm(" ".join(src.get("excerpt", "") for src in pack.get("sources", [])))
+    source_norm = loose(" ".join(src.get("excerpt", "") for src in pack.get("sources", [])))
     for line in lines:
         quotes = [q for q in QUOTE.findall(line) if len(q.split()) >= 3]
         if not quotes:
@@ -210,7 +219,7 @@ def evidence_line_checks(body: str, pack: dict) -> list[dict]:
         for quote in quotes:
             # "a ... b": each part must stand in the sources on its own (the quote may skip words)
             parts = [p for p in re.split(r"\.{3}|…", quote) if norm(p)]
-            if any(norm(p).rstrip("?.!,") not in source_norm for p in parts):
+            if any(loose(p) not in source_norm for p in parts):
                 rows.append(make_row("quote", quote, "Unsupported", "not_in_pack", "none",
                                      reason="The evidence quotation does not appear in the company's sources."))
     return rows

@@ -817,6 +817,25 @@ def test_made_up_placeholder_is_reported_and_old_packs_are_skipped():
     assert det.offer_block_checks(_block("AURA AI Free"), {"approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "text": "x"}]}) == []
 
 
+def test_quote_ignores_line_breaks_and_a_space_before_the_full_stop_of_the_page_text():
+    pack = {"sources": [{"id": "S1", "url": "https://a.com", "excerpt": "To this day, the core of Pirsch is\nopen-source\n. This means the way we collect data is fully transparent."}], "facts": []}
+    body = 'Offer: X\nEvidence: "The core of Pirsch is open-source. This means the way we collect data is fully transparent."\nCompany need: y'
+    assert det.evidence_line_checks(body, pack) == []
+    record = pack["sources"][0]["excerpt"]
+    rows = det.deterministic_checks("x\n" + body, body, pack, record)
+    assert [r for r in rows if r["kind"] == "quote"] == []
+
+
+def test_limits_lines_of_the_table_are_no_promise():
+    free = next(o for o in V2PACK["approved_aura_offers"] if o["name"] == "AURA AI Pro")
+    body = _block("AURA AI Pro")
+    assert "guarantee" in free["limits"]
+    rows = det.deterministic_checks("x\n" + body, body, V2PACK, V2RECORD)
+    assert [r for r in rows if r["kind"] == "promise"] == []
+    promise = body + "\nHypothesis: AURA will guarantee investor introductions."
+    assert [r["kind"] for r in det.deterministic_checks("x\n" + promise, promise, V2PACK, V2RECORD) if r["kind"] == "promise"] == ["promise"]
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
