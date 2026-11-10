@@ -55,7 +55,8 @@ def _words(text: str) -> set[str]:
 def _line_kind(line: str, part: str) -> str:
     """'skip' for headings and empty lines, 'template' for parts the judge does not read, else 'claim'."""
     from .sections import heading_name  # here, not at the top: sections imports judge
-    if len(re.findall(r"\w+", line)) < 5 or line.strip().endswith(":") or heading_name(line):
+    bullet = bool(re.match(r"^\s*[-*\u2022]\s*\S", line))  # a bullet is a statement, even a short one ("100% Data Ownership")
+    if (len(re.findall(r"\w+", line)) < 5 and not bullet) or line.strip().endswith(":") or heading_name(line):
         return "skip"
     if re.match(r"^\s*(?:H\d|\d+[.)])\s*[^.:;]*$", line) and len(line.split()) <= 12:
         return "skip"  # a numbered title such as "1) Privacy-first niche" is a heading
@@ -83,6 +84,62 @@ def _source_name(ref: str, pack: dict | None) -> str:
         if src.get("id") == ref:
             return f'{ref}, {src.get("url", "")}, read {src.get("date_read", "")}'.rstrip(", ")
     return ref if ref and ref != "none" else "no source named"
+
+
+WHOLE_TEASER = re.compile(r"^(first offer$|\d+ (labelled )?hypothes|\d+ offers,|\d+ words|source notes|.*: Limits line missing)", re.I)
+
+
+def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: list):
+    """Puts every code finding under the line (or the sentence) it is about. Returns (line index -> rows,
+    sentence index -> rows, rows about the whole teaser). A row that matches no line goes to the whole teaser."""
+    from .deterministic import loose
+    by_line: dict[int, list[dict]] = {}
+    by_sentence: dict[int, list[dict]] = {}
+    whole: list[dict] = []
+    for r in code_rows:
+        text = (r.get("text") or "").strip()
+        key = loose(text)
+        place = None
+        if key and not WHOLE_TEASER.match(text):
+            candidates = [i for i, (line, _) in enumerate(lines) if kinds[i] != "skip" and key in loose(line)]
+            if r.get("kind") == "offer":  # an offer row belongs to its "Offer:" line
+                candidates = [i for i in candidates if re.match(r"^\W*Offer:", lines[i][0], re.I)] or candidates
+            if candidates:
+                place = candidates[0]
+            else:
+                cw = _words(text)
+                best, score = None, 0.0
+                for i, (line, _) in enumerate(lines):
+                    if kinds[i] != "skip" and cw:
+                        ov = len(cw & _words(line)) / len(cw)
+                        if ov > score:
+                            best, score = i, ov
+                if best is not None and score >= 0.6:
+                    place = best
+        if place is None:
+            whole.append(r)
+            continue
+        hit = [k for k, (i, sent) in enumerate(sentences) if i == place and key in loose(sent)]
+        if hit:
+            by_sentence.setdefault(hit[0], []).append(r)
+        else:
+            by_line.setdefault(place, []).append(r)
+    return by_line, by_sentence, whole
+
+
+PASSED = '<div class="tag code ok"><b>Code:</b> checked, no errors found.</div>'
+
+
+def _code_tag(r: dict) -> str:
+    """One inline note for a code finding: grey, with the table text when the code compared with the table."""
+    cls = {"Unsupported": "bad", "Needs Human Verification": "warn"}.get(r.get("verdict", ""), "note")
+    what = LABEL.get(r.get("verdict", ""), "Note")  # the reason below says what exactly is wrong
+    reason = html.escape(_clean_reason(r.get("reason")))
+    if r.get("kind") == "offer":
+        reason = "(review requirements)"  # the details of the offer table are not repeated here
+    quote = f'<br><span class="q">The table says: \u201c{html.escape(r["record_quote"])}\u201d</span>' if r.get("record_quote") else ""
+    who = "Coverage check" if row_source(r) == "coverage" else "Code"
+    return f'<div class="tag code {cls}"><b>{who}: {html.escape(what)}.</b> {reason}{quote}</div>'
 
 
 def _card(r: dict) -> str:
@@ -139,39 +196,51 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     sent_ids: dict[int, list[int]] = {}
     for k, (i, _) in enumerate(sentences):
         sent_ids.setdefault(i, []).append(k)
+    code_by_line, code_by_sentence, code_whole = _attach_code(code_rows, lines, kinds, sentences)
     n_ok = sum(1 for k, e in by_sentence.items() if all(r.get("finding") == "supported" for r in e))
     n_flag = len(by_sentence) - n_ok
     n_code = sum(1 for kind in kinds if kind == "template")
     n_none = len(sentences) - len(by_sentence)
     html_lines = []
+    n_code_found = 0   # code findings on the lines that only the code checks
     for i, (line, part) in enumerate(lines):
         text = html.escape(line)
         if kinds[i] == "skip":
             html_lines.append(f'<div class="ln head">{text or "&nbsp;"}</div>')
             continue
         if kinds[i] == "template":
-            html_lines.append(f'<div class="ln"><div class="t">{text}</div><div class="tag grey">Checked by code rules (this statement is meant for the code, not for the judge)</div></div>')
+            extra = "".join(_code_tag(r) for r in code_by_line.get(i, []))
+            bad = any(r.get("verdict") for r in code_by_line.get(i, []))
+            n_code_found += len(code_by_line.get(i, []))
+            html_lines.append(f'<div class="ln {"flag" if bad else ""}"><div class="t">{text}</div>{extra or PASSED}</div>')
             continue
         tags, flagged = [], False
+        for r in code_by_line.get(i, []):
+            tags.append(_code_tag(r))
+            flagged = flagged or bool(r.get("verdict"))
         for k in sent_ids.get(i, []):
             entries = by_sentence.get(k, [])
             if not entries:
                 what = "" if len(sent_ids[i]) == 1 else f": \u201c{html.escape(sentences[k][1][:90])}\u201d"
                 tags.append(f'<div class="tag grey">Nobody checked this statement{what}. The judge did not read it and no code rule covers it</div>')
+            for r in code_by_sentence.get(k, []):
+                tags.append(_code_tag(r))
+                flagged = flagged or bool(r.get("verdict"))
             for r in entries:
                 if r.get("finding") == "supported":
-                    tags.append(f'<div class="tag ok">Verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
+                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
                 else:
                     flagged = True
                     what = FINDING_TEXT.get(r["finding"], r["finding"])
-                    tags.append(f'<div class="tag warn"><b>{html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}</div>')
+                    tags.append(f'<div class="tag warn"><b>Judge: {html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}</div>')
         read = [k for k in sent_ids.get(i, []) if by_sentence.get(k)]
         cls = "flag" if flagged else ("good" if read else "")
+        by_code = bool(code_by_line.get(i)) or any(code_by_sentence.get(k) for k in sent_ids.get(i, []))
         html_lines.append(f'<div class="ln {cls}"><div class="t">{text}</div>{"".join(tags)}</div>')
     n_read = n_ok + n_flag
     total = n_read + n_code + n_none  # all statements, headings not counted
     pct = round(100 * n_ok / n_read) if n_read else 0
-    code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
+    whole_block = ("<h2>About the whole teaser</h2>" + "".join(f'<div class="ln flag">{_code_tag(r)}</div>' for r in code_whole)) if code_whole else ""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
@@ -179,21 +248,22 @@ h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
 .sum{{padding:12px 16px;border-radius:8px;border-left:6px solid #5b6b86;background:#eef1f6}}
 .ln{{padding:6px 10px;margin:2px 0;border-left:4px solid transparent}} .ln.head{{font-weight:600;margin-top:10px;border:0}}
 .ln.good{{border-left-color:#2e8b57}} .ln.flag{{border-left-color:#d68910;background:#fff8ea}}
-.t{{white-space:pre-wrap}} .tag{{font-size:.82rem;margin-top:2px}} .tag.ok{{color:#2e7d4f}} .tag.warn{{color:#a86400}} .tag.grey{{color:#6b7280}}
+.t{{white-space:pre-wrap}} .tag{{font-size:.82rem;margin-top:2px}} .tag.ok{{color:#2e7d4f}} .tag.warn{{color:#a86400}} .tag.grey{{color:#6b7280}} .chip{{font-size:.7rem;color:#6b7280;border:1px solid #c9ced8;border-radius:8px;padding:0 6px;margin-right:6px;white-space:nowrap}} .tag.code{{color:#5f6673;background:#f1f2f5;border-left:3px solid #9aa3b2;padding:3px 8px;margin-top:4px;border-radius:3px}} .tag.code.ok{{border-left-color:#2e8b57}} .tag.code.bad{{border-left-color:#c0392b}} .tag.code.warn{{border-left-color:#d68910}} .tag .q{{font-size:.8rem;color:#6b7280}}
 .card{{border:1px solid #d8dce3;border-left:5px solid;border-radius:6px;padding:10px 14px;margin:10px 0}} .card.bad{{border-left-color:#c0392b}} .card.warn{{border-left-color:#d68910}} .card.note{{border-left-color:#7f8c8d}}
 .badge{{font-size:.75rem;padding:2px 8px;border-radius:10px;color:#fff}} .badge.bad{{background:#c0392b}} .badge.warn{{background:#d68910}} .badge.note{{background:#7f8c8d}}
 .what{{font-weight:600}} .stmt{{margin:6px 0;font-style:italic}} .q,.by{{font-size:.85rem;color:#4a5568;margin-top:4px}}
-@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} .sum{{background:#222833}} .ln.flag{{background:#2d2616}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .tag.ok{{color:#6fcf97}} .tag.warn{{color:#f2b04d}} .tag.grey{{color:#9aa3b2}}}}
+@media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} .sum{{background:#222833}} .ln.flag{{background:#2d2616}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .tag.ok{{color:#6fcf97}} .tag.warn{{color:#f2b04d}} .tag.grey{{color:#9aa3b2}} .tag.code{{color:#b8c0cc;background:#222833}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
 <div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
 <b>{n_read}</b> read by the judge, <b>{n_code}</b> checked by code rules only (offer, evidence and limits lines, source notes, sign-up), <b>{n_none}</b> not checked by anyone.<br>
 <b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged.<br>
-<b>Automatic checks (code):</b> {len(code_rows)} findings (below the teaser).<br>
+<b>Automatic checks (code):</b> {len(code_rows)} findings, each shown in grey under the statement it belongs to ({len(code_whole)} about the whole teaser, listed first).<br>
+Checked by code only: headings, the offer, evidence and limits lines, source notes and the sign-up sentence. Errors found there: {n_code_found}.<br>
 <small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = checked by code only, or not checked.</small></div>
-<h2>The teaser with the judge's verdict</h2>
+{whole_block}
+<h2>The teaser, statement by statement: judge's verdict and code checks</h2>
 {"".join(html_lines)}
-<h2>Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}
 </body></html>"""
 
 

@@ -645,6 +645,42 @@ def test_report_treats_source_notes_and_sign_up_as_code_checked():
     assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
 
 
+def test_code_findings_are_shown_under_their_statement_and_whole_teaser_ones_on_top():
+    from teaser_check.report import build_report
+    teaser = ("## Company snapshot\nTuta has 3 million users worldwide today.\nTuta runs on renewable energy since the start.\n\nSource notes\n"
+              "https://tuta.com/about, read on 2026-11-04")
+    rows = [{"kind": "number", "text": "3 million", "verdict": "Needs Human Verification", "finding": "not_in_pack", "reason": "Number not in the pack.", "record_quote": ""},
+            {"kind": "rule", "text": "first offer", "verdict": "Needs Human Verification", "finding": "rule_broken", "reason": "Free must come first.", "record_quote": "AURA AI Free ($0)"},
+            {"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", {"sources": []})
+    assert "About the whole teaser" in page and "Free must come first." in page and "The table says: \u201cAURA AI Free ($0)\u201d" in page
+    body = page.split("code checks</h2>")[1]
+    first, second = body.index("Tuta has 3 million users"), body.index("Number not in the pack.")
+    assert first < second < body.index("Tuta runs on renewable energy")  # the note sits under its own statement
+    assert "Automatic checks (code rules, no AI)" not in page  # no separate block at the bottom
+
+
+def test_short_bullets_are_statements_and_chips_tell_who_checked():
+    from teaser_check.report import build_report
+    teaser = "## Company snapshot\n- Privacy-friendly by design.\n- 100% Data Ownership\n- Tuta has offices in Hanover and Berlin today."
+    rows = [{"kind": "claim", "text": "Privacy-friendly by design.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"},
+            {"kind": "claim", "text": "100% Data Ownership", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"},
+            {"kind": "claim", "text": "Tuta has offices in Hanover and Berlin today.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"},
+            {"kind": "number", "text": "100%", "verdict": "Needs Human Verification", "finding": "not_in_pack", "reason": "Number not in the pack.", "record_quote": ""}]
+    page = build_report(rows, teaser, "T", {"sources": []})
+    assert "The teaser has 3 statements" in page and "<b>3</b> read by the judge" in page
+    assert "chip" not in page.split("<body>")[1] and page.count("<b>Judge:</b> verified") == 3  # the teaser text carries no marks
+    assert "<b>Code needs" not in page and "Number not in the pack." in page
+
+
+def test_code_only_lines_say_that_the_check_passed():
+    from teaser_check.report import build_report
+    teaser = "## Company snapshot\nTuta runs on renewable energy since the start.\n\nSource notes\nhttps://tuta.com/about, read on 2026-11-04"
+    rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", {"sources": []})
+    assert "<b>Code:</b> checked, no errors found." in page and "<b>Judge:</b> verified" in page
+
+
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
     assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)
