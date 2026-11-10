@@ -696,6 +696,63 @@ def test_missing_source_is_named_under_the_source_list():
     assert body.index("https://a.com/x, read on") < body.index("S2 (https://b.com/y) is missing") < body.index("Sign up for AURA")
 
 
+def test_basis_is_asked_only_by_a_rubric_with_a_basis_line_and_unknown_words_count_as_empty():
+    from teaser_check.judge import output_format, parse_judgements
+    root = jd.SKILL_FILE.parent
+    assert '"basis"' not in output_format(jd.load_rubric(root / "experiments" / "n1.md"))
+    assert '"basis"' in output_format(jd.load_rubric(root / "experiments" / "n2.md"))
+    answer = ('{"claims": [{"claim": "a", "finding": "supported", "source_ref": "S1", "record_quote": "q", "reason": "r", "basis": "Strong"},'
+              '{"claim": "b", "finding": "not_in_pack", "source_ref": "none", "record_quote": "", "reason": "r", "basis": "maybe"},'
+              '{"claim": "c", "finding": "supported", "source_ref": "S1", "record_quote": "q", "reason": "r"}]}')
+    assert [j.basis for j in parse_judgements(answer)] == ["strong", "", ""]
+
+
+def test_basis_goes_to_the_row_the_csv_and_the_report():
+    import csv
+    import tempfile
+    from teaser_check.pipeline import write_csv
+    from teaser_check.report import build_report
+    j = jd.ClaimJudgement(claim="Tuta may need a shared workspace for its team.", finding="assumption_as_fact", source_ref="none",
+                          record_quote="", reason="Loose.", basis="weak")
+    row = jd.apply_rules(j, "SOURCE S1 Tuta makes mail.")
+    assert row["basis"] == "weak" and "basis" not in jd.apply_rules(jd.ClaimJudgement(claim="x", finding="not_in_pack", source_ref="none", record_quote="", reason="r"), "t")
+    with tempfile.TemporaryDirectory() as tmp:
+        write_csv([row], Path(tmp) / "x.csv")
+        assert list(csv.DictReader(open(Path(tmp) / "x.csv", encoding="utf-8-sig")))[0]["basis"] == "weak"
+    page = build_report([row], "## Opportunity hypotheses\nCompany need: Tuta may need a shared workspace for its team.", "T", {"sources": []})
+    assert "Link to the sources: <b>weak</b>" in page
+
+
+def test_need_and_hypothesis_table_shows_the_answer_of_every_repeat():
+    import tempfile
+    from teaser_check.basis_report import collect
+    gold = {"F": {"rows": [{"part": "Hypotheses/Company need", "type": "statement", "verdict": "Unsupported", "text": "Tuta needs a shared workspace for its large team."},
+                           {"part": "Snapshot", "type": "statement", "verdict": "Supported", "text": "Tuta makes mail."}]}}
+    with tempfile.TemporaryDirectory() as tmp:
+        for n, (finding, basis) in enumerate([("not_in_pack", "none"), ("assumption_as_fact", "weak")], 1):
+            d = Path(tmp) / f"2026-11-10_10-00-00_n2_m_r{n}"
+            d.mkdir()
+            (d / "F.csv").write_text("kind,text,finding,basis\nclaim,Tuta needs a shared workspace for its large team.,%s,%s\n" % (finding, basis), encoding="utf-8-sig")
+        rows = collect(gold, tmp, "n2")
+    assert len(rows) == 1 and rows[0]["gold"] == "Unsupported" and rows[0]["answers"] == ["no-src/none", "assumed/weak"]
+
+
+def test_run_info_is_in_the_report_and_in_the_csv():
+    import csv
+    import tempfile
+    from teaser_check.pipeline import write_csv
+    from teaser_check.report import build_report, run_meta
+    assert run_meta("x/2026-11-10_10-46-33_n2_gemini-3.5-flash-lite_r1") == "2026-11-10 10:46:33 | rubric n2 | model gemini-3.5-flash-lite | repeat 1"
+    assert run_meta("x/some_other_folder") == ""
+    meta = "2026-11-10 10:46:33 | rubric n2 | model m | repeat 1"
+    page = build_report([], "## Company snapshot\nTuta makes mail for companies in Europe.", "Teaser F", {"sources": []}, meta)
+    assert f"<title>Teaser F | {meta}</title>" in page and f"Run: {meta}" in page
+    with tempfile.TemporaryDirectory() as tmp:
+        write_csv([{"case": "F", "id": "x", "run": meta, "kind": "claim", "text": "a", "verdict": "Supported", "finding": "supported"}], Path(tmp) / "x.csv")
+        out = list(csv.DictReader(open(Path(tmp) / "x.csv", encoding="utf-8-sig")))
+    assert out[0]["run"] == meta and list(out[0])[:3] == ["case", "id", "run"]
+
+
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
     assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)

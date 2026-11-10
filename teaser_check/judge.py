@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Literal, get_args
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from claim_check.common import ROOT, make_row, norm
 from claim_check.config import chat, get_client, get_env
@@ -34,12 +34,24 @@ FINDING_TO_VERDICT = {
 }
 
 
+# How strongly the sources lead to a company need or a hypothesis (asked only when the rubric has a line "BASIS:").
+# It is an extra opinion: the verdict still comes from the finding. The words are chosen here (BASIS_TEXT shows them in the report).
+BASIS_LEVELS = ("strong", "partial", "weak", "none")
+
+
 class ClaimJudgement(BaseModel):
     claim: str = Field(description="One statement from the teaser, copied or lightly shortened.")
     finding: Finding
     source_ref: str = Field(description="ID the quote comes from (S1, F2, A1) or 'none'.")
     record_quote: str = Field(description="Words copied exactly from the pack; empty if none.")
     reason: str = Field(description="One short sentence.")
+    basis: str = Field(default="", description="strong, partial, weak or none; only for Company need and Hypothesis lines.")
+
+    @field_validator("basis", mode="before")
+    @classmethod
+    def _known_basis(cls, value):
+        value = str(value or "").strip().lower()
+        return value if value in BASIS_LEVELS else ""  # anything else counts as "not given"
 
 
 class JudgementList(BaseModel):
@@ -58,9 +70,11 @@ def output_format(rubric_text: str = "") -> str:
     skip = re.search(r"^NO FINDINGS:\s*(.+)$", rubric_text, re.M)
     skipped = {x.strip() for x in skip.group(1).split(",")} if skip else set()
     findings = ", ".join(f for f in get_args(Finding) if f not in skipped)
+    basis = ', "basis": "<strong, partial, weak or none for Company need and Hypothesis lines, else empty>"' \
+        if re.search(r"^BASIS:", rubric_text, re.M) else ""
     return ("Return ONLY one JSON object, with no other text and no code fences, in exactly this shape:\n"
             '{"claims": [{"claim": "...", "finding": "<one of: ' + findings + '>", '
-            '"source_ref": "<S1, F2, A1 ... or none>", "record_quote": "...", "reason": "..."}]}')
+            '"source_ref": "<S1, F2, A1 ... or none>", "record_quote": "...", "reason": "..."' + basis + '}]}')
 
 
 def parse_judgements(text: str) -> list[ClaimJudgement]:
@@ -128,4 +142,7 @@ def apply_rules(j: ClaimJudgement, record_text: str) -> dict:
     elif verdict == "Supported" and not j.record_quote:
         verdict = "Needs Human Verification"
         reason += " [no supporting quote given]"
-    return make_row("claim", j.claim, verdict, j.finding, j.source_ref, j.record_quote, reason)
+    row = make_row("claim", j.claim, verdict, j.finding, j.source_ref, j.record_quote, reason)
+    if j.basis:
+        row["basis"] = j.basis
+    return row

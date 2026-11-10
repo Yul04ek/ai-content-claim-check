@@ -81,7 +81,7 @@ def run_suite(cases_file, judge, dry_run: bool, only: str | None = None):
 
 
 # Column "decided_by" sits right after the verdict
-TEASER_COLUMNS = COLUMNS[:COLUMNS.index("verdict") + 1] + ["decided_by"] + COLUMNS[COLUMNS.index("verdict") + 1:]
+TEASER_COLUMNS = COLUMNS[:2] + ["run"] + COLUMNS[2:COLUMNS.index("verdict") + 1] + ["decided_by"] + COLUMNS[COLUMNS.index("verdict") + 1:] + ["basis"]
 
 
 def decided_by(row: dict) -> str:

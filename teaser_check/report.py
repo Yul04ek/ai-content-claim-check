@@ -30,6 +30,13 @@ FINDING_TEXT = {
     "supported": "Judge accepted it",
     "rule_broken": "Rule check (code)",
 }
+BASIS_TEXT = {"strong": "strong", "partial": "partial", "weak": "weak", "none": "none"}  # words shown for the link to the sources
+
+
+def _basis_note(r: dict) -> str:
+    return f' Link to the sources: <b>{BASIS_TEXT[r["basis"]]}</b>.' if r.get("basis") in BASIS_TEXT else ""
+
+
 SOURCE_TEXT = {"judge": "the judge (model)", "code": "a code rule", "coverage": "coverage check: the judge gave no verdict for this line"}
 
 
@@ -159,7 +166,14 @@ def _card(r: dict) -> str:
     )
 
 
-def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pack: dict | None = None) -> str:
+def run_meta(folder) -> str:
+    """'2026-11-10 10:46:33 | rubric n2 | model gemini-3.5-flash-lite | repeat 1' from the name of a run folder
+    (<date>_<time>_<rubric>_<model>_r<repeat>); '' for any other folder name."""
+    m = re.match(r"^(\d{4}-\d\d-\d\d)_(\d\d)-(\d\d)-(\d\d)_([^_]+)_([^_]+)_r(\d+)$", Path(folder).name)
+    return f"{m[1]} {m[2]}:{m[3]}:{m[4]} | rubric {m[5]} | model {m[6]} | repeat {m[7]}" if m else ""
+
+
+def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pack: dict | None = None, meta: str = "") -> str:
     """The teaser line by line with what the judge said about it, plus the code checks. The judge is taken as right."""
     from .sections import section_of_lines  # here, not at the top: sections imports judge
 
@@ -240,11 +254,11 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
                 flagged = flagged or bool(r.get("verdict"))
             for r in entries:
                 if r.get("finding") == "supported":
-                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
+                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}.{_basis_note(r)}</div>')
                 else:
                     flagged = True
                     what = FINDING_TEXT.get(r["finding"], r["finding"])
-                    tags.append(f'<div class="tag warn"><b>Judge: {html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}</div>')
+                    tags.append(f'<div class="tag warn"><b>Judge: {html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}{_basis_note(r)}</div>')
         read = [k for k in sent_ids.get(i, []) if by_sentence.get(k)]
         cls = "flag" if flagged else ("good" if read else "")
         by_code = bool(code_by_line.get(i)) or any(code_by_sentence.get(k) for k in sent_ids.get(i, []))
@@ -254,9 +268,9 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     pct = round(100 * n_ok / n_read) if n_read else 0
     whole_block = ("<h2>About the whole teaser</h2>" + "".join(f'<div class="ln flag">{_code_tag(r)}</div>' for r in code_whole)) if code_whole else ""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(title)}</title><style>
+<title>{html.escape(title)}{html.escape(' | ' + meta if meta else '')}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
-h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
+h1{{font-size:1.4rem}} .meta{{color:#6b7280;font-size:.85rem;margin-top:-8px}} h2{{font-size:1.1rem;margin-top:28px}}
 .sum{{padding:12px 16px;border-radius:8px;border-left:6px solid #5b6b86;background:#eef1f6}}
 .ln{{padding:6px 10px;margin:2px 0;border-left:4px solid transparent}} .ln.head{{font-weight:600;margin-top:10px;border:0}}
 .ln.good{{border-left-color:#2e8b57}} .ln.flag{{border-left-color:#d68910;background:#fff8ea}}
@@ -267,6 +281,7 @@ h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
 @media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} .sum{{background:#222833}} .ln.flag{{background:#2d2616}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .tag.ok{{color:#6fcf97}} .tag.warn{{color:#f2b04d}} .tag.grey{{color:#9aa3b2}} .tag.code{{color:#b8c0cc;background:#222833}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
+{f'<p class="meta">Run: {html.escape(meta)} (the time is the clock of the machine that ran it)</p>' if meta else ''}
 <div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
 <b>{n_read}</b> read by the judge, <b>{n_code}</b> checked by code rules only (offer, evidence and limits lines, source notes, sign-up), <b>{n_none}</b> not checked by anyone.<br>
 <b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged.<br>
@@ -299,7 +314,8 @@ def main():
         jobs.append((Path(a.csv), Path(a.teaser), Path(a.out or "report.html"), Path(a.teaser).stem, None))
     for csv_path, teaser_path, out, title, pack in jobs:
         rows = list(csv.DictReader(open(csv_path, encoding="utf-8-sig")))
-        out.write_text(build_report(rows, teaser_path.read_text(encoding="utf-8"), title, pack), encoding="utf-8")
+        meta = run_meta(a.run_dir) if a.run_dir else (rows[0].get("run", "") if rows else "")
+        out.write_text(build_report(rows, teaser_path.read_text(encoding="utf-8"), title, pack, meta), encoding="utf-8")
         print("Report:", out)
 
 

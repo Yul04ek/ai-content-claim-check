@@ -74,7 +74,7 @@ def patient(judge, tries: int = 5, wait: int = 120, sleep=None):
 
 
 
-def run_once(lab: dict, judge, out_dir) -> dict:
+def run_once(lab: dict, judge, out_dir, meta: str = "") -> dict:
     """One pass over all teasers of the lab set. Returns the summary; result CSVs go to out_dir."""
     out_dir = Path(out_dir)
     tokens, v2 = {"input": 0, "output": 0}, {}
@@ -84,10 +84,10 @@ def run_once(lab: dict, judge, out_dir) -> dict:
         rows, tok = check_teaser(pack, text, judge)
         tokens["input"] += tok["input"]
         tokens["output"] += tok["output"]
-        write_csv([{"case": case["case"], "id": pack["group_id"], **r} for r in rows], out_dir / f"{case['case']}.csv")
+        write_csv([{"case": case["case"], "id": pack["group_id"], "run": meta, **r} for r in rows], out_dir / f"{case['case']}.csv")
         if judge is not no_judge:  # a readable page per teaser (not for dry runs: no judge, nothing to show)
             (out_dir / f"report_{case['case']}.html").write_text(
-                build_report([dict(r) for r in rows], text, f"Teaser {case['case']}", pack), encoding="utf-8")
+                build_report([dict(r) for r in rows], text, f"Teaser {case['case']}", pack, meta), encoding="utf-8")
         if lab.get("gold_v2") and case["case"] in lab["gold_v2"]:
             v2[case["case"]] = score_case_v2(lab["gold_v2"][case["case"]], rows)
     return {"tokens": tokens, "v2": v2}
@@ -166,7 +166,8 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
         summaries = []
         for repeat in range(1, repeats + 1):
             run_dir = runs_dir / f"{stamp}_{rname}_{model}_r{repeat}".replace("/", "-")
-            summary = run_once(lab, judge, run_dir)
+            meta = f"{stamp[:10]} {stamp[11:].replace('-', ':')} | rubric {rname} | model {model} | repeat {repeat}"
+            summary = run_once(lab, judge, run_dir, meta)
             summaries.append(summary)
             params = {"lab_set": lab.get("name", ""), "rubric": rname, "rubric_sha": sha, "model": model, "repeat": repeat}
             if use_mlflow:
