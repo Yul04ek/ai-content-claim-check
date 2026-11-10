@@ -836,6 +836,22 @@ def test_limits_lines_of_the_table_are_no_promise():
     assert [r["kind"] for r in det.deterministic_checks("x\n" + promise, promise, V2PACK, V2RECORD) if r["kind"] == "promise"] == ["promise"]
 
 
+def test_lines_checked_by_code_are_not_reported_as_unjudged():
+    from teaser_check.postchecks import coverage_checks
+    body = ("Offer: AURA AI Pro ($99 per user/month, or $828 per user/year)\nEvidence: \"we build scheduling software for teams of any size.\"\n"
+            "Limits: Monthly AI usage limits. Data Rooms are Pro-only.\nCompany need: The firm may need a place for its plans.")
+    assert len(coverage_checks(body, [])) == 4
+    left = coverage_checks(body, [], ("Evidence", "Offer", "Limits"))
+    assert [r["text"][:12] for r in left] == ["Company need"]
+
+
+def test_new_rubric_n1_loads_and_keeps_the_findings_list():
+    from teaser_check.judge import load_rubric, output_format
+    text = load_rubric(ROOT / "skills" / "experiments" / "n1.md")
+    assert "Company need" in text and "How AURA helps" in text
+    assert "hypothesis_unlabelled" not in output_format(text) and "aura_offer_unverified" in output_format(text)
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

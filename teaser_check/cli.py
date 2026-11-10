@@ -22,6 +22,7 @@ def main() -> None:
     p.add_argument("--suite", help="cases.json of the synthetic test suite")
     p.add_argument("--out", default=str(ROOT / "results" / "teaser_results.csv"))
     p.add_argument("--model", help="overrides MODEL_NAME")
+    p.add_argument("--rubric", help="rubric file of the judge (default: skills/teaser-judge.md)")
     p.add_argument("--dry-run", action="store_true", help="deterministic checks only, no model call")
     p.add_argument("--only", help='suite only: run the case whose name starts with this text')
     args = p.parse_args()
@@ -33,8 +34,8 @@ def main() -> None:
     else:
         client = get_client()
         model = args.model or get_env("MODEL_NAME")
-        print(f"Model: {model}")
-        judge = lambda record_text, body: judge_with_llm(record_text, body, client=client, model=model)
+        print(f"Model: {model}" + (f", rubric: {args.rubric}" if args.rubric else ""))
+        judge = lambda record_text, body: judge_with_llm(record_text, body, client=client, model=model, rubric_path=args.rubric)
 
     if args.suite:
         rows, tokens = run_suite(args.suite, judge, args.dry_run, args.only)

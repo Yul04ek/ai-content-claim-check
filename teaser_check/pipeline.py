@@ -45,7 +45,9 @@ def check_teaser(pack: dict, teaser_text: str, judge) -> tuple[list[dict], dict]
     rows += deterministic_checks(teaser_text, body, pack, record_text) + text_checks(teaser_text, body, tail, pack)
     judgements, tokens = judge(record_text, body)
     if judgements:  # with no judge (dry run) every line would be 'not judged'
-        rows += coverage_checks(body, judgements) + citation_checks(judgements, pack)
+        # Evidence quotes, the Offer line and the Limits line are checked by code (when the pack has the table fields)
+        code_checked = ("Evidence",) + (("Offer", "Limits") if any(o.get("offer_line") for o in pack.get("approved_aura_offers", [])) else ())
+        rows += coverage_checks(body, judgements, code_checked) + citation_checks(judgements, pack)
     return [apply_rules(j, record_text) for j in judgements] + rows, tokens
 
 

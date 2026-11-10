@@ -70,8 +70,9 @@ def source_note_checks(tail: str, pack: dict) -> list[dict]:
     return rows
 
 
-def coverage_checks(body: str, judgements) -> list[dict]:
-    """Every sentence of the teaser must have been judged. A line no judged claim overlaps is reported."""
+def coverage_checks(body: str, judgements, code_checked: tuple = ()) -> list[dict]:
+    """Every sentence of the teaser must have been judged. A line no judged claim overlaps is reported.
+    Lines that start with a label in `code_checked` ("Evidence", "Offer", "Limits") are checked by code, not by the judge."""
     claim_sets = [words_of(j.claim) for j in judgements]
     rows = []
     for line, part in section_of_lines(body):
@@ -80,6 +81,8 @@ def coverage_checks(body: str, judgements) -> list[dict]:
         text = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
         words = words_of(text)
         n_words = len(text.split())
+        if any(re.match(rf"^\W*{label}:", text, re.I) for label in code_checked):
+            continue
         if heading_name(line) or n_words < 5 or text.endswith(":") or (n_words <= 9 and not text.endswith((".", "!", "?"))):
             continue  # headings and labels (a short line without a full stop) are not statements
         if not any(c and len(c & words) / min(len(c), len(words)) >= 0.6 for c in claim_sets):
