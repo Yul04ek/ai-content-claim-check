@@ -420,10 +420,12 @@ def test_experiment_runs_every_repeat_and_logs_v2_table_and_mlflow():
     rows = list(csv.DictReader(open(d / "res" / "experiments_v2.csv", encoding="utf-8-sig")))
     assert len(rows) == 2 and rows[0]["case"] == "X" and rows[0]["model"] == "m" and rows[0]["code_n"] == "2"
     assert not (d / "res" / "experiments.csv").exists()  # the old count (list v1) is gone
-    assert fake.runs == ["rubric@m", "rubric@m r1", "rubric@m r2"]
-    assert fake.metrics["rubric@m r1"]["v2_X_code_n"] == 2 and fake.metrics["rubric@m r1"]["v2_X_meant"] == 4
-    assert fake.metrics["rubric@m"]["v2_X_code_found_mean"] == 0 and fake.metrics["rubric@m"]["repeats"] == 2
-    assert "recall_mean" not in fake.metrics["rubric@m"]
+    assert [r.split(" ", 1)[-1] for r in fake.runs] == ["rubric@m", "rubric@m r1", "rubric@m r2"]  # names start with the date and time
+    assert fake.runs[0][:2] == "20"
+    metrics = {k.split(" ", 1)[-1]: v for k, v in fake.metrics.items()}  # without the date and time in front
+    assert metrics["rubric@m r1"]["v2_X_code_n"] == 2 and metrics["rubric@m r1"]["v2_X_meant"] == 4
+    assert metrics["rubric@m"]["v2_X_code_found_mean"] == 0 and metrics["rubric@m"]["repeats"] == 2
+    assert "recall_mean" not in metrics["rubric@m"]
     assert len(out[0]["summaries"]) == 2
     assert (d / "res" / "experiment_runs").is_dir()
     assert fake.uri.startswith("sqlite:///") and fake.uri.endswith("mlflow.db") and fake.artifacts.startswith("file:///")
@@ -870,6 +872,34 @@ def test_lab_set_can_name_its_gold_file():
         assert load_lab_set(d / "lab_set.json")["gold_v2"] is None and load_lab_set(d / "lab_set.json")["gold_name"] == "gold_v3.json"
         (d / "gold_v3.json").write_text(json.dumps({"F": _gold_case()}))
         assert list(load_lab_set(d / "lab_set.json")["gold_v2"]) == ["F"]
+
+
+def test_mlflow_overview_is_read_from_the_database_without_the_mlflow_package():
+    import sqlite3
+    import tempfile
+    from teaser_check.mlflow_export import write_overview
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        con = sqlite3.connect(d / "mlflow.db")
+        con.executescript("""
+            create table experiments (experiment_id int, name text);
+            create table runs (run_uuid text, name text, start_time int, experiment_id int, status text, lifecycle_stage text);
+            create table params (key text, value text, run_uuid text);
+            create table metrics (key text, value real, timestamp int, run_uuid text, step int);
+            create table tags (key text, value text, run_uuid text);
+            insert into experiments values (1, 'exp');
+            insert into runs values ('p', '2026-11-10 n1@m', 1794303255933, 1, 'FINISHED', 'active');
+            insert into runs values ('c', '2026-11-10 n1@m r1', 1794303274125, 1, 'FINISHED', 'active');
+            insert into tags values ('mlflow.parentRunId', 'p', 'c');
+            insert into params values ('rubric', 'n1', 'c'), ('repeat', '1', 'c');
+            insert into metrics values ('v2_F_found', 2, 1, 'c', 0), ('v2_F_meant', 13, 1, 'c', 0), ('v2_F_found_mean', 2.5, 1, 'p', 0);
+        """)
+        con.commit()
+        con.close()
+        csv_path, html_path, wide_path = write_overview(str(d), str(d / "out" / "overview"))
+        text = csv_path.read_text()
+        assert "repeat 1,F,13.0" in text and "mean of repeats,F" in text and "2026-11-10 n1@m r1" in text
+        assert "<table>" in html_path.read_text() and "v2_F_found" in wide_path.read_text()
 
 
 if __name__ == "__main__":

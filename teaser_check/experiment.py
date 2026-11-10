@@ -162,7 +162,7 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
     for rubric in rubrics:
         rname, sha = Path(rubric).stem, sha_of(rubric)
         judge = patient(judge_factory(rubric))
-        parent = mlflow.start_run(run_name=f"{rname}@{model}") if use_mlflow else None
+        parent = mlflow.start_run(run_name=f"{stamp} {rname}@{model}") if use_mlflow else None
         summaries = []
         for repeat in range(1, repeats + 1):
             run_dir = runs_dir / f"{stamp}_{rname}_{model}_r{repeat}".replace("/", "-")
@@ -170,7 +170,7 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
             summaries.append(summary)
             params = {"lab_set": lab.get("name", ""), "rubric": rname, "rubric_sha": sha, "model": model, "repeat": repeat}
             if use_mlflow:
-                with mlflow.start_run(run_name=f"{rname}@{model} r{repeat}", nested=True):
+                with mlflow.start_run(run_name=f"{stamp} {rname}@{model} r{repeat}", nested=True):
                     log_child(mlflow, summary, params, run_dir, rubric)
             if not dry_run:
                 append_v2(table, rname, sha, model, repeat, summary["v2"])
@@ -181,6 +181,13 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
             log_parent(mlflow, summaries)
             mlflow.end_run()
         all_summaries.append({"rubric": rname, "summaries": summaries})
+    if use_mlflow:
+        try:   # readable copy of the MLflow database next to the table
+            from .mlflow_export import write_overview
+            for path in write_overview(store, str(out_dir / "mlflow_overview")):
+                print("MLflow overview:", path)
+        except Exception as error:
+            print("MLflow overview not written:", error)
     return all_summaries
 
 
