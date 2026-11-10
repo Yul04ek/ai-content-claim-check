@@ -806,6 +806,28 @@ def test_nli_pairs_use_the_evidence_line_and_the_offer_of_each_block():
     assert seen[0][1] == "The company may need pitch material for its seed round."
 
 
+def test_nli_preselects_pieces_and_scores_a_repeated_statement_once():
+    import tempfile
+    from teaser_check.nli_score import score_run, top_pieces
+    pieces = [("S1", "alpha beta gamma delta"), ("S2", "completely unrelated words here"), ("S3", "gamma delta epsilon zeta"), ("O1", "more filler text")]
+    assert [p[0] for p in top_pieces("gamma delta epsilon", pieces, 2)] == ["S3", "S1"] and top_pieces("x", pieces, None) == pieces
+    calls = []
+
+    def fake(premise, statement):
+        calls.append(premise)
+        return {"entailment": 0.5, "contradiction": 0.0}
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "p.json").write_text(json.dumps({"group_id": "G", "facts": [], "unknowns": [], "sources": [{"id": "S1", "url": "u", "date_read": "d", "excerpt": "alpha beta gamma"}]}))
+        (d / "lab_set.json").write_text(json.dumps({"cases": [{"case": "F", "pack": "p.json", "teaser": "t.txt"}]}))
+        for n in (1, 2, 3):  # three repeats of the same judged statement
+            run = d / "runs" / f"2026-11-10_10-00-0{n}_n2_m_r{n}"
+            run.mkdir(parents=True)
+            (run / "F.csv").write_text("kind,text,finding,basis\nclaim,Tuta runs on alpha beta energy.,supported,\n", encoding="utf-8-sig")
+        rows = score_run({"F": {"rows": []}}, d / "runs", d / "lab_set.json", "n2", fake)
+    assert len(rows) == 3 and len(calls) == 1  # three rows, one model call (one piece, scored once)
+
+
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
     assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)

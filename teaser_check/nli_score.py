@@ -5,6 +5,8 @@ no data leaves, and it is not an LLM, so it is not the family of the judge. The 
 it changes no verdict. Not tested with a real model here (no network in the sandbox): the logic is tested with a fake.
 
   python -m teaser_check.nli_score gold_v3.json results/experiment_runs --lab lab_set.json --rubric n2 --out nli.csv
+Speed: a statement is compared only with the 8 pieces that share most words with it (--top-k 0 = all pieces), and the same
+statement in several repeats is scored once. On a CPU this takes a few minutes; with a GPU runtime (Runtime > Change runtime type) seconds.
 
 Second mode, --pairs: no judge runs needed. For every offer block of the teaser the premise is the teaser's own Evidence quote plus
 the Purpose and Features of the offer named in the block; the statements are the Company need and the Hypothesis of that block.
@@ -43,10 +45,19 @@ def chunks(pack: dict, size: int = 110, step: int = 70) -> list[tuple[str, str]]
     return out
 
 
-def best_entailment(statement: str, pieces: list[tuple[str, str]], scorer) -> dict:
+def top_pieces(statement: str, pieces: list[tuple[str, str]], k: int | None) -> list[tuple[str, str]]:
+    """The k pieces that share most words with the statement (a rough pre-selection: the NLI model is slow on a CPU).
+    The model then picks the best of these. k=None keeps all pieces."""
+    if not k or len(pieces) <= k:
+        return pieces
+    words = toks(statement)
+    return sorted(pieces, key=lambda p: -len(words & toks(p[1])))[:k]
+
+
+def best_entailment(statement: str, pieces: list[tuple[str, str]], scorer, top_k: int | None = None) -> dict:
     """The piece that entails the statement most. scorer(premise, statement) -> {'entailment': p, 'contradiction': p, ...}."""
     best = {"entailment": 0.0, "contradiction": 0.0, "source": ""}
-    for source_id, text in pieces:
+    for source_id, text in top_pieces(statement, pieces, top_k):
         got = scorer(text, statement)
         if got["entailment"] >= best["entailment"]:
             best = {"entailment": got["entailment"], "contradiction": got.get("contradiction", 0.0), "source": source_id}
@@ -57,19 +68,21 @@ def hf_scorer(model_name: str = DEFAULT_MODEL):
     """The real scorer (Hugging Face transformers); imported only here so the tests need no package."""
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    device = "cuda" if torch.cuda.is_available() else "cpu"  # a GPU runtime in Colab makes this about 20 times faster
+    print("NLI model on", device)
     tok = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name).eval()
+    model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device).eval()
     labels = {int(i): name.lower() for i, name in model.config.id2label.items()}
 
     def score(premise: str, statement: str) -> dict:
-        batch = tok(premise, statement, truncation=True, max_length=512, return_tensors="pt")
+        batch = tok(premise, statement, truncation=True, max_length=512, return_tensors="pt").to(device)
         with torch.no_grad():
             probs = torch.softmax(model(**batch).logits[0], dim=-1).tolist()
         return {labels[i]: p for i, p in enumerate(probs)}
     return score
 
 
-def score_run(gold: dict, run_dir, lab_file, rubric: str, scorer) -> list[dict]:
+def score_run(gold: dict, run_dir, lab_file, rubric: str, scorer, top_k: int | None = 8) -> list[dict]:
     """One line per judged statement in every run folder of the rubric: gold verdict, judge finding, basis, NLI."""
     lab = json.loads(Path(lab_file).read_text(encoding="utf-8"))
     base = Path(lab_file).parent
@@ -79,6 +92,7 @@ def score_run(gold: dict, run_dir, lab_file, rubric: str, scorer) -> list[dict]:
         pieces = chunks(load_pack(base / case["pack"]))
         gold_rows = [r for r in gold.get(name, {}).get("rows", []) if r.get("type") == "statement"]
         gt = [toks(r["text"]) for r in gold_rows]
+        done: dict[str, dict] = {}  # the same statement in another repeat is scored only once
         for run in sorted(Path(run_dir).glob(f"*_{rubric}_*_r*")):
             file = run / f"{name}.csv"
             if not file.exists():
@@ -87,7 +101,10 @@ def score_run(gold: dict, run_dir, lab_file, rubric: str, scorer) -> list[dict]:
                 if r.get("kind") != "claim":
                     continue
                 hit = [i for i, g in enumerate(gt) if touches(toks(r["text"]), g)]
-                got = best_entailment(r["text"], pieces, scorer)
+                if r["text"] not in done:
+                    done[r["text"]] = best_entailment(r["text"], pieces, scorer, top_k)
+                    print(f"  {name}: {len(done)} statements scored", flush=True)
+                got = done[r["text"]]
                 out.append({"run": run.name, "case": name, "part": gold_rows[hit[0]]["part"].split("/")[-1] if hit else "",
                             "gold": gold_rows[hit[0]]["verdict"] if hit else "", "judge": r.get("finding", ""),
                             "basis": r.get("basis", ""), "nli_entailment": round(got["entailment"], 3),
@@ -162,6 +179,7 @@ def main() -> None:
     p.add_argument("--pairs", action="store_true", help="test Evidence + offer against the Company need and the Hypothesis of every block")
     p.add_argument("--rubric", default="n2")
     p.add_argument("--model", default=DEFAULT_MODEL)
+    p.add_argument("--top-k", type=int, default=8, help="compare a statement with the k most similar pieces (0 = all)")
     p.add_argument("--out", default="nli_scores.csv")
     a = p.parse_args()
     gold = json.loads(Path(a.gold).read_text(encoding="utf-8"))
@@ -173,7 +191,7 @@ def main() -> None:
         return
     if not a.run_dir:
         p.error("run_dir is needed without --pairs")
-    rows = score_run(gold, a.run_dir, a.lab, a.rubric, hf_scorer(a.model))
+    rows = score_run(gold, a.run_dir, a.lab, a.rubric, hf_scorer(a.model), a.top_k or None)
     write_rows(rows, a.out)
     print(summary(rows))
 
