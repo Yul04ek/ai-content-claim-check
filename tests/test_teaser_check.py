@@ -753,6 +753,59 @@ def test_run_info_is_in_the_report_and_in_the_csv():
     assert out[0]["run"] == meta and list(out[0])[:3] == ["case", "id", "run"]
 
 
+def test_nli_signal_takes_the_best_piece_and_averages_per_gold_verdict():
+    import tempfile
+    from teaser_check.nli_score import best_entailment, chunks, score_run, summary
+    pack = {"sources": [{"id": "S1", "url": "u", "date_read": "d", "excerpt": "Tuta makes encrypted mail. " + "filler word " * 100 + "Tuta runs on renewable energy."}],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "purpose": "entry", "features": "core workspace"}]}
+    pieces = chunks(pack)
+    assert len(pieces) >= 3 and pieces[-1][0] == "O1"  # the text is cut into pieces, the offers come last
+
+    def fake(premise, statement):  # a pretend NLI model: entails when the premise holds the key word of the statement
+        hit = statement.split()[1] in premise
+        return {"entailment": 0.9 if hit else 0.1, "contradiction": 0.0}
+    got = best_entailment("Tuta runs on renewable energy since the start.", pieces, fake)
+    assert got["entailment"] == 0.9 and got["source"] == "S1"
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "p.json").write_text(json.dumps({**pack, "group_id": "G", "facts": [], "unknowns": []}))
+        (d / "lab_set.json").write_text(json.dumps({"cases": [{"case": "F", "pack": "p.json", "teaser": "t.txt"}]}))
+        run = d / "runs" / "2026-11-10_10-00-00_n2_m_r1"
+        run.mkdir(parents=True)
+        (run / "F.csv").write_text("kind,text,finding,basis\nclaim,Tuta runs on renewable energy since the start.,supported,\n"
+                                   "claim,Tuta needs a shared workspace for its large team.,not_in_pack,none\n", encoding="utf-8-sig")
+        gold = {"F": {"rows": [{"part": "Snapshot", "type": "statement", "verdict": "Supported", "text": "Tuta runs on renewable energy since the start."},
+                               {"part": "Hypotheses/Company need", "type": "statement", "verdict": "Unsupported", "text": "Tuta needs a shared workspace for its large team."}]}}
+        rows = score_run(gold, d / "runs", d / "lab_set.json", "n2", fake)
+    assert [r["gold"] for r in rows] == ["Supported", "Unsupported"] and rows[0]["nli_entailment"] == 0.9 and rows[1]["nli_entailment"] == 0.1
+    assert "Snapshot" in summary(rows) and "gold Unsupported" in summary(rows)
+
+
+def test_nli_pairs_use_the_evidence_line_and_the_offer_of_each_block():
+    import tempfile
+    from teaser_check.nli_score import score_pairs
+    pack = {"group_id": "G", "facts": [], "unknowns": [], "sources": [{"id": "S1", "url": "u", "date_read": "d", "excerpt": "We are raising a seed round."}],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "purpose": "entry", "features": "pitch and document workflows"}]}
+    teaser = ("## Opportunity hypotheses\nOffer: AURA AI Free ($0)\nEvidence: \"We are raising a seed round.\"\n"
+              "Company need: The company may need pitch material for its seed round.\nHow AURA helps: pitch and document workflows.\n"
+              "Limits: x\nHypothesis: The company could prepare its pitch with AURA AI Free.\n")
+    seen = []
+
+    def fake(premise, statement):
+        seen.append((premise, statement))
+        return {"entailment": 0.7, "contradiction": 0.0}
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "p.json").write_text(json.dumps(pack))
+        (d / "t.txt").write_text(teaser)
+        (d / "lab_set.json").write_text(json.dumps({"cases": [{"case": "F", "pack": "p.json", "teaser": "t.txt"}]}))
+        gold = {"F": {"rows": [{"part": "Hypotheses/Company need", "type": "statement", "verdict": "Needs human", "text": "The company may need pitch material for its seed round."}]}}
+        rows = score_pairs(gold, d / "lab_set.json", fake)
+    assert [r["part"] for r in rows] == ["Company need", "Hypothesis"] and rows[0]["gold"] == "Needs human" and rows[0]["offer"] == "AURA AI Free"
+    assert seen[0][0].startswith("We are raising a seed round. AURA offer AURA AI Free:") and "pitch and document workflows" in seen[0][0]
+    assert seen[0][1] == "The company may need pitch material for its seed round."
+
+
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
     assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)
