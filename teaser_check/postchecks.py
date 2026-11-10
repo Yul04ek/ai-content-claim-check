@@ -59,10 +59,12 @@ def source_note_checks(tail: str, pack: dict) -> list[dict]:
     if not tail.strip():
         return rows  # a missing section is reported by the 'source notes' rule
     known = {address_of(s["url"]) for s in sources if s["url"].startswith("http")}
-    for s in sources:
-        if s["url"].startswith("http") and (address_of(s["url"]) not in tail_norm or s.get("date_read", "") not in tail):
-            rows.append(make_row("flag", f"source notes: {s['id']} address or read date",
-                                 reason=f"Source notes miss the address or the read date of {s['id']}."))
+    web = [s for s in sources if s["url"].startswith("http")]
+    missing = [s for s in web if address_of(s["url"]) not in tail_norm or s.get("date_read", "") not in tail]
+    for s in missing:
+        rows.append(make_row("flag", f"source notes: {s['id']} address or read date",
+                             reason=f"Source notes list only {len(web) - len(missing)} of {len(web)} sources: "
+                                    f"{s['id']} ({s['url']}) is missing, or its read date is."))
     for m in dict.fromkeys(x.group(0).lower().rstrip(".,;)") for x in ADDRESS.finditer(tail)):
         if not any(m == k or m.startswith(k + "/") for k in known):
             rows.append(make_row("rule", f"source notes: {m}", "Needs Human Verification", "not_in_pack", "none",

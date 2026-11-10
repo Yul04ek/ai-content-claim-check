@@ -89,7 +89,7 @@ def _source_name(ref: str, pack: dict | None) -> str:
 WHOLE_TEASER = re.compile(r"^(first offer$|\d+ (labelled )?hypothes|\d+ offers,|\d+ words|source notes|.*: Limits line missing)", re.I)
 
 
-def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: list):
+def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: list, sources_end=None):
     """Puts every code finding under the line (or the sentence) it is about. Returns (line index -> rows,
     sentence index -> rows, rows about the whole teaser). A row that matches no line goes to the whole teaser."""
     from .deterministic import loose
@@ -100,6 +100,9 @@ def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: lis
         text = (r.get("text") or "").strip()
         key = loose(text)
         place = None
+        if sources_end is not None and re.match(r"source notes:", text, re.I):
+            by_line.setdefault(sources_end, []).append(r)  # under the list of sources
+            continue
         if key and not WHOLE_TEASER.match(text):
             candidates = [i for i, (line, _) in enumerate(lines) if kinds[i] != "skip" and key in loose(line)]
             if r.get("kind") == "offer":  # an offer row belongs to its "Offer:" line
@@ -180,6 +183,15 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
         if kind == "claim" and re.match(r"^\W*(%s):" % "|".join(labels), line, re.I):
             kind = "template"  # Offer, Evidence and Limits lines are compared with the table and the sources by code
         kinds.append(kind)
+    sources_end = None  # the last line of the source notes: the note about a missing source sits under it
+    in_sources = False
+    for i, (line, _) in enumerate(lines):
+        if re.match(r"^\W*(source notes?|sources?)\W*$", line, re.I):
+            in_sources = True
+        elif re.match(r"^\W*(Sign up for AURA|#)", line, re.I):
+            in_sources = False
+        if (in_sources or re.match(r"^\W*SOURCE:", line, re.I)) and kinds[i] == "template":
+            sources_end = i
     # the unit is the statement: a sentence of a line for the judge; a whole line the code checks counts as one statement
     sentences = [(i, sent) for i, (line, _) in enumerate(lines) if kinds[i] == "claim" for sent in _sentences(line)]
     by_sentence: dict[int, list[dict]] = {}
@@ -196,7 +208,7 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     sent_ids: dict[int, list[int]] = {}
     for k, (i, _) in enumerate(sentences):
         sent_ids.setdefault(i, []).append(k)
-    code_by_line, code_by_sentence, code_whole = _attach_code(code_rows, lines, kinds, sentences)
+    code_by_line, code_by_sentence, code_whole = _attach_code(code_rows, lines, kinds, sentences, sources_end)
     n_ok = sum(1 for k, e in by_sentence.items() if all(r.get("finding") == "supported" for r in e))
     n_flag = len(by_sentence) - n_ok
     n_code = sum(1 for kind in kinds if kind == "template")

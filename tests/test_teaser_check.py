@@ -681,6 +681,21 @@ def test_code_only_lines_say_that_the_check_passed():
     assert "<b>Code:</b> checked, no errors found." in page and "<b>Judge:</b> verified" in page
 
 
+def test_missing_source_is_named_under_the_source_list():
+    from teaser_check.postchecks import source_note_checks
+    from teaser_check.report import build_report
+    pack = {"sources": [{"id": "S1", "url": "https://a.com/x", "date_read": "2026-11-05"},
+                        {"id": "S2", "url": "https://b.com/y", "date_read": "2026-11-05"}]}
+    tail = "https://a.com/x, read on 2026-11-05"
+    rows = source_note_checks(tail, pack)
+    assert "list only 1 of 2 sources: S2 (https://b.com/y) is missing" in rows[0]["reason"]
+    teaser = "## Company snapshot\nA runs on renewable energy since the start.\n\nSource notes\n" + tail + "\n\nSign up for AURA AI Free ($0) to review the preliminary Company DNA built from public research about A."
+    page = build_report(rows, teaser, "T", pack)
+    assert "About the whole teaser" not in page
+    body = page.split("code checks</h2>")[1]
+    assert body.index("https://a.com/x, read on") < body.index("S2 (https://b.com/y) is missing") < body.index("Sign up for AURA")
+
+
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
     record = "The team is based in Vienna and has ten people. Elsewhere: it serves customers in three countries."
     assert jd.quote_in_pack("based in Vienna and has ten people... serves customers in three countries", record)
