@@ -807,7 +807,8 @@ def test_entry_offer_must_come_first_and_the_need_must_not_copy_the_offer():
     assert [r["text"] for r in det.offer_block_checks(_block("AURA AI Pro"), V2PACK)] == ["first offer"]
     copied = _block("AURA AI Enterprise", need="A team with tailored workspace configuration and security needs.")
     rows = det.offer_block_checks(_block("AURA AI Free") + "\n" + copied, V2PACK)
-    assert [r["text"] for r in rows] == ["Company need: ... tailored workspace configuration ..."]
+    assert len(rows) == 1 and rows[0]["text"].startswith("Company need: A team with tailored workspace")
+    assert "tailored workspace configuration" in rows[0]["reason"]
 
 
 def test_made_up_placeholder_is_reported_and_old_packs_are_skipped():
@@ -850,6 +851,25 @@ def test_new_rubric_n1_loads_and_keeps_the_findings_list():
     text = load_rubric(ROOT / "skills" / "experiments" / "n1.md")
     assert "Company need" in text and "How AURA helps" in text
     assert "hypothesis_unlabelled" not in output_format(text) and "aura_offer_unverified" in output_format(text)
+
+
+def test_score_code_finds_whole_teaser_items_by_the_kind_of_rule():
+    from teaser_check.score_v2 import score_code
+    gold = {"rows": [], "whole": [["F4", "Source notes list 2 of 3 sources", "code"], ["G3", "AURA AI Free is not the first offer", "code"]]}
+    rows = [{"kind": "flag", "text": "source notes: S3 address or read date"}, {"kind": "rule", "text": "first offer"}]
+    assert score_code(gold, rows)["code_found"] == 2
+    assert score_code(gold, rows[:1])["code_found"] == 1 and score_code(gold, [])["code_found"] == 0
+
+
+def test_lab_set_can_name_its_gold_file():
+    import tempfile
+    from teaser_check.experiment import load_lab_set
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "lab_set.json").write_text(json.dumps({"name": "x", "gold": "gold_v3.json", "cases": []}))
+        assert load_lab_set(d / "lab_set.json")["gold_v2"] is None and load_lab_set(d / "lab_set.json")["gold_name"] == "gold_v3.json"
+        (d / "gold_v3.json").write_text(json.dumps({"F": _gold_case()}))
+        assert list(load_lab_set(d / "lab_set.json")["gold_v2"]) == ["F"]
 
 
 if __name__ == "__main__":

@@ -7,8 +7,9 @@
 #   python -m teaser_check.experiment lab_set.json --dry-run       (code rules only, no model, tests the setup, writes nothing)
 #
 # lab_set.json (paths relative to the file; keep it OUTSIDE the repository, it holds real company text):
-#   {"name": "lab_set_v1", "cases": [{"case": "B", "pack": "pack.json", "teaser": "teaser.txt"}]}
-# gold_v2.json must lie next to it (the standard v2); without it the run stops, there is no other count.
+#   {"name": "lab_set_v1", "gold": "gold_v2.json", "cases": [{"case": "B", "pack": "pack.json", "teaser": "teaser.txt"}]}
+# The standard (gold_v2.json, or the file named in "gold", e.g. gold_v3.json for the teaser format of 9 Nov) must lie next to it;
+# without it the run stops, there is no other count.
 #
 # Written (not for --dry-run), all in --out-dir (default results/):
 #   experiments_v2.csv      one row per run and teaser (judge statistics and code checks)
@@ -44,7 +45,8 @@ def load_lab_set(path) -> dict:
     path = Path(path)
     lab = json.loads(path.read_text(encoding="utf-8"))
     lab["base"] = path.parent
-    gold = path.parent / "gold_v2.json"  # the standard v2 (by sentence); if it is there, the v2 statistics are written
+    lab["gold_name"] = lab.get("gold", "gold_v2.json")  # the standard (by sentence): v2 by default, or the file named in lab_set.json
+    gold = path.parent / lab["gold_name"]
     lab["gold_v2"] = load_gold(gold) if gold.exists() else None
     return lab
 
@@ -148,7 +150,7 @@ def run_experiment(lab: dict, rubrics: list[str], model: str, repeats: int, judg
     """Every rubric x repeats. judge_factory(rubric_path) returns the judge function.
     A dry run prints only: nothing goes into the table, the run folders or MLflow."""
     if not lab.get("gold_v2"):
-        raise SystemExit("gold_v2.json not found next to lab_set.json: put it in the same folder (step 3 of the notebook).")
+        raise SystemExit(f"{lab.get('gold_name', 'gold_v2.json')} not found next to lab_set.json: put it in the same folder (step 3 of the notebook).")
     out_dir = Path(out_dir or ROOT / "results")
     runs_dir = Path(tempfile.mkdtemp()) if dry_run else out_dir / "experiment_runs"
     table = out_dir / "experiments_v2.csv"

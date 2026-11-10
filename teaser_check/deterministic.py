@@ -288,8 +288,8 @@ def offer_block_checks(body: str, pack: dict) -> list[dict]:
                                  "The Limits line is not word for word the Limits of the table. A changed limit can turn into a benefit."))
         run = shared_run(block.get("company need", ""), f"{offer['purpose']} {offer['features']}")
         if run:
-            rows.append(make_row("rule", f"Company need: ... {run} ...", "Needs Human Verification", "rule_broken", "none", "",
-                                 "The Company need repeats the wording of the offer's Purpose or Features. A need must come from the company's evidence."))
+            rows.append(make_row("rule", f"Company need: {block['company need'][:160]}", "Needs Human Verification", "rule_broken", "none", "",
+                                 f"The Company need repeats the wording of the offer ('{run}'). A need must come from the company's evidence."))
     defaults = [o for o in offers if o.get("default")]
     if defaults and (not matched or matched[0] is None or not matched[0].get("default")):
         rows.append(make_row("rule", "first offer", "Needs Human Verification", "rule_broken", "none", defaults[0]["offer_line"],

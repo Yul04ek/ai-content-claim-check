@@ -23,8 +23,11 @@ def load_gold(path) -> dict:
 
 
 def toks(text: str) -> set[str]:
-    text = re.sub(r"\[[^\]]*\]", " ", (text or "").lower())
-    return {w for w in re.findall(r"[a-z0-9$%+]+", text) if w not in STOP}
+    """The words of a text without the words in square brackets (citation tags, placeholders). A text that is
+    nothing but a bracket (the model's own made-up placeholder) keeps its words, or it could never be matched."""
+    text = (text or "").lower()
+    found = {w for w in re.findall(r"[a-z0-9$%+]+", re.sub(r"\[[^\]]*\]", " ", text)) if w not in STOP}
+    return found or {w for w in re.findall(r"[a-z0-9$%+]+", text) if w not in STOP}
 
 
 def touches(judge: set, gold: set) -> bool:
@@ -69,17 +72,31 @@ def score_judge(gold_case: dict, rows: list[dict]) -> dict:
             "found_idx": found, "error_idx": errors, "missed": [gold[i]["text"][:80] for i in errors if i not in flagged]}
 
 
+def whole_found(item: str, code_texts: list[str]) -> int:
+    """Did a code row report this whole-teaser item? Matched by the kind of rule: length ("514 words"), source notes
+    that miss a source ("source notes: S3 ..."), the entry offer not first ("first offer")."""
+    item = item.lower()
+    if "words" in item:
+        return int(any(re.search(r"\d+ words", t) for t in code_texts))
+    if "source notes" in item:
+        return int(any(t.startswith("source notes") for t in code_texts))
+    if "first offer" in item:
+        return int("first offer" in code_texts)
+    return 0
+
+
 def score_code(gold_case: dict, rows: list[dict]) -> dict:
     """Which gold problems for the code (by code or both, not statements for the judge) did the code rules find."""
     gold = gold_case["rows"]
     gold_toks = [toks(g["text"]) for g in gold]
-    hit, whole_hits = set(), 0
+    hit, code_texts = set(), []
     for r in rows:
         if r.get("kind") not in ("rule", "offer", "flag"):
             continue
         text = str(r.get("text", ""))
+        code_texts.append(text.lower())
         if re.search(r"\d+ words", text):
-            whole_hits += 1
+            continue
         elif text.lower().startswith("source notes"):
             hit.update(i for i, g in enumerate(gold) if g["part"] == "Source notes" and g["type"] == "heading")
         elif r.get("kind") == "offer":
@@ -90,7 +107,7 @@ def score_code(gold_case: dict, rows: list[dict]) -> dict:
     own = [i for i, g in enumerate(gold) if g["prob"] == "error" and g["by"] in ("code", "both")
            and (g["type"] != "statement" or g["by"] == "code")]
     whole = gold_case.get("whole", [])
-    return {"code_n": len(own) + len(whole), "code_found": len([i for i in own if i in hit]) + min(whole_hits, len(whole)),
+    return {"code_n": len(own) + len(whole), "code_found": len([i for i in own if i in hit]) + sum(whole_found(w[1], code_texts) for w in whole),
             "code_missed": [gold[i]["text"][:70] for i in own if i not in hit]}
 
 
