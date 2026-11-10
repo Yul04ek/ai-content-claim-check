@@ -59,9 +59,23 @@ def _line_kind(line: str, part: str) -> str:
         return "skip"
     if re.match(r"^\s*(?:H\d|\d+[.)])\s*[^.:;]*$", line) and len(line.split()) <= 12:
         return "skip"  # a numbered title such as "1) Privacy-first niche" is a heading
+    if re.match(r"^\W*(SOURCE:|Sign up for AURA)", line, re.I):
+        return "template"  # source notes and the sign-up sentence are checked by code rules
     if part in ("signup", "start") or re.match(r"^\W*(source notes?|sources?)\b", part or "", re.I):
         return "template"
     return "claim"
+
+
+def _sentences(line: str) -> list[str]:
+    """A line cut into sentences; fragments of fewer than 3 words stay with the sentence before."""
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z0-9\"\u201c(\[])", re.sub(r"^\W*(?:[-*\u2022]|\d+[.)])\s*", "", line.strip()))
+    out: list[str] = []
+    for part in parts:
+        if out and len(re.findall(r"\w+", part)) < 3:
+            out[-1] += " " + part
+        elif part.strip():
+            out.append(part.strip())
+    return out or [line.strip()]
 
 
 def _source_name(ref: str, pack: dict | None) -> str:
@@ -94,50 +108,69 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
         r.setdefault("verdict", "")
     judged = [r for r in rows if row_source(r) == "judge"]
     code_rows = [r for r in rows if row_source(r) != "judge"]
-    # which teaser line does each judge entry belong to: the line that holds most of its words
+    labels = ("Evidence",) + (("Offer", "Limits") if any(o.get("offer_line") for o in (pack or {}).get("approved_aura_offers", [])) else ())
     lines = section_of_lines(teaser)
-    by_line: dict[int, list[dict]] = {}
+    kinds = []
+    in_sources = False  # lines after a "Source notes" heading belong to the source notes
+    for line, part in lines:
+        if re.match(r"^\W*(source notes?|sources?)\W*$", line, re.I):
+            in_sources = True
+        elif re.match(r"^\W*(Sign up for AURA|#)", line, re.I):
+            in_sources = False
+        kind = _line_kind(line, part)
+        if in_sources and kind == "claim":
+            kind = "template"
+        if kind == "claim" and re.match(r"^\W*(%s):" % "|".join(labels), line, re.I):
+            kind = "template"  # Offer, Evidence and Limits lines are compared with the table and the sources by code
+        kinds.append(kind)
+    # the unit is the statement: a sentence of a line for the judge; a whole line the code checks counts as one statement
+    sentences = [(i, sent) for i, (line, _) in enumerate(lines) if kinds[i] == "claim" for sent in _sentences(line)]
+    by_sentence: dict[int, list[dict]] = {}
     for r in judged:
         cw = _words(r["text"])
         best, score = None, 0.0
-        for i, (line, part) in enumerate(lines):
-            if _line_kind(line, part) == "skip":
-                continue
-            lw = _words(line)
-            ov = len(cw & lw) / max(1, min(len(cw), len(lw)))
+        for k, (_, sent) in enumerate(sentences):
+            sw = _words(sent)
+            ov = len(cw & sw) / max(1, min(len(cw), len(sw)))
             if ov > score:
-                best, score = i, ov
+                best, score = k, ov
         if best is not None and score >= 0.6:
-            by_line.setdefault(best, []).append(r)
-    html_lines, n_ok, n_flag, n_none = [], 0, 0, 0
+            by_sentence.setdefault(best, []).append(r)
+    sent_ids: dict[int, list[int]] = {}
+    for k, (i, _) in enumerate(sentences):
+        sent_ids.setdefault(i, []).append(k)
+    n_ok = sum(1 for k, e in by_sentence.items() if all(r.get("finding") == "supported" for r in e))
+    n_flag = len(by_sentence) - n_ok
+    n_code = sum(1 for kind in kinds if kind == "template")
+    n_none = len(sentences) - len(by_sentence)
+    html_lines = []
     for i, (line, part) in enumerate(lines):
-        kind = _line_kind(line, part)
         text = html.escape(line)
-        if kind == "skip":
+        if kinds[i] == "skip":
             html_lines.append(f'<div class="ln head">{text or "&nbsp;"}</div>')
             continue
-        if kind == "template":
-            html_lines.append(f'<div class="ln"><div class="t">{text}</div><div class="tag grey">Header, sign-up text or source note: checked by code rules, not by the judge</div></div>')
+        if kinds[i] == "template":
+            html_lines.append(f'<div class="ln"><div class="t">{text}</div><div class="tag grey">Checked by code rules (this statement is meant for the code, not for the judge)</div></div>')
             continue
-        entries = by_line.get(i, [])
-        if not entries:
-            n_none += 1
-            html_lines.append(f'<div class="ln"><div class="t">{text}</div><div class="tag grey">The judge did not check this line</div></div>')
-            continue
-        tags = []
-        for r in entries:
-            if r.get("finding") == "supported":
-                n_ok += 1
-                tags.append(f'<div class="tag ok">Verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
-            else:
-                n_flag += 1
-                what = FINDING_TEXT.get(r["finding"], r["finding"])
-                tags.append(f'<div class="tag warn"><b>{html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}</div>')
-        cls = "flag" if any(r.get("finding") != "supported" for r in entries) else "good"
+        tags, flagged = [], False
+        for k in sent_ids.get(i, []):
+            entries = by_sentence.get(k, [])
+            if not entries:
+                what = "" if len(sent_ids[i]) == 1 else f": \u201c{html.escape(sentences[k][1][:90])}\u201d"
+                tags.append(f'<div class="tag grey">Nobody checked this statement{what}. The judge did not read it and no code rule covers it</div>')
+            for r in entries:
+                if r.get("finding") == "supported":
+                    tags.append(f'<div class="tag ok">Verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
+                else:
+                    flagged = True
+                    what = FINDING_TEXT.get(r["finding"], r["finding"])
+                    tags.append(f'<div class="tag warn"><b>{html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}</div>')
+        read = [k for k in sent_ids.get(i, []) if by_sentence.get(k)]
+        cls = "flag" if flagged else ("good" if read else "")
         html_lines.append(f'<div class="ln {cls}"><div class="t">{text}</div>{"".join(tags)}</div>')
-    checked = n_ok + n_flag
-    total = checked + n_none
-    pct = round(100 * n_ok / checked) if checked else 0
+    n_read = n_ok + n_flag
+    total = n_read + n_code + n_none  # all statements, headings not counted
+    pct = round(100 * n_ok / n_read) if n_read else 0
     code_cards = "".join(_card(r) for r in code_rows) or "<p>No findings.</p>"
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title><style>
@@ -153,9 +186,11 @@ h1{{font-size:1.4rem}} h2{{font-size:1.1rem;margin-top:28px}}
 @media (prefers-color-scheme:dark){{body{{background:#14171c;color:#e6e9ef}} .sum{{background:#222833}} .ln.flag{{background:#2d2616}} .card{{border-color:#333a45}} .q,.by{{color:#aab3c2}} .tag.ok{{color:#6fcf97}} .tag.warn{{color:#f2b04d}} .tag.grey{{color:#9aa3b2}}}}
 </style></head><body>
 <h1>{html.escape(title)}</h1>
-<div class="sum"><b>Judge:</b> {checked} statements checked, <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged. {n_none} lines were not checked by the judge.<br>
+<div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
+<b>{n_read}</b> read by the judge, <b>{n_code}</b> checked by code rules only (offer, evidence and limits lines, source notes, sign-up), <b>{n_none}</b> not checked by anyone.<br>
+<b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged.<br>
 <b>Automatic checks (code):</b> {len(code_rows)} findings (below the teaser).<br>
-<small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = not checked by the judge.</small></div>
+<small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = checked by code only, or not checked.</small></div>
 <h2>The teaser with the judge's verdict</h2>
 {"".join(html_lines)}
 <h2>Automatic checks (code rules, no AI) ({len(code_rows)})</h2>{code_cards}

@@ -8,7 +8,7 @@ from pathlib import Path
 from claim_check.common import COLUMNS, make_row
 
 from .deterministic import deterministic_checks, split_teaser
-from .judge import apply_rules
+from .judge import FINDING_TO_VERDICT, apply_rules
 from .postchecks import citation_checks, coverage_checks, text_checks
 from .pack import load_pack, pack_to_text
 
@@ -80,9 +80,29 @@ def run_suite(cases_file, judge, dry_run: bool, only: str | None = None):
     return all_rows, total
 
 
+# Column "decided_by" sits right after the verdict
+TEASER_COLUMNS = COLUMNS[:COLUMNS.index("verdict") + 1] + ["decided_by"] + COLUMNS[COLUMNS.index("verdict") + 1:]
+
+
+def decided_by(row: dict) -> str:
+    """Who gave the verdict of this row: the judge (model), the code, or both (code corrected the judge)."""
+    kind = row.get("kind", "")
+    if kind == "claim":
+        # the judge said Supported, but the code lowered it (quote missing or not in the pack)
+        if FINDING_TO_VERDICT.get(row.get("finding", "")) == "Supported" and row.get("verdict") != "Supported":
+            return "judge, lowered by code (quote)"
+        return "judge"
+    if kind == "citation":
+        return "code (checked the judge's source)"
+    if kind == "coverage":
+        return "code (the judge did not read it)"
+    return "code"
+
+
 def write_csv(rows: list[dict], path) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
+    rows = [{**r, "decided_by": r.get("decided_by") or decided_by(r)} for r in rows]
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=COLUMNS)
+        writer = csv.DictWriter(f, fieldnames=TEASER_COLUMNS)
         writer.writeheader()
         writer.writerows(rows)

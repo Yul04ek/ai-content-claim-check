@@ -608,9 +608,41 @@ def test_html_report():
     ]
     pack = {"sources": [{"id": "S1", "url": "https://tuta.com/team", "date_read": "2026-11-05"}]}
     page = build_report(rows, teaser, "Teaser X", pack)
-    assert "1 verified (50%)" in page and "1 flagged" in page and "1 lines were not checked" in page
+    assert "1 verified (50%)" in page and "1 flagged" in page and "<b>1</b> not checked by anyone" in page
+    assert "The teaser has 3 statements" in page and "<b>2</b> read by the judge" in page
     assert "Evidence: S1, https://tuta.com/team, read 2026-11-05" in page and "Nothing in the evidence says this" in page
     assert "renewable energy\u201d" not in page and "<script" not in page  # no duplicated quote, no script
+
+
+def test_report_counts_code_checked_lines_apart_from_forgotten_lines():
+    from teaser_check.report import build_report
+    teaser = ("## Company snapshot\nTuta runs on renewable energy since the start.\n## Opportunity hypotheses\n"
+              "Offer: AURA AI Free ($0)\nLimits: Monthly AI usage limits apply to every Free account.")
+    pack = {"sources": [], "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)"}]}
+    rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", pack)
+    assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
+    old_pack = {"sources": []}   # an old pack without table fields: the code does not check these lines
+    assert "<b>2</b> not checked by anyone" in build_report(rows, teaser, "T", old_pack)
+
+
+def test_report_counts_statements_not_lines():
+    from teaser_check.report import build_report
+    teaser = ("## Company snapshot\nTuta runs on renewable energy since the start. Tuta has offices in Hanover and Berlin today.")
+    rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", {"sources": []})
+    # one line, two statements: one read by the judge, one not checked by anyone
+    assert "The teaser has 2 statements" in page and "<b>1</b> read by the judge" in page and "<b>1</b> not checked by anyone" in page
+    assert "Nobody checked this statement" in page and "offices in Hanover" in page
+
+
+def test_report_treats_source_notes_and_sign_up_as_code_checked():
+    from teaser_check.report import build_report
+    teaser = ("## Company snapshot\nTuta runs on renewable energy since the start.\n\nSource notes\n"
+              "https://tuta.com/about, read on 2026-11-04\n\nSign up for AURA AI Free ($0) to review the preliminary Company DNA built from public research about Tuta.")
+    rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", {"sources": []})
+    assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
 
 
 def test_quote_joined_with_ellipsis_is_checked_piece_by_piece():
@@ -900,6 +932,24 @@ def test_mlflow_overview_is_read_from_the_database_without_the_mlflow_package():
         text = csv_path.read_text()
         assert "repeat 1,F,13.0" in text and "mean of repeats,F" in text and "2026-11-10 n1@m r1" in text
         assert "<table>" in html_path.read_text() and "v2_F_found" in wide_path.read_text()
+
+
+def test_csv_says_who_decided_each_row():
+    import csv
+    import tempfile
+    from teaser_check.pipeline import write_csv
+    rows = [{"kind": "claim", "text": "a", "verdict": "Supported", "finding": "supported"},
+            {"kind": "claim", "text": "b", "verdict": "Needs Human Verification", "finding": "supported"},  # quote check lowered it
+            {"kind": "claim", "text": "c", "verdict": "Unsupported", "finding": "not_in_pack"},
+            {"kind": "rule", "text": "first offer", "verdict": "Needs Human Verification", "finding": "rule_broken"},
+            {"kind": "coverage", "text": "d", "verdict": "Needs Human Verification", "finding": "rule_broken"},
+            {"kind": "citation", "text": "e", "verdict": "Needs Human Verification", "finding": "meaning_shifted"}]
+    with tempfile.TemporaryDirectory() as tmp:
+        write_csv(rows, Path(tmp) / "x.csv")
+        out = list(csv.DictReader(open(Path(tmp) / "x.csv", encoding="utf-8-sig")))
+    assert list(out[0]).index("decided_by") == list(out[0]).index("verdict") + 1
+    assert [r["decided_by"] for r in out] == ["judge", "judge, lowered by code (quote)", "judge", "code",
+                                             "code (the judge did not read it)", "code (checked the judge's source)"]
 
 
 if __name__ == "__main__":
