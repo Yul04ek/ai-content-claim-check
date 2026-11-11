@@ -804,6 +804,10 @@ def test_nli_pairs_use_the_evidence_line_and_the_offer_of_each_block():
     assert [r["part"] for r in rows] == ["Company need", "Hypothesis"] and rows[0]["gold"] == "Needs human" and rows[0]["offer"] == "AURA AI Free"
     assert seen[0][0].startswith("We are raising a seed round. AURA offer AURA AI Free:") and "pitch and document workflows" in seen[0][0]
     assert seen[0][1] == "The company may need pitch material for its seed round."
+    # the same statement is also scored against the Evidence alone and against the offer alone
+    assert seen[1][0] == "We are raising a seed round." and seen[2][0].startswith("AURA offer AURA AI Free:")
+    assert seen[1][1] == seen[2][1] == seen[0][1] and len(seen) == 6
+    assert rows[0]["nli_evidence"] == 0.7 and rows[0]["nli_offer"] == 0.7 and rows[0]["nli_entailment"] == 0.7
 
 
 def test_nli_preselects_pieces_and_scores_a_repeated_statement_once():

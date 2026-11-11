@@ -10,7 +10,8 @@ statement in several repeats is scored once. On a CPU this takes a few minutes; 
 
 Second mode, --pairs: no judge runs needed. For every offer block of the teaser the premise is the teaser's own Evidence quote plus
 the Purpose and Features of the offer named in the block; the statements are the Company need and the Hypothesis of that block.
-A low number means: the evidence the author gave, together with the offer, does not lead to the need or to the hypothesis.
+Three numbers per statement (11 Nov): vs the Evidence alone (nli_evidence), vs the offer alone (nli_offer), vs both together
+(nli_entailment). Only the entailment number is used; contradiction is noise on texts that are close in topic but unrelated.
   python -m teaser_check.nli_score gold_v3.json --lab lab_set.json --pairs --out nli_pairs.csv
 
 Needs: pip install transformers torch   (Colab has torch). Default model: cross-encoder/nli-deberta-v3-base.
@@ -138,16 +139,26 @@ def score_pairs(gold: dict, lab_file, scorer) -> list[dict]:
             evidence = re.sub(r'^["\u201c]|["\u201d]$', "", (block.get("evidence") or "").strip())
             if not offer or not evidence:
                 continue  # no pair to test: the code checks a missing Evidence line elsewhere
-            premise = f'{evidence} AURA offer {offer["name"]}: {offer.get("purpose", "")} Features: {offer.get("features", "")}'
+            offer_text = f'AURA offer {offer["name"]}: {offer.get("purpose", "")} Features: {offer.get("features", "")}'
+            both = f"{evidence} {offer_text}"   # the two sources together (the cross signal)
             for part, key in (("Company need", "company need"), ("Hypothesis", "hypothesis")):
                 text = block.get(key) or ""
                 if not text:
                     continue
                 hit = [i for i, g in enumerate(gt) if touches(toks(text), g) and part in gold_rows[i]["part"]]
-                got = scorer(premise, re.sub(r"^\w+:\s*", "", text))
+                statement = re.sub(r"^\w+:\s*", "", text)
+                # The same statement against each source alone and against both together:
+                #   high only vs the evidence -> rests on the company's own words
+                #   high only vs the offer    -> probably re-written from the offer
+                #   high only vs both         -> the link needs the two sources
+                #   low everywhere            -> not supported by either
+                got = scorer(both, statement)
+                ent = scorer(evidence, statement)["entailment"]
+                off = scorer(offer_text, statement)["entailment"]
                 out.append({"case": name, "block": n, "offer": offer["name"], "part": part,
                             "gold": gold_rows[hit[0]]["verdict"] if hit else "",
                             "nli_entailment": round(got["entailment"], 3), "nli_contradiction": round(got.get("contradiction", 0.0), 3),
+                            "nli_evidence": round(ent, 3), "nli_offer": round(off, 3),
                             "evidence": evidence[:80], "statement": text[:90]})
     return out
 
@@ -186,7 +197,8 @@ def main() -> None:
     if a.pairs:
         rows = score_pairs(gold, a.lab, hf_scorer(a.model))
         for r in rows:
-            print(f"{r['case']} block {r['block']} {r['part']:13} gold {r['gold'][:11]:11} entailment {r['nli_entailment']:.2f}  {r['statement'][:60]}")
+            print(f"{r['case']} block {r['block']} {r['part']:13} gold {r['gold'][:11]:11} "
+                  f"evidence {r['nli_evidence']:.2f}  offer {r['nli_offer']:.2f}  both {r['nli_entailment']:.2f}  {r['statement'][:50]}")
         write_rows(rows, a.out)
         return
     if not a.run_dir:
