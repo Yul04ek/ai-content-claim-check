@@ -806,7 +806,8 @@ def test_nli_pairs_use_the_evidence_line_and_the_offer_of_each_block():
     assert seen[0][1] == "The company may need pitch material for its seed round."
     # the same statement is also scored against the Evidence alone and against the offer alone
     assert seen[1][0] == "We are raising a seed round." and seen[2][0].startswith("AURA offer AURA AI Free:")
-    assert seen[1][1] == seen[2][1] == seen[0][1] and len(seen) == 6
+    assert seen[1][1] == seen[2][1] == seen[0][1] == seen[3][1] and len(seen) == 8   # both, evidence, offer, best company piece
+    assert rows[0]["nli_sources"] == 0.7 and rows[0]["best_source"] == "S1"
     assert rows[0]["nli_evidence"] == 0.7 and rows[0]["nli_offer"] == 0.7 and rows[0]["nli_entailment"] == 0.7
 
 

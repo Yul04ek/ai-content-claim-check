@@ -10,8 +10,8 @@ statement in several repeats is scored once. On a CPU this takes a few minutes; 
 
 Second mode, --pairs: no judge runs needed. For every offer block of the teaser the premise is the teaser's own Evidence quote plus
 the Purpose and Features of the offer named in the block; the statements are the Company need and the Hypothesis of that block.
-Three numbers per statement (11 Nov): vs the Evidence alone (nli_evidence), vs the offer alone (nli_offer), vs both together
-(nli_entailment). Only the entailment number is used; contradiction is noise on texts that are close in topic but unrelated.
+Four numbers per statement (11 Nov): vs the Evidence alone (nli_evidence), vs the offer alone (nli_offer), vs both together
+(nli_entailment), vs all pieces of the company sources of the pack (nli_sources, best piece in best_source). Only the entailment number is used; contradiction is noise on texts that are close in topic but unrelated.
   python -m teaser_check.nli_score gold_v3.json --lab lab_set.json --pairs --out nli_pairs.csv
 
 Needs: pip install transformers torch   (Colab has torch). Default model: cross-encoder/nli-deberta-v3-base.
@@ -123,14 +123,17 @@ def offer_for_block(block: dict, pack: dict) -> dict | None:
     return None
 
 
-def score_pairs(gold: dict, lab_file, scorer) -> list[dict]:
-    """Per offer block: does Evidence + offer entail the Company need? the Hypothesis? (no judge runs needed)"""
+def score_pairs(gold: dict, lab_file, scorer, top_k: int | None = 8) -> list[dict]:
+    """Per offer block: does Evidence + offer entail the Company need? the Hypothesis? (no judge runs needed)
+    Also: does ANY piece of the company sources of the pack entail it (nli_sources)?"""
     lab = json.loads(Path(lab_file).read_text(encoding="utf-8"))
     base = Path(lab_file).parent
     out = []
     for case in lab["cases"]:
         name = case["case"]
         pack = load_pack(base / case["pack"])
+        source_ids = {src["id"] for src in pack.get("sources", [])}
+        company_pieces = [pc for pc in chunks(pack) if pc[0] in source_ids]   # the company's own text, not the offers
         body, _ = split_teaser((base / case["teaser"]).read_text(encoding="utf-8"))
         gold_rows = [r for r in gold.get(name, {}).get("rows", []) if r.get("type") == "statement"]
         gt = [toks(r["text"]) for r in gold_rows]
@@ -152,13 +155,17 @@ def score_pairs(gold: dict, lab_file, scorer) -> list[dict]:
                 #   high only vs the offer    -> probably re-written from the offer
                 #   high only vs both         -> the link needs the two sources
                 #   low everywhere            -> not supported by either
+                # nli_sources: the same statement against every piece of the company sources; high there but low vs
+                # the single Evidence quote -> the quote was too narrow; low there too -> not grounded in the company
                 got = scorer(both, statement)
                 ent = scorer(evidence, statement)["entailment"]
                 off = scorer(offer_text, statement)["entailment"]
+                src = best_entailment(statement, company_pieces, scorer, top_k)   # best piece of ALL company sources
                 out.append({"case": name, "block": n, "offer": offer["name"], "part": part,
                             "gold": gold_rows[hit[0]]["verdict"] if hit else "",
                             "nli_entailment": round(got["entailment"], 3), "nli_contradiction": round(got.get("contradiction", 0.0), 3),
                             "nli_evidence": round(ent, 3), "nli_offer": round(off, 3),
+                            "nli_sources": round(src["entailment"], 3), "best_source": src["source"],
                             "evidence": evidence[:80], "statement": text[:90]})
     return out
 
@@ -195,10 +202,10 @@ def main() -> None:
     a = p.parse_args()
     gold = json.loads(Path(a.gold).read_text(encoding="utf-8"))
     if a.pairs:
-        rows = score_pairs(gold, a.lab, hf_scorer(a.model))
+        rows = score_pairs(gold, a.lab, hf_scorer(a.model), a.top_k or None)
         for r in rows:
             print(f"{r['case']} block {r['block']} {r['part']:13} gold {r['gold'][:11]:11} "
-                  f"evidence {r['nli_evidence']:.2f}  offer {r['nli_offer']:.2f}  both {r['nli_entailment']:.2f}  {r['statement'][:50]}")
+                  f"evidence {r['nli_evidence']:.2f}  offer {r['nli_offer']:.2f}  both {r['nli_entailment']:.2f}  sources {r['nli_sources']:.2f}  {r['statement'][:50]}")
         write_rows(rows, a.out)
         return
     if not a.run_dir:
