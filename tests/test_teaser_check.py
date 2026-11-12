@@ -618,7 +618,7 @@ def test_report_counts_code_checked_lines_apart_from_forgotten_lines():
     from teaser_check.report import build_report
     teaser = ("## Company snapshot\nTuta runs on renewable energy since the start.\n## Opportunity hypotheses\n"
               "Offer: AURA AI Free ($0)\nLimits: Monthly AI usage limits apply to every Free account.")
-    pack = {"sources": [], "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)"}]}
+    pack = {"sources": [], "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "text": "AURA AI Free ($0)"}]}
     rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
     page = build_report(rows, teaser, "T", pack)
     assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
@@ -1073,6 +1073,28 @@ def test_new_rubric_n1_loads_and_keeps_the_findings_list():
     text = load_rubric(ROOT / "skills" / "experiments" / "n1.md")
     assert "Company need" in text and "How AURA helps" in text
     assert "hypothesis_unlabelled" not in output_format(text) and "aura_offer_unverified" in output_format(text)
+
+
+def test_rubric_n3_adds_weak_evidence_and_judges_the_evidence_line():
+    from teaser_check.judge import FINDING_TO_VERDICT, ClaimJudgement, judged_lines, load_rubric, output_format
+    from teaser_check.postchecks import coverage_checks
+    n1, n3 = (load_rubric(ROOT / "skills" / "experiments" / f"{name}.md") for name in ("n1", "n3"))
+    assert "weak_evidence" in output_format(n3) and "hypothesis_without_fact" not in output_format(n3)
+    assert "weak_evidence" not in output_format(n1) and "weak_evidence" not in output_format("")  # old rubrics are unchanged
+    assert FINDING_TO_VERDICT["weak_evidence"] == "Needs Human Verification"
+    assert judged_lines(n3) == ("Evidence",) and judged_lines(n1) == ()
+    # with n3 an Evidence line the judge skipped is reported; with n1 it is the code's line
+    body = "## Opportunity hypotheses\nEvidence: \"We are a team of six people working from two cities.\"\nCompany need: The team may need one shared place for its plans and documents."
+    need = [ClaimJudgement(claim="The team may need one shared place for its plans and documents.", finding="supported",
+                           source_ref="S1", record_quote="x", reason="r")]
+    judge = lambda rec, text: (need, {})
+    pack = {"group_id": "X_1", "sources": [{"id": "S1", "url": "https://x-demo.example", "excerpt": "x"}], "facts": [],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "text": "AURA AI Free ($0)"}]}
+    assert not coverage_checks(body, need, ("Evidence", "Offer", "Limits"))
+    assert len(coverage_checks(body, need, ("Offer", "Limits"))) == 1
+    judge.judged_lines = ("Evidence",)
+    rows, _ = pl.check_teaser(pack, "DRAFT. INTERNAL REVIEW ONLY.\n" + body, judge)
+    assert any(r["kind"] == "coverage" and "team of six" in r["text"] for r in rows)
 
 
 def test_score_code_finds_whole_teaser_items_by_the_kind_of_rule():

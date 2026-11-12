@@ -9,7 +9,7 @@ from pathlib import Path
 from claim_check.common import ROOT
 from claim_check.config import get_client, get_env
 
-from .judge import judge_with_llm, no_judge
+from .judge import judge_with_llm, judged_lines, load_rubric, no_judge
 from .pack import load_pack
 from .report import build_report
 from .pipeline import check_teaser, overall, run_suite, write_csv
@@ -36,6 +36,7 @@ def main() -> None:
         model = args.model or get_env("MODEL_NAME")
         print(f"Model: {model}" + (f", rubric: {args.rubric}" if args.rubric else ""))
         judge = lambda record_text, body: judge_with_llm(record_text, body, client=client, model=model, rubric_path=args.rubric)
+        judge.judged_lines = judged_lines(load_rubric(args.rubric))
 
     if args.suite:
         rows, tokens = run_suite(args.suite, judge, args.dry_run, args.only)

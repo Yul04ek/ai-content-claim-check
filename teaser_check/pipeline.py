@@ -47,6 +47,8 @@ def check_teaser(pack: dict, teaser_text: str, judge) -> tuple[list[dict], dict]
     if judgements:  # with no judge (dry run) every line would be 'not judged'
         # Evidence quotes, the Offer line and the Limits line are checked by code (when the pack has the table fields)
         code_checked = ("Evidence",) + (("Offer", "Limits") if any(o.get("offer_line") for o in pack.get("approved_aura_offers", [])) else ())
+        # a rubric may judge such a line itself (n3 judges Evidence): then a missing verdict for it is reported
+        code_checked = tuple(label for label in code_checked if label not in getattr(judge, "judged_lines", ()))
         rows += coverage_checks(body, judgements, code_checked) + citation_checks(judgements, pack)
     return [apply_rules(j, record_text) for j in judgements] + rows, tokens
 

@@ -13,7 +13,7 @@ from .score_v2 import toks, touches
 
 SHORT = {"supported": "ok", "not_in_pack": "no-src", "assumption_as_fact": "assumed", "aura_offer_unverified": "offer?",
          "promise": "promise", "contradicted": "contra", "overgeneralised": "stretch", "meaning_shifted": "shifted",
-         "hypothesis_without_fact": "no-fact"}
+         "hypothesis_without_fact": "no-fact", "weak_evidence": "weak-quote"}
 
 
 def collect(gold: dict, run_dir, rubric: str) -> list[dict]:

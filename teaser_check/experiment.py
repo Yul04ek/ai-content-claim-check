@@ -29,7 +29,7 @@ from pathlib import Path
 from claim_check.common import ROOT
 from claim_check.config import get_client, get_env
 
-from .judge import judge_with_llm, no_judge
+from .judge import judge_with_llm, judged_lines, load_rubric, no_judge
 from .pack import load_pack
 from .pipeline import check_teaser, write_csv
 from .report import build_report
@@ -70,6 +70,7 @@ def patient(judge, tries: int = 5, wait: int = 120, sleep=None):
                     raise
                 print(f"Judge failed ({type(error).__name__}), waiting {wait} s, then try {attempt + 1} of {tries} ...")
                 sleep(wait)
+    run.judged_lines = getattr(judge, "judged_lines", ())
     return run
 
 
@@ -218,7 +219,9 @@ def main() -> None:
         model = args.model or get_env("MODEL_NAME")
         def factory(rubric):  # a rubric with '## SECTION' blocks is applied part by part
             call = judge_sections if is_sectioned(rubric) else judge_with_llm
-            return lambda rec, body: call(rec, body, client=client, model=model, rubric_path=rubric)
+            judge = lambda rec, body: call(rec, body, client=client, model=model, rubric_path=rubric)
+            judge.judged_lines = judged_lines(load_rubric(rubric))
+            return judge
     print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, standard v2 (by sentence). "
           f"Model {model}, repeats {args.repeats}, rubrics {[Path(r).stem for r in args.rubric]}"
           + (" (dry run: nothing is saved)" if args.dry_run else ""))

@@ -17,7 +17,10 @@ SKILL_FILE = ROOT / "skills" / "teaser-judge.md"
 Finding = Literal[
     "supported", "not_in_pack", "contradicted", "assumption_as_fact", "overgeneralised",
     "meaning_shifted", "promise", "hypothesis_unlabelled", "hypothesis_without_fact", "aura_offer_unverified",
+    "weak_evidence",
 ]
+# Findings a rubric must ask for with a line "EXTRA FINDINGS: a, b"; older rubrics (n1, n2 ...) keep their list unchanged.
+OPTIONAL_FINDINGS = {"weak_evidence"}
 
 # One place to change how findings map to the three verdicts.
 FINDING_TO_VERDICT = {
@@ -31,6 +34,7 @@ FINDING_TO_VERDICT = {
     "hypothesis_unlabelled": "Needs Human Verification",
     "hypothesis_without_fact": "Needs Human Verification",
     "aura_offer_unverified": "Needs Human Verification",
+    "weak_evidence": "Needs Human Verification",  # the Evidence quote of the teaser is chosen poorly (rubric n3)
 }
 
 
@@ -66,15 +70,24 @@ def load_rubric(path=None) -> str:
 
 
 def output_format(rubric_text: str = "") -> str:
-    """The JSON shape. A rubric line 'NO FINDINGS: a, b' takes those findings out of the list the model may choose from."""
+    """The JSON shape. A rubric line 'NO FINDINGS: a, b' takes those findings out of the list the model may choose from;
+    'EXTRA FINDINGS: a' adds an optional one."""
     skip = re.search(r"^NO FINDINGS:\s*(.+)$", rubric_text, re.M)
     skipped = {x.strip() for x in skip.group(1).split(",")} if skip else set()
+    extra = re.search(r"^EXTRA FINDINGS:\s*(.+)$", rubric_text, re.M)
+    skipped |= OPTIONAL_FINDINGS - ({x.strip() for x in extra.group(1).split(",")} if extra else set())
     findings = ", ".join(f for f in get_args(Finding) if f not in skipped)
     basis = ', "basis": "<strong, partial, weak or none for Company need and Hypothesis lines, else empty>"' \
         if re.search(r"^BASIS:", rubric_text, re.M) else ""
     return ("Return ONLY one JSON object, with no other text and no code fences, in exactly this shape:\n"
             '{"claims": [{"claim": "...", "finding": "<one of: ' + findings + '>", '
             '"source_ref": "<S1, F2, A1 ... or none>", "record_quote": "...", "reason": "..."' + basis + '}]}')
+
+
+def judged_lines(rubric_text: str) -> tuple:
+    """Labelled lines that this rubric judges itself although the code also checks them ("JUDGED LINES: Evidence")."""
+    line = re.search(r"^JUDGED LINES:\s*(.+)$", rubric_text, re.M)
+    return tuple(x.strip() for x in line.group(1).split(",")) if line else ()
 
 
 def parse_judgements(text: str) -> list[ClaimJudgement]:

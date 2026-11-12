@@ -27,6 +27,7 @@ FINDING_TEXT = {
     "hypothesis_unlabelled": "Possibility written as an established fact",
     "hypothesis_without_fact": "Hypothesis without a fact behind it",
     "aura_offer_unverified": "AURA offer not on the approved list",
+    "weak_evidence": "Quote chosen poorly",
     "supported": "Judge accepted it",
     "rule_broken": "Rule check (code)",
 }
