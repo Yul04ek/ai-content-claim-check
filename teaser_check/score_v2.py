@@ -74,7 +74,7 @@ def score_judge(gold_case: dict, rows: list[dict]) -> dict:
 
 def whole_found(item: str, code_texts: list[str]) -> int:
     """Did a code row report this whole-teaser item? Matched by the kind of rule: length ("514 words"), source notes
-    that miss a source ("source notes: S3 ..."), the entry offer not first ("first offer")."""
+    that miss a source ("source notes: S3 ..."), the entry offer not first ("first offer"), a misspelled company name."""
     item = item.lower()
     if "words" in item:
         return int(any(re.search(r"\d+ words", t) for t in code_texts))
@@ -82,6 +82,8 @@ def whole_found(item: str, code_texts: list[str]) -> int:
         return int(any(t.startswith("source notes") for t in code_texts))
     if "first offer" in item:
         return int("first offer" in code_texts)
+    if "company name" in item:
+        return int(any(t.startswith("company name") for t in code_texts))
     return 0
 
 

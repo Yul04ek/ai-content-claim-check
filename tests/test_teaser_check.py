@@ -1083,6 +1083,20 @@ def test_score_code_finds_whole_teaser_items_by_the_kind_of_rule():
     assert score_code(gold, rows[:1])["code_found"] == 1 and score_code(gold, [])["code_found"] == 0
 
 
+def test_company_name_of_the_header_must_appear_in_the_pack():
+    from teaser_check.score_v2 import score_code
+    pack = {"group_id": "X_1", "sources": [{"id": "S1", "url": "https://acme-demo.example", "excerpt": "Acme Robotics builds arms."}], "facts": []}
+    record = "COMPANY: Acme Robotics\nS1: Acme Robotics builds arms."
+    def rows_for(name):
+        text = f"DRAFT, NOT APPROVED. INTERNAL REVIEW ONLY.\nCompany: {name}\n\n## Company snapshot\nIt builds arms."
+        return [r for r in det.deterministic_checks(text, det.split_teaser(text)[0], pack, record) if r["text"].startswith("company name")]
+    assert not rows_for("Acme Robotics") and not rows_for("acme robotics")
+    typo = rows_for("Acme Robotiks")
+    assert len(typo) == 1 and typo[0]["verdict"] == "Needs Human Verification"
+    gold = {"rows": [], "whole": [["M0", "Company name misspelled in the input (Acme Robotiks)", "code"]]}
+    assert score_code(gold, typo)["code_found"] == 1 and score_code(gold, [])["code_found"] == 0
+
+
 def test_lab_set_can_name_its_gold_file():
     import tempfile
     from teaser_check.experiment import load_lab_set

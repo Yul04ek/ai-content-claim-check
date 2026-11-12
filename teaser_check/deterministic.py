@@ -53,6 +53,7 @@ def split_teaser(text: str) -> tuple[str, str]:
 
 
 WRAPPER = re.compile(r"^Created: \d{4}-\d{2}-\d{2}[ \d:]*$", re.M)  # line added by the Make Google Docs module
+COMPANY_LINE = re.compile(r"^Company: (.+)$", re.M)  # header line added by the Make Google Docs module (the input field company_name)
 
 
 def numbered_items_under_hypotheses(body: str) -> int:
@@ -76,6 +77,12 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
     if not HEADER.search(text):
         rows.append(make_row("rule", "INTERNAL REVIEW ONLY", "Needs Human Verification", "rule_broken", "none",
                              reason="The internal-review label is missing."))
+
+    # The company name typed into Make must be the name the sources use: a typo there is repeated all over the teaser.
+    company = COMPANY_LINE.search(text)
+    if company and loose(company[1]) and loose(company[1]) not in loose(record_text):
+        rows.append(make_row("rule", f"company name: {company[1].strip()}", "Needs Human Verification", "rule_broken", "none",
+                             reason="The company name in the teaser header does not appear in the pack. Check the spelling typed into Make."))
 
     # Source and fact IDs must exist in the pack.
     ids = known_ids(pack)
