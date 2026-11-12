@@ -480,6 +480,22 @@ def test_patient_judge_retries_after_a_failure_and_gives_up_in_the_end():
         pass
 
 
+def test_patient_judge_stops_at_once_when_the_daily_quota_is_used_up():
+    from claim_check.config import DailyQuotaExhausted
+    from teaser_check.experiment import patient
+    calls = []
+    def out_of_quota(rec, body):
+        calls.append(1)
+        raise DailyQuotaExhausted("429 PerDay")
+    waits = []
+    try:
+        patient(out_of_quota, tries=5, wait=120, sleep=waits.append)("r", "b")
+        assert False
+    except DailyQuotaExhausted:
+        pass
+    assert len(calls) == 1 and waits == []
+
+
 SECTIONED_BODY = ("AURA Opportunity Teaser - X\nVerified company snapshot\n- X makes mail.\n"
                   "Opportunity hypotheses (labelled)\n1) H one\n- Rationale: a long enough statement about X here.\n"
                   "AURA help and applicable offers\n- AURA AI Free, $0.\nSign-up invitation to review\n- Sign up to review the DNA of X.\n")

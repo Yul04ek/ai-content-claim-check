@@ -23,11 +23,12 @@ import datetime
 import hashlib
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 from claim_check.common import ROOT
-from claim_check.config import get_client, get_env
+from claim_check.config import DailyQuotaExhausted, get_client, get_env
 
 from .judge import judge_with_llm, judged_lines, load_rubric, no_judge
 from .pack import load_pack
@@ -65,6 +66,8 @@ def patient(judge, tries: int = 5, wait: int = 120, sleep=None):
         for attempt in range(1, tries + 1):
             try:
                 return judge(record_text, body)
+            except DailyQuotaExhausted:
+                raise  # waiting does not help: stop at once
             except Exception as error:  # the API client raises its own error types; any failure here is retried
                 if attempt == tries:
                     raise
@@ -225,8 +228,12 @@ def main() -> None:
     print(f"Lab set {lab.get('name')}: {len(lab['cases'])} teasers, standard v2 (by sentence). "
           f"Model {model}, repeats {args.repeats}, rubrics {[Path(r).stem for r in args.rubric]}"
           + (" (dry run: nothing is saved)" if args.dry_run else ""))
-    done = run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=args.experiment,
-                          out_dir=args.out_dir, mlflow=mlflow, dry_run=args.dry_run)
+    try:
+        done = run_experiment(lab, args.rubric, model, args.repeats, factory, store=args.store, experiment=args.experiment,
+                              out_dir=args.out_dir, mlflow=mlflow, dry_run=args.dry_run)
+    except DailyQuotaExhausted:
+        sys.exit("\nThe daily quota of the model is used up. Runs that are already finished are saved in the results folder "
+                 "(experiments_v2.csv, experiment_runs). Start the rest again tomorrow, after the quota resets.")
     print()
     for case, gold_case in sorted(lab["gold_v2"].items()):  # per teaser first
         by_rubric = {d["rubric"]: [s["v2"][case] for s in d["summaries"] if case in s["v2"]] for d in done}
