@@ -35,12 +35,14 @@ def get_client():
     return openai.OpenAI(base_url=get_env("BASE_URL"), api_key=get_env("API_KEY"))
 
 
-def chat(client, retries: int = 5, timeout: float = 90, **kwargs):
+def chat(client, retries: int = 5, timeout: float | None = None, **kwargs):
     """client.chat.completions.create(**kwargs) with a timeout, waiting and retrying.
 
     Waits and tries again on 429 (rate limit) and 5xx (model overloaded) and on timeouts.
     Stops at once when the DAILY free quota is used up, because waiting does not help.
     """
+    if timeout is None:  # slow models that think long need more than 90 s: set CLAIM_CHECK_TIMEOUT (seconds)
+        timeout = float(os.getenv("CLAIM_CHECK_TIMEOUT", "90"))
     fast = client.with_options(timeout=timeout, max_retries=0)  # we do the retrying ourselves
     for attempt in range(retries + 1):
         try:
