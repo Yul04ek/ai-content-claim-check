@@ -255,7 +255,9 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
                 flagged = flagged or bool(r.get("verdict"))
             for r in entries:
                 if r.get("finding") == "supported":
-                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}.{_basis_note(r)}</div>')
+                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified.{_basis_note(r)}</div>')
+                    # a verified row has a quote that the code found word for word in the source
+                    tags.append(f'<div class="tag code ok"><b>Code:</b> checked. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
                 else:
                     flagged = True
                     what = FINDING_TEXT.get(r["finding"], r["finding"])
@@ -283,9 +285,10 @@ h1{{font-size:1.4rem}} .meta{{color:#6b7280;font-size:.85rem;margin-top:-8px}} h
 </style></head><body>
 <h1>{html.escape(title)}</h1>
 {f'<p class="meta">Run: {html.escape(meta)} (the time is the clock of the machine that ran it)</p>' if meta else ''}
+<div class="sum"><small><b>How to read this report.</b> <b>Judge</b> = a model read the statement and compared it with the sources. <b>Code</b> = a word-for-word check: the program looks for the quote in the saved source text, and checks the offer and limits lines against the approved table. Under each statement the source is given with its address and the date it was read.</small></div>
 <div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
 <b>{n_read}</b> read by the judge, <b>{n_code}</b> checked by code rules only (offer, evidence and limits lines, source notes, sign-up), <b>{n_none}</b> not checked by anyone.<br>
-<b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged.<br>
+<b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged. <small>This is the share of statements labelled verified, not an accuracy score of the teaser or of the checker.</small><br>
 <b>Automatic checks (code):</b> {len(code_rows)} findings, each shown in grey under the statement it belongs to ({len(code_whole)} about the whole teaser, listed first).<br>
 Checked by code only: headings, the offer, evidence and limits lines, source notes and the sign-up sentence. Errors found there: {n_code_found}.<br>
 <small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = checked by code only, or not checked.</small></div>
