@@ -91,17 +91,20 @@ def _sentences(line: str) -> list[str]:
     return out or [line.strip()]
 
 
-def _source_name(ref: str, pack: dict | None) -> str:
-    """'S1, <address>, read <date>' for a company source, 'O1, offer table: <offer>' for a row of the AURA offer table."""
+def _source_html(ref: str, pack: dict | None) -> str:
+    """'S1, <address as link>, read <date>' for a company source; 'O1, table (link), read <date>' for a row of the AURA offer table."""
+    e = html.escape
     for src in (pack or {}).get("sources", []):
         if src.get("id") == ref:
-            return f'{ref}, {src.get("url", "")}, read {src.get("date_read", "")}'.rstrip(", ")
+            url = src.get("url", "")
+            link = f'<a href="{e(url)}">{e(url)}</a>' if url.startswith("https://") else e(url)
+            return f'{e(ref)}, {link}, read {e(src.get("date_read", ""))}'.rstrip(", ")
     for offer in (pack or {}).get("approved_aura_offers", []):
         if offer.get("id") == ref:
             url, date = (pack or {}).get("offers_table_url", ""), (pack or {}).get("offers_table_date", "")
-            where = url if url.startswith("https://") else f'offer table: {offer.get("name", "")}'
-            return f'{ref}, {where}, read {date}' if date else f'{ref}, {where}'
-    return ref if ref and ref != "none" else "no source named"
+            where = f'<a href="{e(url)}">table</a>' if url.startswith("https://") else f'offer table: {e(offer.get("name", ""))}'
+            return f'{e(ref)}, {where}' + (f", read {e(date)}" if date else "")
+    return e(ref) if ref and ref != "none" else "no source named"
 
 
 WHOLE_TEASER = re.compile(r"^(first offer$|\d+ (labelled )?hypothes|\d+ offers,|\d+ words|source notes|.*: Limits line missing)", re.I)
@@ -169,17 +172,19 @@ def _quote_sources(line: str, pack: dict | None) -> list[str]:
 
 
 def _code_pass(line: str, pack: dict | None, offer: dict | None) -> str:
-    """What the code compared a line with, when it found no error there; the plain note when it compared with nothing named."""
+    """What the code compared a line with, when it found no error there; the plain note when it compared with nothing named.
+    The note names the part that was checked (offer, limits, evidence, source notes)."""
     from .postchecks import address_of
     if re.match(r"^\W*Evidence:", line, re.I):
         ids = _quote_sources(line, pack)
         if ids:
-            return _ok_code("checked. Evidence: " + "; ".join(html.escape(_source_name(i, pack)) for i in ids) + ".")
-    if offer and re.match(r"^\W*(Offer|Limits):", line, re.I):
-        return _ok_code(f"checked. Evidence: {html.escape(_source_name(offer['id'], pack))}.")
+            return _ok_code("evidence checked. Evidence: " + "; ".join(_source_html(i, pack) for i in ids) + ".")
+    m = re.match(r"^\W*(Offer|Limits):", line, re.I)
+    if offer and m:
+        return _ok_code(f"{m[1].lower()} checked. Evidence: {_source_html(offer['id'], pack)}.")
     for src in (pack or {}).get("sources", []):
         if src.get("url", "").startswith("http") and address_of(src["url"]) in line.lower():
-            return _ok_code(f"checked. Evidence: {html.escape(_source_name(src['id'], pack))}.")
+            return _ok_code(f"source notes checked. Evidence: {_source_html(src['id'], pack)}.")
     return PASSED
 
 
@@ -189,10 +194,10 @@ def _judge_tags(entries: list[dict], pack: dict | None, quote_line: bool = True)
     tags, flagged = [], False
     for r in entries:
         if r.get("finding") == "supported":
-            where = html.escape(_source_name(r.get("source_field", ""), pack))
+            where = _source_html(r.get("source_field", ""), pack)
             tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {where}.{_basis_note(r)}</div>')
             if quote_line:  # not on Evidence lines: there the code line of the rule already says where the quote is
-                tags.append(_ok_code(f"checked. Evidence: {where}."))
+                tags.append(_ok_code(f"quote checked. Evidence: {where}."))
         else:
             flagged = True
             what = FINDING_TEXT.get(r["finding"], r["finding"])
@@ -200,14 +205,14 @@ def _judge_tags(entries: list[dict], pack: dict | None, quote_line: bool = True)
     return tags, flagged
 
 
-def _code_tag(r: dict) -> str:
+def _code_tag(r: dict, pack: dict | None = None) -> str:
     """One inline note for a code finding: grey, with the table text when the code compared with the table."""
     cls = {"Unsupported": "bad", "Needs Human Verification": "warn"}.get(r.get("verdict", ""), "note")
     what = LABEL.get(r.get("verdict", ""), "Note")  # the reason below says what exactly is wrong
     reason = html.escape(_clean_reason(r.get("reason")))
     if r.get("kind") == "offer":  # a separate rule: every offer except Free carries a review requirement in the table
-        ref = r.get("source_field") if r.get("source_field") not in (None, "", "none") else "offer table"
-        return f'<div class="tag code {cls}"><b>Code: {html.escape(what)}.</b> Evidence: {html.escape(ref)} review requirements.</div>'
+        ref = r.get("source_field") if r.get("source_field") not in (None, "", "none") else ""
+        return f'<div class="tag code {cls}"><b>Code: offer review, {html.escape(what[:1].lower() + what[1:])}.</b> Evidence: {_source_html(ref, pack)}, review requirements.</div>'
     quote = f'<br><span class="q">The table says: \u201c{html.escape(r["record_quote"])}\u201d</span>' if r.get("record_quote") else ""
     who = "Coverage check" if row_source(r) == "coverage" else "Code"
     return f'<div class="tag code {cls}"><b>{who}: {html.escape(what)}.</b> {reason}{quote}</div>'
@@ -225,25 +230,6 @@ def _card(r: dict) -> str:
         f'<div class="stmt">{html.escape(r["text"])}</div>'
         f'<div class="why"><b>Why:</b> {reason}</div><div class="by">Found by: {by}</div></div>'
     )
-
-
-def _legend(pack: dict | None) -> str:
-    """Which source the short ids stand for: S = saved company pages, O = rows of the approved AURA offer table."""
-    pack = pack or {}
-    srcs = [f'<b>{html.escape(s["id"])}</b> <a href="{html.escape(s.get("url", ""))}">{html.escape(s.get("url", ""))}</a>, page date {html.escape(s.get("page_date") or "none shown")}, read {html.escape(s.get("date_read", ""))}'
-            for s in pack.get("sources", []) if s.get("id")]
-    offers = [f'<b>{html.escape(o["id"])}</b> {html.escape(o.get("name", ""))}' for o in pack.get("approved_aura_offers", []) if o.get("id")]
-    if not srcs and not offers:
-        return ""
-    url, date = pack.get("offers_table_url", ""), pack.get("offers_table_date", "")
-    out = '<h2>Sources</h2><div class="sum legend">'
-    if srcs:
-        out += "<b>S</b>, pages about the company:<br>" + "<br>".join(srcs)
-    if offers:
-        table = f'<a href="{html.escape(url)}">{html.escape(url)}</a>' if url.startswith("https://") else "the approved AURA offer table"
-        out += ("<br><br>" if srcs else "") + f"<b>O</b>, rows of the approved AURA offer table: {table}" + (f", read {html.escape(date)}" if date else "")
-        out += "<br>" + "; ".join(offers) + "."
-    return out + "</div>"
 
 
 def run_meta(folder) -> str:
@@ -343,7 +329,7 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
         if kinds[i] == "template":
             found = code_by_line.get(i, [])
             jtags, jflag = _judge_tags(by_template.get(i, []), pack, quote_line=False)
-            extra = "".join(_code_tag(r) for r in found)
+            extra = "".join(_code_tag(r, pack) for r in found)
             bad = jflag or any(r.get("verdict") for r in found if r.get("kind") != "offer")
             n_review += sum(1 for r in found if r.get("kind") == "offer")
             n_code_found += sum(1 for r in found if r.get("kind") != "offer")
@@ -355,7 +341,7 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
             continue
         tags, flagged = [], False
         for r in code_by_line.get(i, []):
-            tags.append(_code_tag(r))
+            tags.append(_code_tag(r, pack))
             flagged = flagged or bool(r.get("verdict"))
         for k in sent_ids.get(i, []):
             entries = by_sentence.get(k, [])
@@ -363,7 +349,7 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
                 what = "" if len(sent_ids[i]) == 1 else f": \u201c{html.escape(sentences[k][1][:90])}\u201d"
                 tags.append(f'<div class="tag grey">Nobody checked this statement{what}. The judge did not read it and no code rule covers it</div>')
             for r in code_by_sentence.get(k, []):
-                tags.append(_code_tag(r))
+                tags.append(_code_tag(r, pack))
                 flagged = flagged or bool(r.get("verdict"))
             jtags, jflag = _judge_tags(entries, pack)
             tags += jtags
@@ -374,8 +360,7 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     n_read = n_ok + n_flag
     total = len(sentences) + n_code  # all statements, headings not counted
     pct = round(100 * n_ok / n_read) if n_read else 0
-    legend = _legend(pack)
-    whole_block = ("<h2>About the whole teaser</h2>" + "".join(f'<div class="ln flag">{_code_tag(r)}</div>' for r in code_whole)) if code_whole else ""
+    whole_block = ("<h2>About the whole teaser</h2>" + "".join(f'<div class="ln flag">{_code_tag(r, pack)}</div>' for r in code_whole)) if code_whole else ""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}{html.escape(' | ' + meta if meta else '')}</title><style>
 body{{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.5;color:#1d2330;background:#fff}}
@@ -401,7 +386,6 @@ Checked by code: the offer, evidence and limits lines, source notes and the sign
 {whole_block}
 <h2>The teaser, statement by statement: judge's verdict and code checks</h2>
 {"".join(html_lines)}
-{legend}
 </body></html>"""
 
 

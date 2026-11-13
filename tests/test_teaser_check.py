@@ -626,7 +626,7 @@ def test_html_report():
     page = build_report(rows, teaser, "Teaser X", pack)
     assert "1 verified (50%)" in page and "1 flagged" in page and "<b>1</b> not checked by anyone" in page
     assert "The teaser has 3 statements" in page and "<b>2</b> read only by the judge" in page
-    assert "Evidence: S1, https://tuta.com/team, read 2026-11-05" in page and "Nothing in the evidence says this" in page
+    assert 'Evidence: S1, <a href="https://tuta.com/team">https://tuta.com/team</a>, read 2026-11-05' in page and "Nothing in the evidence says this" in page
     assert "renewable energy\u201d" not in page and "<script" not in page  # no duplicated quote, no script
 
 
@@ -704,11 +704,14 @@ def test_report_names_what_judge_and_code_compared_with():
     # the short snapshot line is a statement; the Evidence line is read by the judge and checked by code
     assert "<b>1</b> read only by the judge" in page and "<b>1</b> checked by both" in page
     assert "<b>3</b> checked only by code" in page and "<b>0</b> not checked by anyone" in page
-    assert page.count("<b>Judge:</b> verified. Evidence: S1, https://tallowick.test/about, read 2026-11-13") == 2
-    # judge and code lines have the same form: "<who>: <verdict>. Evidence: <id>, <link>, read <date>."
-    assert page.count("<b>Code:</b> checked. Evidence: S1, https://tallowick.test/about, read 2026-11-13.") == 3  # snapshot, Evidence, source notes
-    assert page.count("<b>Code:</b> checked. Evidence: O1, https://docs.example/table, read 2026-11-09.") == 2   # Offer and Limits lines
-    assert page.index("<h2>Sources</h2>") > page.index("Source notes") and "page date 2026-10-20" in page
+    assert page.count('<b>Judge:</b> verified. Evidence: S1, <a href="https://tallowick.test/about">https://tallowick.test/about</a>, read 2026-11-13') == 2
+    # judge and code lines have the same form: "<who>: <what>. Evidence: <id>, <link>, read <date>."; the code line names the part it checked
+    assert page.count('<b>Code:</b> quote checked. Evidence: S1, <a href="https://tallowick.test/about">https://tallowick.test/about</a>, read 2026-11-13.') == 1      # snapshot statement
+    assert page.count('<b>Code:</b> evidence checked. Evidence: S1, <a href="https://tallowick.test/about">https://tallowick.test/about</a>, read 2026-11-13.') == 1   # Evidence line
+    assert page.count('<b>Code:</b> source notes checked. Evidence: S1, <a href="https://tallowick.test/about">https://tallowick.test/about</a>, read 2026-11-13.') == 1
+    assert page.count('<b>Code:</b> offer checked. Evidence: O1, <a href="https://docs.example/table">table</a>, read 2026-11-09.') == 1
+    assert page.count('<b>Code:</b> limits checked. Evidence: O1, <a href="https://docs.example/table">table</a>, read 2026-11-09.') == 1
+    assert "<h2>Sources</h2>" not in page and "AURA AI Free;" not in page  # no list of sources at the end
 
 
 def test_code_only_lines_say_that_the_check_passed():
