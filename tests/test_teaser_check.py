@@ -625,7 +625,7 @@ def test_html_report():
     pack = {"sources": [{"id": "S1", "url": "https://tuta.com/team", "date_read": "2026-11-05"}]}
     page = build_report(rows, teaser, "Teaser X", pack)
     assert "1 verified (50%)" in page and "1 flagged" in page and "<b>1</b> not checked by anyone" in page
-    assert "The teaser has 3 statements" in page and "<b>2</b> read by the judge" in page
+    assert "The teaser has 3 statements" in page and "<b>2</b> read only by the judge" in page
     assert "Evidence: S1, https://tuta.com/team, read 2026-11-05" in page and "Nothing in the evidence says this" in page
     assert "renewable energy\u201d" not in page and "<script" not in page  # no duplicated quote, no script
 
@@ -637,7 +637,7 @@ def test_report_counts_code_checked_lines_apart_from_forgotten_lines():
     pack = {"sources": [], "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "text": "AURA AI Free ($0)"}]}
     rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
     page = build_report(rows, teaser, "T", pack)
-    assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
+    assert "The teaser has 3 statements" in page and "<b>2</b> checked only by code" in page and "<b>0</b> not checked by anyone" in page
     old_pack = {"sources": []}   # an old pack without table fields: the code does not check these lines
     assert "<b>2</b> not checked by anyone" in build_report(rows, teaser, "T", old_pack)
 
@@ -648,7 +648,7 @@ def test_report_counts_statements_not_lines():
     rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
     page = build_report(rows, teaser, "T", {"sources": []})
     # one line, two statements: one read by the judge, one not checked by anyone
-    assert "The teaser has 2 statements" in page and "<b>1</b> read by the judge" in page and "<b>1</b> not checked by anyone" in page
+    assert "The teaser has 2 statements" in page and "<b>1</b> read only by the judge" in page and "<b>1</b> not checked by anyone" in page
     assert "Nobody checked this statement" in page and "offices in Hanover" in page
 
 
@@ -658,7 +658,7 @@ def test_report_treats_source_notes_and_sign_up_as_code_checked():
               "https://tuta.com/about, read on 2026-11-04\n\nSign up for AURA AI Free ($0) to review the preliminary Company DNA built from public research about Tuta.")
     rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
     page = build_report(rows, teaser, "T", {"sources": []})
-    assert "The teaser has 3 statements" in page and "<b>2</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
+    assert "The teaser has 3 statements" in page and "<b>2</b> checked only by code" in page and "<b>0</b> not checked by anyone" in page
 
 
 def test_code_findings_are_shown_under_their_statement_and_whole_teaser_ones_on_top():
@@ -684,7 +684,7 @@ def test_short_bullets_are_statements_and_chips_tell_who_checked():
             {"kind": "claim", "text": "Tuta has offices in Hanover and Berlin today.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"},
             {"kind": "number", "text": "100%", "verdict": "Needs Human Verification", "finding": "not_in_pack", "reason": "Number not in the pack.", "record_quote": ""}]
     page = build_report(rows, teaser, "T", {"sources": []})
-    assert "The teaser has 3 statements" in page and "<b>3</b> read by the judge" in page
+    assert "The teaser has 3 statements" in page and "<b>3</b> read only by the judge" in page
     assert "chip" not in page.split("<body>")[1] and page.count("<b>Judge:</b> verified") == 3  # the teaser text carries no marks
     assert "<b>Code needs" not in page and "Number not in the pack." in page
 
@@ -697,18 +697,18 @@ def test_report_names_what_judge_and_code_compared_with():
     pack = {"sources": [{"id": "S1", "url": "https://tallowick.test/about", "date_read": "2026-11-13", "page_date": "2026-10-20",
                          "excerpt": "We are four people. We have not written a pitch deck yet."}],
             "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "limits": "Monthly AI usage limits."}],
-            "offers_table_url": "https://docs.example/table"}
+            "offers_table_url": "https://docs.example/table", "offers_table_date": "2026-11-09"}
     rows = [{"kind": "claim", "text": "Team of 4 people", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "We are four people.", "reason": "ok"},
             {"kind": "claim", "text": "Evidence: \u201cWe have not written a pitch deck yet.\u201d", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "We have not written a pitch deck yet.", "reason": "ok"}]
     page = build_report(rows, teaser, "T", pack)
     # the short snapshot line is a statement; the Evidence line is read by the judge and checked by code
-    assert "<b>1</b> read by the judge" in page and "<b>1</b> checked by code rules and read by the judge" in page
-    assert "<b>3</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
+    assert "<b>1</b> read only by the judge" in page and "<b>1</b> checked by both" in page
+    assert "<b>3</b> checked only by code" in page and "<b>0</b> not checked by anyone" in page
     assert page.count("<b>Judge:</b> verified. Evidence: S1, https://tallowick.test/about, read 2026-11-13") == 2
-    assert "quote found word for word. Evidence: S1, https://tallowick.test/about, read 2026-11-13" in page
-    assert page.count("against the offer table. Evidence: O1, offer table: AURA AI Free") == 2   # Offer and Limits lines
-    assert "address and read date match the saved source. Evidence: S1" in page
-    assert '<a href="https://docs.example/table">the table</a>' in page and "page date 2026-10-20" in page
+    # judge and code lines have the same form: "<who>: <verdict>. Evidence: <id>, <link>, read <date>."
+    assert page.count("<b>Code:</b> checked. Evidence: S1, https://tallowick.test/about, read 2026-11-13.") == 3  # snapshot, Evidence, source notes
+    assert page.count("<b>Code:</b> checked. Evidence: O1, https://docs.example/table, read 2026-11-09.") == 2   # Offer and Limits lines
+    assert page.index("<h2>Sources</h2>") > page.index("Source notes") and "page date 2026-10-20" in page
 
 
 def test_code_only_lines_say_that_the_check_passed():
@@ -716,7 +716,7 @@ def test_code_only_lines_say_that_the_check_passed():
     teaser = "## Company snapshot\nTuta runs on renewable energy since the start.\n\nSource notes\nhttps://tuta.com/about, read on 2026-11-04"
     rows = [{"kind": "claim", "text": "Tuta runs on renewable energy since the start.", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "x", "reason": "ok"}]
     page = build_report(rows, teaser, "T", {"sources": []})
-    assert "<b>Code:</b> checked, no errors found." in page and "<b>Judge:</b> verified" in page
+    assert "<b>Code:</b> checked." in page and "<b>Judge:</b> verified" in page
 
 
 def test_missing_source_is_named_under_the_source_list():

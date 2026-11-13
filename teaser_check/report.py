@@ -98,7 +98,9 @@ def _source_name(ref: str, pack: dict | None) -> str:
             return f'{ref}, {src.get("url", "")}, read {src.get("date_read", "")}'.rstrip(", ")
     for offer in (pack or {}).get("approved_aura_offers", []):
         if offer.get("id") == ref:
-            return f'{ref}, offer table: {offer.get("name", "")}'
+            url, date = (pack or {}).get("offers_table_url", ""), (pack or {}).get("offers_table_date", "")
+            where = url if url.startswith("https://") else f'offer table: {offer.get("name", "")}'
+            return f'{ref}, {where}, read {date}' if date else f'{ref}, {where}'
     return ref if ref and ref != "none" else "no source named"
 
 
@@ -146,7 +148,7 @@ def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: lis
     return by_line, by_sentence, whole
 
 
-PASSED = '<div class="tag code ok"><b>Code:</b> checked, no errors found.</div>'
+PASSED = '<div class="tag code ok"><b>Code:</b> checked.</div>'
 
 
 def _ok_code(text: str) -> str:
@@ -172,14 +174,12 @@ def _code_pass(line: str, pack: dict | None, offer: dict | None) -> str:
     if re.match(r"^\W*Evidence:", line, re.I):
         ids = _quote_sources(line, pack)
         if ids:
-            return _ok_code("checked, quote found word for word. Evidence: " + "; ".join(html.escape(_source_name(i, pack)) for i in ids))
+            return _ok_code("checked. Evidence: " + "; ".join(html.escape(_source_name(i, pack)) for i in ids) + ".")
     if offer and re.match(r"^\W*(Offer|Limits):", line, re.I):
-        return _ok_code(f"checked word for word against the offer table. Evidence: {html.escape(_source_name(offer['id'], pack))}")
+        return _ok_code(f"checked. Evidence: {html.escape(_source_name(offer['id'], pack))}.")
     for src in (pack or {}).get("sources", []):
         if src.get("url", "").startswith("http") and address_of(src["url"]) in line.lower():
-            return _ok_code(f"checked: address and read date match the saved source. Evidence: {html.escape(_source_name(src['id'], pack))}")
-    if re.match(r"^\W*Sign up for AURA", line, re.I):
-        return _ok_code("checked: the fixed sign-up sentence is present.")
+            return _ok_code(f"checked. Evidence: {html.escape(_source_name(src['id'], pack))}.")
     return PASSED
 
 
@@ -192,7 +192,7 @@ def _judge_tags(entries: list[dict], pack: dict | None, quote_line: bool = True)
             where = html.escape(_source_name(r.get("source_field", ""), pack))
             tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {where}.{_basis_note(r)}</div>')
             if quote_line:  # not on Evidence lines: there the code line of the rule already says where the quote is
-                tags.append(_ok_code(f"checked, the judge's quote is found word for word. Evidence: {where}"))
+                tags.append(_ok_code(f"checked. Evidence: {where}."))
         else:
             flagged = True
             what = FINDING_TEXT.get(r["finding"], r["finding"])
@@ -205,8 +205,9 @@ def _code_tag(r: dict) -> str:
     cls = {"Unsupported": "bad", "Needs Human Verification": "warn"}.get(r.get("verdict", ""), "note")
     what = LABEL.get(r.get("verdict", ""), "Note")  # the reason below says what exactly is wrong
     reason = html.escape(_clean_reason(r.get("reason")))
-    if r.get("kind") == "offer":
-        reason = "(review requirements)"  # the details of the offer table are not repeated here
+    if r.get("kind") == "offer":  # a separate rule: every offer except Free carries a review requirement in the table
+        ref = r.get("source_field") if r.get("source_field") not in (None, "", "none") else "offer table"
+        return f'<div class="tag code {cls}"><b>Code: {html.escape(what)}.</b> Evidence: {html.escape(ref)} review requirements.</div>'
     quote = f'<br><span class="q">The table says: \u201c{html.escape(r["record_quote"])}\u201d</span>' if r.get("record_quote") else ""
     who = "Coverage check" if row_source(r) == "coverage" else "Code"
     return f'<div class="tag code {cls}"><b>{who}: {html.escape(what)}.</b> {reason}{quote}</div>'
@@ -229,18 +230,19 @@ def _card(r: dict) -> str:
 def _legend(pack: dict | None) -> str:
     """Which source the short ids stand for: S = saved company pages, O = rows of the approved AURA offer table."""
     pack = pack or {}
-    srcs = [f'<b>{html.escape(s["id"])}</b> {html.escape(s.get("url", ""))}, page date {html.escape(s.get("page_date") or "none shown")}, read {html.escape(s.get("date_read", ""))}'
+    srcs = [f'<b>{html.escape(s["id"])}</b> <a href="{html.escape(s.get("url", ""))}">{html.escape(s.get("url", ""))}</a>, page date {html.escape(s.get("page_date") or "none shown")}, read {html.escape(s.get("date_read", ""))}'
             for s in pack.get("sources", []) if s.get("id")]
     offers = [f'<b>{html.escape(o["id"])}</b> {html.escape(o.get("name", ""))}' for o in pack.get("approved_aura_offers", []) if o.get("id")]
     if not srcs and not offers:
         return ""
-    url = pack.get("offers_table_url", "")
-    table = f' (<a href="{html.escape(url)}">the table</a>)' if url.startswith("https://") else ""
-    out = '<div class="sum legend"><b>Sources.</b>'
+    url, date = pack.get("offers_table_url", ""), pack.get("offers_table_date", "")
+    out = '<h2>Sources</h2><div class="sum legend">'
     if srcs:
-        out += "<br><b>S</b> = pages about the company, saved with the date they were read: " + "; ".join(srcs) + "."
+        out += "<b>S</b>, pages about the company:<br>" + "<br>".join(srcs)
     if offers:
-        out += f"<br><b>O</b> = rows of the approved AURA offer table{table}: " + "; ".join(offers) + "."
+        table = f'<a href="{html.escape(url)}">{html.escape(url)}</a>' if url.startswith("https://") else "the approved AURA offer table"
+        out += ("<br><br>" if srcs else "") + f"<b>O</b>, rows of the approved AURA offer table: {table}" + (f", read {html.escape(date)}" if date else "")
+        out += "<br>" + "; ".join(offers) + "."
     return out + "</div>"
 
 
@@ -389,17 +391,17 @@ h1{{font-size:1.4rem}} .meta{{color:#6b7280;font-size:.85rem;margin-top:-8px}} h
 </style></head><body>
 <h1>{html.escape(title)}</h1>
 {f'<p class="meta">Run: {html.escape(meta)} (the time is the clock of the machine that ran it)</p>' if meta else ''}
-<div class="sum"><small><b>How to read this report.</b> <b>Judge</b> = a model read the statement and compared it with the sources. <b>Code</b> = a word-for-word check: the program looks for the quote in the saved source text, and checks the offer and limits lines against the approved table. Under each statement the source is given with its address and the date it was read.</small></div>
+<div class="sum"><small><b>How to read this report.</b> <b>Judge</b> = a model read the statement and compared it with the sources. <b>Code</b> = a word-for-word check: the program looks for the quote in the saved source text, and checks the offer and limits lines against the approved table. Under each statement the source is given with its link and the date it was read.<br><b>S</b> = pages about the company. <b>O</b> = rows of the approved AURA offer table. All links are listed at the end.</small></div>
 <div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
-<b>{len(by_sentence)}</b> read by the judge, <b>{n_code - n_both}</b> checked by code rules only, <b>{n_both}</b> checked by code rules and read by the judge, <b>{n_none}</b> not checked by anyone.<br>
+<b>{len(by_sentence)}</b> read only by the judge, <b>{n_code - n_both}</b> checked only by code, <b>{n_both}</b> checked by both, <b>{n_none}</b> not checked by anyone.<br>
 <b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged. <small>This is the share of statements labelled verified, not an accuracy score of the teaser or of the checker.</small><br>
 <b>Automatic checks (code):</b> {len(code_rows)} findings, each shown in grey under the statement it belongs to ({len(code_whole)} about the whole teaser, listed first).<br>
 Checked by code: the offer, evidence and limits lines, source notes and the sign-up sentence. Errors found there: {n_code_found}. Review required by the offer table (not errors): {n_review}.<br>
 <small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = checked by code only, or not checked.</small></div>
-{legend}
 {whole_block}
 <h2>The teaser, statement by statement: judge's verdict and code checks</h2>
 {"".join(html_lines)}
+{legend}
 </body></html>"""
 
 

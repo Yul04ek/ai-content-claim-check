@@ -45,7 +45,7 @@ def build_pack(sources: list[dict], group_id: str, record_id: str, label: str, w
                      "page_date": s["page_date"] or "none shown", "excerpt": s["text"]} for i, s in enumerate(sources, 1)],
         "facts": [], "unknowns": UNKNOWNS,
     }
-    for key in ("approved_aura_offers_status", "approved_aura_offers", "forbidden_terms", "offers_table_url"):
+    for key in ("approved_aura_offers_status", "approved_aura_offers", "forbidden_terms", "offers_table_url", "offers_table_date"):
         if key in offers_pack:
             pack[key] = offers_pack[key]
     return pack
@@ -60,6 +60,7 @@ def main(argv=None):
     ap.add_argument("--website", default="")
     ap.add_argument("--offers", required=True, help="a pack JSON with approved_aura_offers to copy")
     ap.add_argument("--offers-table-url", default="", help="link to the offer table, shown in the report (kept in the pack, not in the code)")
+    ap.add_argument("--offers-table-date", default="", help="date the offer table was read (copied), shown in the report")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     sources = parse_make_evidence(Path(a.evidence).read_text(encoding="utf-8"))
@@ -67,6 +68,8 @@ def main(argv=None):
     pack = build_pack(sources, a.group, a.record, a.label, a.website, offers)
     if a.offers_table_url:
         pack["offers_table_url"] = a.offers_table_url
+    if a.offers_table_date:
+        pack["offers_table_date"] = a.offers_table_date
     Path(a.out).write_text(json.dumps(pack, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"Pack {a.group}: {len(sources)} sources, {sum(len(s['text'].split()) for s in sources)} words -> {a.out}")
 
