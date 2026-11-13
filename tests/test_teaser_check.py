@@ -689,6 +689,28 @@ def test_short_bullets_are_statements_and_chips_tell_who_checked():
     assert "<b>Code needs" not in page and "Number not in the pack." in page
 
 
+def test_report_names_what_judge_and_code_compared_with():
+    from teaser_check.report import build_report
+    teaser = ("## Company snapshot\nTeam of 4 people\n## Opportunity hypotheses\nOffer: AURA AI Free ($0)\n"
+              "Evidence: \u201cWe have not written a pitch deck yet.\u201d\nLimits: Monthly AI usage limits.\n\nSource notes\n"
+              "https://tallowick.test/about, read on 2026-11-13")
+    pack = {"sources": [{"id": "S1", "url": "https://tallowick.test/about", "date_read": "2026-11-13", "page_date": "2026-10-20",
+                         "excerpt": "We are four people. We have not written a pitch deck yet."}],
+            "approved_aura_offers": [{"id": "O1", "name": "AURA AI Free", "offer_line": "AURA AI Free ($0)", "limits": "Monthly AI usage limits."}],
+            "offers_table_url": "https://docs.example/table"}
+    rows = [{"kind": "claim", "text": "Team of 4 people", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "We are four people.", "reason": "ok"},
+            {"kind": "claim", "text": "Evidence: \u201cWe have not written a pitch deck yet.\u201d", "verdict": "Supported", "finding": "supported", "source_field": "S1", "record_quote": "We have not written a pitch deck yet.", "reason": "ok"}]
+    page = build_report(rows, teaser, "T", pack)
+    # the short snapshot line is a statement; the Evidence line is read by the judge and checked by code
+    assert "<b>1</b> read by the judge" in page and "<b>1</b> checked by code rules and read by the judge" in page
+    assert "<b>3</b> checked by code rules only" in page and "<b>0</b> not checked by anyone" in page
+    assert page.count("<b>Judge:</b> verified. Evidence: S1, https://tallowick.test/about, read 2026-11-13") == 2
+    assert "quote found word for word. Evidence: S1, https://tallowick.test/about, read 2026-11-13" in page
+    assert page.count("against the offer table. Evidence: O1, offer table: AURA AI Free") == 2   # Offer and Limits lines
+    assert "address and read date match the saved source. Evidence: S1" in page
+    assert '<a href="https://docs.example/table">the table</a>' in page and "page date 2026-10-20" in page
+
+
 def test_code_only_lines_say_that_the_check_passed():
     from teaser_check.report import build_report
     teaser = "## Company snapshot\nTuta runs on renewable energy since the start.\n\nSource notes\nhttps://tuta.com/about, read on 2026-11-04"

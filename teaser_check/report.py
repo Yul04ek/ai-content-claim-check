@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 
+from claim_check.common import norm
 from teaser_check.pack import load_pack
 from teaser_check.score import row_source
 
@@ -64,7 +65,10 @@ def _line_kind(line: str, part: str) -> str:
     """'skip' for headings and empty lines, 'template' for parts the judge does not read, else 'claim'."""
     from .sections import heading_name  # here, not at the top: sections imports judge
     bullet = bool(re.match(r"^\s*[-*\u2022]\s*\S", line))  # a bullet is a statement, even a short one ("100% Data Ownership")
-    if (len(re.findall(r"\w+", line)) < 5 and not bullet) or line.strip().endswith(":") or heading_name(line):
+    # a short line is a heading, except in the company snapshot, where "Team of 4 people" is a fact
+    heading_like = bool(re.match(r"^\W*(source notes?|sources?)\W*$|^\s*#", line, re.I))
+    short = len(re.findall(r"\w+", line)) < 5 and not bullet and (part != "snapshot" or heading_like)
+    if not line.strip() or short or line.strip().endswith(":") or heading_name(line):
         return "skip"
     if re.match(r"^\s*(?:H\d|\d+[.)])\s*[^.:;]*$", line) and len(line.split()) <= 12:
         return "skip"  # a numbered title such as "1) Privacy-first niche" is a heading
@@ -88,9 +92,13 @@ def _sentences(line: str) -> list[str]:
 
 
 def _source_name(ref: str, pack: dict | None) -> str:
+    """'S1, <address>, read <date>' for a company source, 'O1, offer table: <offer>' for a row of the AURA offer table."""
     for src in (pack or {}).get("sources", []):
         if src.get("id") == ref:
             return f'{ref}, {src.get("url", "")}, read {src.get("date_read", "")}'.rstrip(", ")
+    for offer in (pack or {}).get("approved_aura_offers", []):
+        if offer.get("id") == ref:
+            return f'{ref}, offer table: {offer.get("name", "")}'
     return ref if ref and ref != "none" else "no source named"
 
 
@@ -141,6 +149,57 @@ def _attach_code(code_rows: list[dict], lines: list, kinds: list, sentences: lis
 PASSED = '<div class="tag code ok"><b>Code:</b> checked, no errors found.</div>'
 
 
+def _ok_code(text: str) -> str:
+    return f'<div class="tag code ok"><b>Code:</b> {text}</div>'
+
+
+def _quote_sources(line: str, pack: dict | None) -> list[str]:
+    """Ids of the company sources that hold each quotation of an Evidence line word for word."""
+    from .deterministic import QUOTE, loose
+    found = []
+    for quote in (q for q in QUOTE.findall(line) if len(q.split()) >= 3):
+        parts = [loose(p) for p in re.split(r"\.{3}|…", quote) if loose(p)]
+        for src in (pack or {}).get("sources", []):
+            if parts and all(p in loose(src.get("excerpt", "")) for p in parts):
+                found.append(src["id"])
+                break
+    return list(dict.fromkeys(found))
+
+
+def _code_pass(line: str, pack: dict | None, offer: dict | None) -> str:
+    """What the code compared a line with, when it found no error there; the plain note when it compared with nothing named."""
+    from .postchecks import address_of
+    if re.match(r"^\W*Evidence:", line, re.I):
+        ids = _quote_sources(line, pack)
+        if ids:
+            return _ok_code("checked, quote found word for word. Evidence: " + "; ".join(html.escape(_source_name(i, pack)) for i in ids))
+    if offer and re.match(r"^\W*(Offer|Limits):", line, re.I):
+        return _ok_code(f"checked word for word against the offer table. Evidence: {html.escape(_source_name(offer['id'], pack))}")
+    for src in (pack or {}).get("sources", []):
+        if src.get("url", "").startswith("http") and address_of(src["url"]) in line.lower():
+            return _ok_code(f"checked: address and read date match the saved source. Evidence: {html.escape(_source_name(src['id'], pack))}")
+    if re.match(r"^\W*Sign up for AURA", line, re.I):
+        return _ok_code("checked: the fixed sign-up sentence is present.")
+    return PASSED
+
+
+def _judge_tags(entries: list[dict], pack: dict | None, quote_line: bool = True) -> tuple[list[str], bool]:
+    """The judge's verdicts on one statement. A verified one names its source; the code line under it says that the
+    judge's quote was found word for word in that source (a verified row whose quote is not found is downgraded)."""
+    tags, flagged = [], False
+    for r in entries:
+        if r.get("finding") == "supported":
+            where = html.escape(_source_name(r.get("source_field", ""), pack))
+            tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {where}.{_basis_note(r)}</div>')
+            if quote_line:  # not on Evidence lines: there the code line of the rule already says where the quote is
+                tags.append(_ok_code(f"checked, the judge's quote is found word for word. Evidence: {where}"))
+        else:
+            flagged = True
+            what = FINDING_TEXT.get(r["finding"], r["finding"])
+            tags.append(f'<div class="tag warn"><b>Judge: {html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}{_basis_note(r)}</div>')
+    return tags, flagged
+
+
 def _code_tag(r: dict) -> str:
     """One inline note for a code finding: grey, with the table text when the code compared with the table."""
     cls = {"Unsupported": "bad", "Needs Human Verification": "warn"}.get(r.get("verdict", ""), "note")
@@ -165,6 +224,24 @@ def _card(r: dict) -> str:
         f'<div class="stmt">{html.escape(r["text"])}</div>'
         f'<div class="why"><b>Why:</b> {reason}</div><div class="by">Found by: {by}</div></div>'
     )
+
+
+def _legend(pack: dict | None) -> str:
+    """Which source the short ids stand for: S = saved company pages, O = rows of the approved AURA offer table."""
+    pack = pack or {}
+    srcs = [f'<b>{html.escape(s["id"])}</b> {html.escape(s.get("url", ""))}, page date {html.escape(s.get("page_date") or "none shown")}, read {html.escape(s.get("date_read", ""))}'
+            for s in pack.get("sources", []) if s.get("id")]
+    offers = [f'<b>{html.escape(o["id"])}</b> {html.escape(o.get("name", ""))}' for o in pack.get("approved_aura_offers", []) if o.get("id")]
+    if not srcs and not offers:
+        return ""
+    url = pack.get("offers_table_url", "")
+    table = f' (<a href="{html.escape(url)}">the table</a>)' if url.startswith("https://") else ""
+    out = '<div class="sum legend"><b>Sources.</b>'
+    if srcs:
+        out += "<br><b>S</b> = pages about the company, saved with the date they were read: " + "; ".join(srcs) + "."
+    if offers:
+        out += f"<br><b>O</b> = rows of the approved AURA offer table{table}: " + "; ".join(offers) + "."
+    return out + "</div>"
 
 
 def run_meta(folder) -> str:
@@ -210,8 +287,23 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     # the unit is the statement: a sentence of a line for the judge; a whole line the code checks counts as one statement
     sentences = [(i, sent) for i, (line, _) in enumerate(lines) if kinds[i] == "claim" for sent in _sentences(line)]
     by_sentence: dict[int, list[dict]] = {}
+    by_template: dict[int, list[dict]] = {}   # judge verdicts on lines the code checks too (Evidence lines): checked by both
+    def best_template(cw):
+        best, score = None, 0.0
+        for i, (line, _) in enumerate(lines):
+            if kinds[i] == "template":
+                lw = _words(line)
+                ov = len(cw & lw) / max(1, min(len(cw), len(lw)))
+                if ov > score:
+                    best, score = i, ov
+        return best if score >= 0.6 else None
+
     for r in judged:
         cw = _words(r["text"])
+        # an "Evidence: ..." verdict belongs to the Evidence line, not to a hypothesis that repeats the same quote
+        if re.match(r"^\W*(%s):" % "|".join(labels), r["text"], re.I) and best_template(cw) is not None:
+            by_template.setdefault(best_template(cw), []).append(r)
+            continue
         best, score = None, 0.0
         for k, (_, sent) in enumerate(sentences):
             sw = _words(sent)
@@ -220,26 +312,44 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
                 best, score = k, ov
         if best is not None and score >= 0.6:
             by_sentence.setdefault(best, []).append(r)
+        elif best_template(cw) is not None:
+            by_template.setdefault(best_template(cw), []).append(r)
     sent_ids: dict[int, list[int]] = {}
     for k, (i, _) in enumerate(sentences):
         sent_ids.setdefault(i, []).append(k)
     code_by_line, code_by_sentence, code_whole = _attach_code(code_rows, lines, kinds, sentences, sources_end)
-    n_ok = sum(1 for k, e in by_sentence.items() if all(r.get("finding") == "supported" for r in e))
-    n_flag = len(by_sentence) - n_ok
+    judged_units = list(by_sentence.values()) + list(by_template.values())
+    n_ok = sum(1 for e in judged_units if all(r.get("finding") == "supported" for r in e))
+    n_flag = len(judged_units) - n_ok
     n_code = sum(1 for kind in kinds if kind == "template")
+    n_both = len(by_template)
     n_none = len(sentences) - len(by_sentence)
+    offers = [o for o in (pack or {}).get("approved_aura_offers", []) if o.get("offer_line")]
     html_lines = []
     n_code_found = 0   # code findings on the lines that only the code checks
+    n_review = 0       # rows that only repeat the review requirement of the offer table: not errors
+    offer = None       # the offer of the block the line belongs to (for the Offer and Limits lines)
     for i, (line, part) in enumerate(lines):
         text = html.escape(line)
+        m = re.match(r"^\W*Offer:\s*(.*)$", line, re.I)
+        if m:
+            offer = next((o for o in offers if norm(o["offer_line"]) == norm(m[1])), None) or \
+                next((o for o in offers if norm(o["name"]) in norm(m[1])), None)
         if kinds[i] == "skip":
             html_lines.append(f'<div class="ln head">{text or "&nbsp;"}</div>')
             continue
         if kinds[i] == "template":
-            extra = "".join(_code_tag(r) for r in code_by_line.get(i, []))
-            bad = any(r.get("verdict") for r in code_by_line.get(i, []))
-            n_code_found += len(code_by_line.get(i, []))
-            html_lines.append(f'<div class="ln {"flag" if bad else ""}"><div class="t">{text}</div>{extra or PASSED}</div>')
+            found = code_by_line.get(i, [])
+            jtags, jflag = _judge_tags(by_template.get(i, []), pack, quote_line=False)
+            extra = "".join(_code_tag(r) for r in found)
+            bad = jflag or any(r.get("verdict") for r in found if r.get("kind") != "offer")
+            n_review += sum(1 for r in found if r.get("kind") == "offer")
+            n_code_found += sum(1 for r in found if r.get("kind") != "offer")
+            code_part = extra if found else _code_pass(line, pack, offer)
+            if found and all(r.get("kind") == "offer" for r in found):
+                code_part = _code_pass(line, pack, offer) + extra  # the table check passed; the review requirement stays
+            cls = "flag" if bad else ("good" if jtags else "")
+            html_lines.append(f'<div class="ln {cls}"><div class="t">{text}</div>{"".join(jtags)}{code_part}</div>')
             continue
         tags, flagged = [], False
         for r in code_by_line.get(i, []):
@@ -253,22 +363,16 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
             for r in code_by_sentence.get(k, []):
                 tags.append(_code_tag(r))
                 flagged = flagged or bool(r.get("verdict"))
-            for r in entries:
-                if r.get("finding") == "supported":
-                    tags.append(f'<div class="tag ok"><b>Judge:</b> verified.{_basis_note(r)}</div>')
-                    # a verified row has a quote that the code found word for word in the source
-                    tags.append(f'<div class="tag code ok"><b>Code:</b> checked. Evidence: {html.escape(_source_name(r.get("source_field", ""), pack))}</div>')
-                else:
-                    flagged = True
-                    what = FINDING_TEXT.get(r["finding"], r["finding"])
-                    tags.append(f'<div class="tag warn"><b>Judge: {html.escape(what)}.</b> {html.escape(_clean_reason(r.get("reason")))}{_basis_note(r)}</div>')
+            jtags, jflag = _judge_tags(entries, pack)
+            tags += jtags
+            flagged = flagged or jflag
         read = [k for k in sent_ids.get(i, []) if by_sentence.get(k)]
         cls = "flag" if flagged else ("good" if read else "")
-        by_code = bool(code_by_line.get(i)) or any(code_by_sentence.get(k) for k in sent_ids.get(i, []))
         html_lines.append(f'<div class="ln {cls}"><div class="t">{text}</div>{"".join(tags)}</div>')
     n_read = n_ok + n_flag
-    total = n_read + n_code + n_none  # all statements, headings not counted
+    total = len(sentences) + n_code  # all statements, headings not counted
     pct = round(100 * n_ok / n_read) if n_read else 0
+    legend = _legend(pack)
     whole_block = ("<h2>About the whole teaser</h2>" + "".join(f'<div class="ln flag">{_code_tag(r)}</div>' for r in code_whole)) if code_whole else ""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}{html.escape(' | ' + meta if meta else '')}</title><style>
@@ -287,11 +391,12 @@ h1{{font-size:1.4rem}} .meta{{color:#6b7280;font-size:.85rem;margin-top:-8px}} h
 {f'<p class="meta">Run: {html.escape(meta)} (the time is the clock of the machine that ran it)</p>' if meta else ''}
 <div class="sum"><small><b>How to read this report.</b> <b>Judge</b> = a model read the statement and compared it with the sources. <b>Code</b> = a word-for-word check: the program looks for the quote in the saved source text, and checks the offer and limits lines against the approved table. Under each statement the source is given with its address and the date it was read.</small></div>
 <div class="sum"><b>The teaser has {total} statements</b> (headings not counted):
-<b>{n_read}</b> read by the judge, <b>{n_code}</b> checked by code rules only (offer, evidence and limits lines, source notes, sign-up), <b>{n_none}</b> not checked by anyone.<br>
+<b>{len(by_sentence)}</b> read by the judge, <b>{n_code - n_both}</b> checked by code rules only, <b>{n_both}</b> checked by code rules and read by the judge, <b>{n_none}</b> not checked by anyone.<br>
 <b>Judge:</b> of {n_read} statements <b>{n_ok} verified ({pct}%)</b>, {n_flag} flagged. <small>This is the share of statements labelled verified, not an accuracy score of the teaser or of the checker.</small><br>
 <b>Automatic checks (code):</b> {len(code_rows)} findings, each shown in grey under the statement it belongs to ({len(code_whole)} about the whole teaser, listed first).<br>
-Checked by code only: headings, the offer, evidence and limits lines, source notes and the sign-up sentence. Errors found there: {n_code_found}.<br>
+Checked by code: the offer, evidence and limits lines, source notes and the sign-up sentence. Errors found there: {n_code_found}. Review required by the offer table (not errors): {n_review}.<br>
 <small>Review only: nothing is published or sent. Green = verified against the source, amber = the judge has a remark, grey = checked by code only, or not checked.</small></div>
+{legend}
 {whole_block}
 <h2>The teaser, statement by statement: judge's verdict and code checks</h2>
 {"".join(html_lines)}
