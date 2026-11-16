@@ -9,15 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from identity.match import check_input, decide, decide_json, describe_input, host_of, is_platform, name_key, registrable
 
 # A small synthetic registry (records as Make would pass them as candidates)
-CORVANE = {"group_id": "c-1", "name": "Corvane GmbH", "official_domain": "corvane.de", "domain_verified": True}
-TALLOWICK = {"group_id": "c-2", "name": "Tallowick", "official_domain": "", "domain_verified": False}
-MOVED = {"group_id": "c-3", "name": "Veilpost", "official_domain": "veilpost.io", "domain_verified": True,
+CORVANE = {"group_id": "c-1", "name": "Corvane GmbH", "official_domain": "corvane.de"}
+TALLOWICK = {"group_id": "c-2", "name": "Tallowick", "official_domain": ""}
+MOVED = {"group_id": "c-3", "name": "Veilpost", "official_domain": "veilpost.io",
          "domain_history": ["veilpost-app.com"]}
-UNVERIFIED = {"group_id": "c-4", "name": "Slotwise", "official_domain": "slotwise.app", "domain_verified": False}
-REGISTERED = {"group_id": "c-5", "name": "Buildstash Ltd", "official_domain": "buildstash.com", "domain_verified": True,
+UNVERIFIED = {"group_id": "c-4", "name": "Slotwise", "official_domain": "", "candidate_url": "https://www.slotwise.app/"}
+REGISTERED = {"group_id": "c-5", "name": "Buildstash Ltd", "official_domain": "buildstash.com",
               "registration_id": "HRB 123456 B"}
-CLERA_MUC = {"group_id": "c-6", "name": "Clera", "official_domain": "getclera.com", "domain_verified": True}
-BRAND_A = {"group_id": "c-7", "name": "Northwind Labs", "official_domain": "labs.parentgroup.com", "domain_verified": True}
+CLERA_MUC = {"group_id": "c-6", "name": "Clera", "official_domain": "getclera.com"}
+BRAND_A = {"group_id": "c-7", "name": "Northwind Labs", "official_domain": "labs.parentgroup.com"}
 REGISTRY = [CORVANE, TALLOWICK, MOVED, UNVERIFIED, REGISTERED, CLERA_MUC, BRAND_A]
 
 
@@ -77,7 +77,7 @@ def test_same_verified_website_is_a_duplicate():
 
 def test_same_but_unverified_website_goes_to_a_human():
     result = decide({"name": "Slotwise", "website": "https://slotwise.app"}, REGISTRY)
-    assert result["status"] == "POSSIBLE_DUPLICATE" and result["matches"][0]["reason"] == "same domain, not verified yet"
+    assert result["status"] == "POSSIBLE_DUPLICATE" and result["matches"][0]["reason"] == "same website, not verified yet"
 
 
 def test_different_websites_same_name_goes_to_a_human():
@@ -103,12 +103,12 @@ def test_changed_domain_is_recognised_from_the_history():
 
 def test_two_companies_on_the_same_platform_are_both_new():
     # Tallowick and Corvane test pages both live on claude.ai: the platform must not join them
-    registry = [{"group_id": "t-1", "name": "Tallowick", "official_domain": "", "domain_verified": False}]
+    registry = [{"group_id": "t-1", "name": "Tallowick", "official_domain": "", "candidate_url": "https://claude.ai/artifact/S4k"}]
     assert status({"name": "Corvane", "website": "https://claude.ai/artifact/44j2E49j7935imJEMzNxcd"}, registry) == "NEW"
 
 
 def test_same_platform_and_same_name_goes_to_a_human():
-    registry = [{"group_id": "t-1", "name": "Tallowick", "official_domain": "", "domain_verified": False}]
+    registry = [{"group_id": "t-1", "name": "Tallowick", "official_domain": "", "candidate_url": "https://claude.ai/artifact/S4k"}]
     assert status({"name": "Tallowick", "website": "https://claude.ai/artifact/other"}, registry) == "POSSIBLE_DUPLICATE"
 
 
@@ -161,6 +161,59 @@ def test_json_entry_point_for_make():
     out = json.loads(decide_json(json.dumps({"new": {"name": "Corvane", "website": "https://corvane.de"},
                                              "candidates": [CORVANE]})))
     assert out["status"] == "DUPLICATE" and out["group_id"] == "c-1"
+
+
+# --- Make adapter and the generated Code blocks ---
+
+from identity.make_adapter import NONE, make_decide, make_keys
+from identity.make_code import build
+
+
+def run_block(code, inp):
+    """Run a generated block the way Make's Code module does: inside a function, with `input` given."""
+    scope = {}
+    exec("def _make(input):\n" + "\n".join("    " + line for line in code.splitlines()), scope)
+    return scope["_make"](inp)
+
+
+def test_keys_use_a_placeholder_for_empty_values():
+    keys = make_keys({"company_label": "Corvane GmbH", "candidate_url": "", "source_urls": "https://a.example/job"})
+    assert keys["name_key"] == "corvane" and keys["domain_candidate"] == NONE and keys["registration_key"] == NONE
+    assert keys["problems"] == ""
+
+
+def test_keys_report_a_missing_https_source():
+    assert "HTTPS source" in make_keys({"company_label": "Newco", "source_urls": "http://x.de"})["problems"]
+
+
+def test_decide_reads_aggregated_records_and_skips_the_empty_bundle():
+    candidates = [{"group_id": "c-1", "company_label": "Corvane GmbH", "official_domain": "corvane.de"},
+                  {}, {"group_id": "c-1", "company_label": "Corvane GmbH", "official_domain": "corvane.de"}]
+    out = make_decide({"company_label": "Corvane", "candidate_url": "https://corvane.de",
+                       "source_urls": "https://corvane.de; https://a.example/job", "candidates": candidates})
+    assert out["status"] == "DUPLICATE" and out["group_id"] == "c-1" and out["candidates_seen"] == 1
+    assert out["source_provenance"] == "https://corvane.de; https://a.example/job"
+
+
+def test_decide_accepts_candidates_as_json_text():
+    text = json.dumps([{"group_id": "t-1", "company_label": "Tallowick", "candidate_url": "https://claude.ai/artifact/S4k"}])
+    out = make_decide({"company_label": "Corvane", "source_urls": "https://claude.ai/artifact/44j", "candidates": text})
+    assert out["status"] == "NEW" and out["duplicate_candidates"] == ""
+
+
+def test_generated_blocks_run_like_in_make():
+    blocks = build()
+    keys = run_block(blocks["make_keys.py.txt"], {"company_label": "Corvane", "source_urls": "https://a.example/job"})
+    assert keys["name_key"] == "corvane"
+    out = run_block(blocks["make_decide.py.txt"], {"company_label": "Tallowick", "source_urls": "https://a.example/j",
+                                                   "candidates": [{"group_id": "t-1", "company_label": "Tallowick"}]})
+    assert out["status"] == "POSSIBLE_DUPLICATE" and "t-1" in out["duplicate_candidates"]
+
+
+def test_generated_blocks_are_up_to_date():
+    here = Path(__file__).resolve().parent.parent / "identity"
+    for name, text in build().items():
+        assert (here / name).read_text(encoding="utf-8") == text, f"{name} is stale: run python -m identity.make_code"
 
 
 if __name__ == "__main__":

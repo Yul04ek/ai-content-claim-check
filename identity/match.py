@@ -1,11 +1,13 @@
 # Company identity and duplicate detection for the founder source registry (task YL-004B).
 #
-# Pure Python, standard library only, so the same file can run inside Make's Code module.
+# Pure Python, standard library only, no type hints (runs on older Python too), so the same file can run inside
+# Make's Code module.
 # Make finds a few candidate records in the registry (by domain, registration ID, name key) and passes them here;
 # this code decides. It never merges: an uncertain match goes to a human.
 #
 # Decisions:
 #   DUPLICATE           same registration ID, or the same VERIFIED official domain (or one of its earlier domains)
+#                       (official_domain is filled only by a human after checking the site: filled = verified)
 #                       with a matching name -> use the existing group_id, add the new source to it
 #   POSSIBLE_DUPLICATE  something matches but identity is not proven (same name, unverified or shared domain)
 #                       -> new record, held for human review, candidates listed
@@ -35,30 +37,30 @@ LEGAL_FORMS = {
 NAME_SIMILARITY = 0.9  # difflib ratio of two name keys counted as "the same name" (catches typos like Bildstash/Buildstash)
 
 
-def host_of(url: str) -> str:
+def host_of(url):
     """'https://www.Corvane.de:443/about?x=1' -> 'corvane.de'. Empty input gives ''."""
     url = (url or "").strip().lower()
     if not url:
         return ""
     host = url.split("://", 1)[-1].split("/", 1)[0].split("?", 1)[0].split("#", 1)[0]
     host = host.rsplit("@", 1)[-1].split(":", 1)[0].rstrip(".")
-    return host.removeprefix("www.")
+    return host[4:] if host.startswith("www.") else host
 
 
-def registrable(host: str) -> str:
+def registrable(host):
     """The part a company registers: 'shop.corvane.de' -> 'corvane.de', 'a.b.co.uk' -> 'b.co.uk'."""
     parts = host.split(".")
     keep = 3 if ".".join(parts[-2:]) in TWO_PART_SUFFIXES else 2
     return ".".join(parts[-keep:])
 
 
-def is_platform(host: str, extra: set | None = None) -> bool:
+def is_platform(host, extra=None):
     """True for a page on a third-party platform (also its subdomains, e.g. jobs.linkedin.com)."""
     platforms = PLATFORM_DOMAINS | (extra or set())
     return bool(host) and any(host == p or host.endswith("." + p) for p in platforms)
 
 
-def name_key(name: str) -> str:
+def name_key(name):
     """'Corvane GmbH' and 'CORVANE  UG (haftungsbeschränkt)' -> 'corvane'. Accents, punctuation and legal forms removed."""
     text = (name or "").lower().replace("ß", "ss").replace("&", " ")
     text = "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
@@ -67,21 +69,21 @@ def name_key(name: str) -> str:
     return " ".join(kept or words)  # a name made only of legal-form words keeps them
 
 
-def same_name(a: str, b: str) -> bool:
+def same_name(a, b):
     ka, kb = name_key(a), name_key(b)
     return bool(ka and kb) and (ka == kb or difflib.SequenceMatcher(None, ka, kb).ratio() >= NAME_SIMILARITY)
 
 
-def reg_key(value: str) -> str:
+def reg_key(value):
     """'HRB 123 456 B' -> 'HRB123456B'."""
     return "".join(c for c in (value or "").upper() if c.isalnum())
 
 
-def names_of(record: dict) -> list[str]:
+def names_of(record):
     return [record.get("name", "")] + list(record.get("aliases") or [])
 
 
-def describe_input(new: dict, extra_platforms: set | None = None) -> dict:
+def describe_input(new, extra_platforms=None):
     """The fields Make stores for a new entry: website host, whether it is a third-party platform, name key."""
     host = host_of(new.get("website", ""))
     platform = is_platform(host, extra_platforms)
@@ -89,7 +91,7 @@ def describe_input(new: dict, extra_platforms: set | None = None) -> dict:
             "domain_candidate": "" if platform else host, "registration_key": reg_key(new.get("registration_id", ""))}
 
 
-def check_input(new: dict) -> list[str]:
+def check_input(new):
     """Problems that stop an entry: no name, or no HTTPS source at all (website or another public source)."""
     problems = []
     if not name_key(new.get("name", "")):
@@ -100,12 +102,14 @@ def check_input(new: dict) -> list[str]:
     return problems
 
 
-def decide(new: dict, candidates: list[dict], extra_platforms: set | None = None) -> dict:
+def decide(new, candidates, extra_platforms=None):
     """Compare a new entry with candidate records of the registry.
 
     new:        {"name", "website" (optional), "registration_id" (optional), "sources" (list of URLs)}
-    candidates: registry records {"group_id", "name", "aliases", "official_domain", "domain_verified",
-                "domain_history", "registration_id"}
+    candidates: registry records {"group_id", "name", "aliases", "official_domain", "domain_history",
+                "candidate_url", "registration_id"}
+                official_domain is written only by a human after checking the site: filled = verified.
+                candidate_url is the site somebody entered, not verified.
     Returns {"status", "group_id" (only for DUPLICATE), "matches": [{"group_id", "reason"}], "input": {...}}.
     """
     info = describe_input(new, extra_platforms)
@@ -125,20 +129,23 @@ def decide(new: dict, candidates: list[dict], extra_platforms: set | None = None
             if name_match:
                 unsure.append({"group_id": cid, "reason": "same name, different registration IDs"})
             continue
-        known = [d for d in [c.get("official_domain", "")] + list(c.get("domain_history") or []) if d]
+        known = [d for d in [c.get("official_domain", "")] + list(c.get("domain_history") or []) if d]  # verified
+        entered = host_of(c.get("candidate_url", ""))
+        entered = "" if is_platform(entered, extra_platforms) or entered in known else entered  # not verified
         if domain and known:
             if domain in known:
-                if c.get("domain_verified") and name_match:
+                if name_match:
                     reason = "same verified domain" if domain == c.get("official_domain") else "earlier domain of this company"
                     sure.append({"group_id": cid, "reason": reason})
-                elif not c.get("domain_verified"):
-                    unsure.append({"group_id": cid, "reason": "same domain, not verified yet"})
                 else:
                     unsure.append({"group_id": cid, "reason": "same domain, different names (shared or parent domain?)"})
                 continue
             if any(registrable(domain) == registrable(d) for d in known):
                 unsure.append({"group_id": cid, "reason": "same parent domain, different subdomains"})
                 continue
+        if domain and entered == domain:
+            unsure.append({"group_id": cid, "reason": "same website, not verified yet"})
+            continue
         if name_match:
             if domain and known:
                 why = "same name, different domains (changed website or another company?)"
@@ -153,7 +160,7 @@ def decide(new: dict, candidates: list[dict], extra_platforms: set | None = None
     return {"status": "NEW", "matches": [], "input": info}
 
 
-def decide_json(payload: str) -> str:
+def decide_json(payload):
     """Entry point for Make's Code module: JSON in ({"new": {...}, "candidates": [...]}), JSON out."""
     data = json.loads(payload)
     return json.dumps(decide(data["new"], data.get("candidates") or []), ensure_ascii=False)
