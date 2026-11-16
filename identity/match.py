@@ -6,10 +6,10 @@
 #
 # Decisions:
 #   DUPLICATE           same registration ID, or the same VERIFIED official domain (or one of its earlier domains)
-#                       with a matching name -> use the existing company_id, add the new source to it
+#                       with a matching name -> use the existing group_id, add the new source to it
 #   POSSIBLE_DUPLICATE  something matches but identity is not proven (same name, unverified or shared domain)
 #                       -> new record, held for human review, candidates listed
-#   NEW                 nothing matches -> new record with a new company_id (Make generates it with uuid)
+#   NEW                 nothing matches -> new record with a new group_id (Make generates it with uuid)
 #
 # A third-party page (job board, directory, accelerator, social network, claude.ai) is never a company's own domain.
 
@@ -104,9 +104,9 @@ def decide(new: dict, candidates: list[dict], extra_platforms: set | None = None
     """Compare a new entry with candidate records of the registry.
 
     new:        {"name", "website" (optional), "registration_id" (optional), "sources" (list of URLs)}
-    candidates: registry records {"company_id", "name", "aliases", "official_domain", "domain_verified",
+    candidates: registry records {"group_id", "name", "aliases", "official_domain", "domain_verified",
                 "domain_history", "registration_id"}
-    Returns {"status", "company_id" (only for DUPLICATE), "matches": [{"company_id", "reason"}], "input": {...}}.
+    Returns {"status", "group_id" (only for DUPLICATE), "matches": [{"group_id", "reason"}], "input": {...}}.
     """
     info = describe_input(new, extra_platforms)
     problems = check_input(new)
@@ -116,38 +116,38 @@ def decide(new: dict, candidates: list[dict], extra_platforms: set | None = None
     domain, reg = info["domain_candidate"], info["registration_key"]
     sure, unsure = [], []
     for c in candidates:
-        cid = c.get("company_id", "")
+        cid = c.get("group_id", "")
         name_match = any(same_name(new.get("name", ""), n) for n in names_of(c))
         if reg and reg == reg_key(c.get("registration_id", "")):
-            sure.append({"company_id": cid, "reason": "same registration ID"})
+            sure.append({"group_id": cid, "reason": "same registration ID"})
             continue
         if reg and reg_key(c.get("registration_id", "")):  # both have registration IDs and they differ
             if name_match:
-                unsure.append({"company_id": cid, "reason": "same name, different registration IDs"})
+                unsure.append({"group_id": cid, "reason": "same name, different registration IDs"})
             continue
         known = [d for d in [c.get("official_domain", "")] + list(c.get("domain_history") or []) if d]
         if domain and known:
             if domain in known:
                 if c.get("domain_verified") and name_match:
                     reason = "same verified domain" if domain == c.get("official_domain") else "earlier domain of this company"
-                    sure.append({"company_id": cid, "reason": reason})
+                    sure.append({"group_id": cid, "reason": reason})
                 elif not c.get("domain_verified"):
-                    unsure.append({"company_id": cid, "reason": "same domain, not verified yet"})
+                    unsure.append({"group_id": cid, "reason": "same domain, not verified yet"})
                 else:
-                    unsure.append({"company_id": cid, "reason": "same domain, different names (shared or parent domain?)"})
+                    unsure.append({"group_id": cid, "reason": "same domain, different names (shared or parent domain?)"})
                 continue
             if any(registrable(domain) == registrable(d) for d in known):
-                unsure.append({"company_id": cid, "reason": "same parent domain, different subdomains"})
+                unsure.append({"group_id": cid, "reason": "same parent domain, different subdomains"})
                 continue
         if name_match:
             if domain and known:
                 why = "same name, different domains (changed website or another company?)"
             else:
                 why = "same name, no domain to compare"
-            unsure.append({"company_id": cid, "reason": why})
+            unsure.append({"group_id": cid, "reason": why})
 
     if len(sure) == 1 and not unsure:
-        return {"status": "DUPLICATE", "company_id": sure[0]["company_id"], "matches": sure, "input": info}
+        return {"status": "DUPLICATE", "group_id": sure[0]["group_id"], "matches": sure, "input": info}
     if sure or unsure:  # several sure matches also need a human: the registry may already hold a duplicate
         return {"status": "POSSIBLE_DUPLICATE", "matches": sure + unsure, "input": info}
     return {"status": "NEW", "matches": [], "input": info}
