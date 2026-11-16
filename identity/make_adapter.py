@@ -10,7 +10,10 @@ try:  # in the repository; inside Make these names are defined above (the block 
 except ImportError:
     pass
 
+import uuid
+
 NONE = "__none__"
+REVIEW_STATE = {"NEW": "SOURCE_CANDIDATE_UNVERIFIED", "POSSIBLE_DUPLICATE": "POSSIBLE_DUPLICATE_HELD"}
 
 
 def split_list(text, sep):
@@ -52,7 +55,10 @@ def make_decide(inp):
             candidates.append(c)
     result = decide(new_from_make(inp), candidates)
     info = result["input"]
+    # a new permanent ID (full UUIDv4) only for a record that will be written; a DUPLICATE keeps the existing group_id
+    new_id = "G-" + str(uuid.uuid4()) if result["status"] in REVIEW_STATE else ""
     return {"status": result["status"], "group_id": result.get("group_id", ""),
+            "new_group_id": new_id, "review_state": REVIEW_STATE.get(result["status"], ""),
             "duplicate_candidates": json.dumps(result["matches"], ensure_ascii=False) if result["matches"] else "",
             "problems": "; ".join(result.get("problems", [])), "candidates_seen": len(candidates),
             "name_key": info["name_key"], "registration_key": info["registration_key"],

@@ -1,6 +1,7 @@
 # Offline tests for identity/match.py (company ID and duplicate detection). Run: python tests/test_identity.py
 # All companies here are fictional.
 import json
+import uuid
 import sys
 from pathlib import Path
 
@@ -193,6 +194,22 @@ def test_decide_reads_aggregated_records_and_skips_the_empty_bundle():
                        "source_urls": "https://corvane.de; https://a.example/job", "candidates": candidates})
     assert out["status"] == "DUPLICATE" and out["group_id"] == "c-1" and out["candidates_seen"] == 1
     assert out["source_provenance"] == "https://corvane.de; https://a.example/job"
+
+
+def test_new_group_id_only_for_records_that_will_be_written():
+    new = make_decide({"company_label": "Quillmoor", "source_urls": "https://a.example/job"})
+    assert new["status"] == "NEW" and new["review_state"] == "SOURCE_CANDIDATE_UNVERIFIED"
+    assert new["new_group_id"].startswith("G-") and len(new["new_group_id"]) == 38
+    assert str(uuid.UUID(new["new_group_id"][2:], version=4)) == new["new_group_id"][2:]
+    assert make_decide({"company_label": "Quillmoor", "source_urls": "https://a.example/job"})["new_group_id"] != new["new_group_id"]
+    held = make_decide({"company_label": "Tallowick", "source_urls": "https://a.example/j",
+                        "candidates": [{"group_id": "t-1", "company_label": "Tallowick"}]})
+    assert held["status"] == "POSSIBLE_DUPLICATE" and held["review_state"] == "POSSIBLE_DUPLICATE_HELD" and held["new_group_id"]
+    dup = make_decide({"company_label": "Corvane", "candidate_url": "https://corvane.de",
+                       "candidates": [{"group_id": "c-1", "company_label": "Corvane", "official_domain": "corvane.de"}]})
+    assert dup["status"] == "DUPLICATE" and dup["new_group_id"] == "" and dup["review_state"] == ""
+    bad = make_decide({"company_label": "Newco", "source_urls": "http://x.de"})
+    assert bad["status"] == "INVALID" and bad["new_group_id"] == ""
 
 
 def test_decide_accepts_candidates_as_json_text():
