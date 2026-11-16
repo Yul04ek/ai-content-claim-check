@@ -1,5 +1,5 @@
 {
- "_note": "Our own fields, NOT from Tapiwa's table (aura_offer_cards.csv is a copy of his sheet 'AURA offer cards', 9 Nov 2026). Keyed by the Offer column. status follows his colour legend.",
+ "_note": "Our own fields, NOT from Tapiwa's table (aura_offer_cards.csv is a copy of his sheet 'AURA offer cards', copy of 16 Nov 2026; Launchpad wording as edited by Tapiwa in Make on 14 Nov). Keyed by the Offer column. status follows his colour legend.",
  "AURA AI Free": {
   "id": "O1",
   "status": "published",
@@ -22,9 +22,9 @@
   "status": "proposed",
   "offer_line": "AURA Startup Launchpad (proposed, $5,000 before tax and third-party costs; not open for purchase)",
   "match": "\\bLaunchpad\\b",
-  "must_say": "proposed|in development",
+  "must_say": "proposed|in development|pre-launch",
   "human_review": true,
-  "wording": "always say proposed or in development; never say open for purchase, fixed delivery dates or guaranteed results."
+  "wording": "this is a pre-launch founder service. Consider it when a dated company signal supports a plausible need for hands-on founder deliverables. Use conditional language. Keep the exact Offer and Limits lines for the checker. Availability is pre-launch / register interest only. Keep any interest invitation outside this review-only teaser and use only the approved channel after human review. Never claim active onboarding, checkout, delivery, fixed dates or guaranteed results."
  },
  "AURA Equity Studio": {
   "id": "O4",

@@ -990,6 +990,9 @@ def test_v2_launchpad_and_equity_studio_must_say_proposed_or_in_development():
     assert [r["reason"] for r in rows if "must be described" in r["reason"]] == []
     rows = det.offer_checks("The Launchpad is in development.", V2PACK, V2RECORD)
     assert [r["reason"] for r in rows if "must be described" in r["reason"]] == []
+    # Table of 16 Nov (Tapiwa): Launchpad may be described as pre-launch / register interest
+    rows = det.offer_checks("The Launchpad is a pre-launch service, USD $5,000 indicative.", V2PACK, V2RECORD)
+    assert [r["reason"] for r in rows if "must be described" in r["reason"]] == []
     rows = det.offer_checks("AURA Equity Studio accepts founders.", V2PACK, V2RECORD)
     assert any("must be described as 'proposed'" in r["reason"] for r in rows)
 
