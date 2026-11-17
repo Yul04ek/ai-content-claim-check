@@ -6,7 +6,7 @@
 # Empty keys become NONE: a search for an empty value would match every record whose field is empty.
 
 try:  # in the repository; inside Make these names are defined above (the block holds match.py first)
-    from identity.match import check_input, decide, describe_input, host_of, json
+    from identity.match import check_input, decide, describe_input, host_of, json, truthy
 except ImportError:
     pass
 
@@ -24,6 +24,7 @@ def new_from_make(inp):
     """Inputs of the scenario -> the new entry for decide()."""
     return {"name": inp.get("company_label") or "", "website": inp.get("candidate_url") or "",
             "registration_id": inp.get("registration_id") or "",
+            "jurisdiction": inp.get("registration_jurisdiction") or "",
             "sources": split_list(inp.get("source_urls"), ";")}
 
 
@@ -32,7 +33,11 @@ def candidate_from_make(item):
     return {"group_id": item.get("group_id") or "", "name": item.get("company_label") or "",
             "aliases": split_list(item.get("aliases"), ";"), "official_domain": host_of(item.get("official_domain")),
             "domain_history": [host_of(d) for d in split_list(item.get("domain_history"), ",")],
-            "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or ""}
+            "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or "",
+            "registration_verified": truthy(item.get("registration_verified")),
+            "jurisdiction": item.get("jurisdiction") or "",
+            "duplicate_of": item.get("duplicate_of") or "",
+            "different_from": split_list(item.get("different_from"), ";")}
 
 
 def make_keys(inp):

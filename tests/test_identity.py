@@ -7,7 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from identity.match import check_input, decide, decide_json, describe_input, host_of, is_platform, name_key, registrable
+from identity.match import (check_input, decide, decide_json, describe_input, host_of, is_platform, jur_key, main_id,
+                            name_key, registrable)
 
 # A small synthetic registry (records as Make would pass them as candidates)
 CORVANE = {"group_id": "c-1", "name": "Corvane GmbH", "official_domain": "corvane.de"}
@@ -131,9 +132,34 @@ def test_typo_in_the_name_still_matches():
     assert result["status"] == "DUPLICATE" and result["group_id"] == "c-5"
 
 
-def test_same_registration_id_is_a_duplicate_even_with_another_name():
+def test_unverified_registration_id_alone_goes_to_a_human():
     result = decide({"name": "Buildstash Software", "registration_id": "hrb123456b", "sources": ["https://x.de"]}, REGISTRY)
-    assert result["status"] == "DUPLICATE" and result["matches"][0]["reason"] == "same registration ID"
+    assert result["status"] == "POSSIBLE_DUPLICATE"
+    assert result["matches"][0]["reason"] == "same registration ID, not verified for this jurisdiction"
+
+
+VERIFIED_REG = dict(REGISTERED, registration_verified=True, jurisdiction="Amtsgericht Göttingen")
+
+
+def test_verified_registration_id_with_the_same_jurisdiction_is_a_duplicate():
+    new = {"name": "Buildstash Software", "registration_id": "hrb123456b", "jurisdiction": "amtsgericht gottingen",
+           "sources": ["https://x.de"]}
+    result = decide(new, [VERIFIED_REG])
+    assert result["status"] == "DUPLICATE" and result["group_id"] == "c-5"
+    assert result["matches"][0]["reason"].startswith("same verified registration ID")
+
+
+def test_verified_registration_id_without_or_with_another_jurisdiction_goes_to_a_human():
+    new = {"name": "Buildstash Software", "registration_id": "HRB 123456 B", "sources": ["https://x.de"]}
+    assert decide(new, [VERIFIED_REG])["status"] == "POSSIBLE_DUPLICATE"  # the new entry names no jurisdiction
+    other = dict(new, jurisdiction="Amtsgericht München")
+    assert decide(other, [VERIFIED_REG])["status"] == "POSSIBLE_DUPLICATE"
+    unverified = dict(VERIFIED_REG, registration_verified=False)  # the number was typed, never checked
+    assert decide(dict(new, jurisdiction="Amtsgericht Göttingen"), [unverified])["status"] == "POSSIBLE_DUPLICATE"
+
+
+def test_jurisdiction_key_ignores_case_and_accents():
+    assert jur_key("Amtsgericht Göttingen") == jur_key("AMTSGERICHT  gottingen") == "amtsgericht gottingen"
 
 
 def test_same_name_different_registration_ids_goes_to_a_human():
@@ -166,7 +192,7 @@ def test_json_entry_point_for_make():
 
 # --- Make adapter and the generated Code blocks ---
 
-from identity.make_adapter import NONE, make_decide, make_keys
+from identity.make_adapter import NONE, candidate_from_make, make_decide, make_keys
 from identity.make_code import build
 
 
@@ -231,6 +257,120 @@ def test_generated_blocks_are_up_to_date():
     here = Path(__file__).resolve().parent.parent / "identity"
     for name, text in build().items():
         assert (here / name).read_text(encoding="utf-8") == text, f"{name} is stale: run python -m identity.make_code"
+
+
+# --- decisions of a human: duplicate_of and different_from ---
+
+NORDVALE = {"group_id": "n-1", "name": "Nordvale GmbH", "official_domain": "", "candidate_url": "https://nordvale.example/"}
+
+
+def test_main_company_follows_the_chain_and_stops_at_a_cycle():
+    by_id = {"a": {"duplicate_of": "b"}, "b": {"duplicate_of": "c"}, "c": {}}
+    assert main_id("a", by_id) == main_id("b", by_id) == main_id("c", by_id) == "c"
+    assert main_id("x", by_id) == "x"  # unknown row: itself
+    assert main_id("a", {"a": {"duplicate_of": "b"}}) == "b"  # the main row was not returned by the search: its id still counts
+    loop = {"a": {"duplicate_of": "b"}, "b": {"duplicate_of": "a"}}
+    assert main_id("a", loop) == main_id("b", loop) == "a"  # a cycle ends at the smallest id, whatever the start
+    assert main_id("a", {"a": {"duplicate_of": "a"}}) == "a"
+
+
+def test_a_row_linked_by_a_human_counts_as_its_main_company():
+    linked = {"group_id": "n-2", "name": "Nordval", "candidate_url": "https://nordvale.example/", "duplicate_of": "n-1"}
+    new = {"name": "Nordvale", "website": "https://nordvale.example"}
+    for registry in ([NORDVALE, linked], [linked]):  # the main row may be missing from the search result
+        result = decide(new, registry)
+        assert result["status"] == "DUPLICATE" and result["group_id"] == "n-1", registry
+        assert "linked" in result["matches"][0]["reason"] or len(registry) == 2
+
+
+def test_the_same_website_is_unverified_before_the_human_links_it_and_remembered_after():
+    new = {"name": "Nordvale", "website": "https://nordvale.example"}
+    assert decide(new, [NORDVALE])["status"] == "POSSIBLE_DUPLICATE"  # first time: a human must look
+    linked = {"group_id": "n-2", "name": "Nordvale", "candidate_url": "https://nordvale.example/", "duplicate_of": "n-1"}
+    assert decide(new, [NORDVALE, linked])["status"] == "DUPLICATE"  # the same entry again: no new question
+
+
+def test_rows_of_one_company_are_one_match_not_two():
+    linked = {"group_id": "n-2", "name": "Nordvale", "duplicate_of": "n-1"}
+    result = decide({"name": "Nordvale", "sources": ["https://x.example/j"]}, [NORDVALE, linked])  # name only, nothing sure
+    assert result["status"] == "POSSIBLE_DUPLICATE" and [m["group_id"] for m in result["matches"]] == ["n-1"]
+
+
+def test_a_linked_row_with_only_a_name_match_is_still_a_question():
+    linked = {"group_id": "n-2", "name": "Nordvale", "duplicate_of": "n-1"}
+    result = decide({"name": "Nordvale Ltd", "website": "https://other.example"}, [NORDVALE, linked])
+    assert result["status"] == "POSSIBLE_DUPLICATE" and result["matches"][0]["group_id"] == "n-1"
+
+
+LABS = {"group_id": "n-3", "name": "Nordvale Ltd", "official_domain": "", "candidate_url": "https://nordvale.co.uk/",
+        "different_from": ["n-1"]}  # a human said: Nordvale Ltd is not Nordvale GmbH
+
+
+def test_without_the_human_decision_both_similar_companies_are_listed():
+    plain = dict(LABS, different_from=[])
+    result = decide({"name": "Nordvale", "website": "https://nordvale.co.uk"}, [NORDVALE, plain])
+    assert sorted(m["group_id"] for m in result["matches"]) == ["n-1", "n-3"]
+
+
+def test_different_company_decision_drops_the_weaker_match():
+    result = decide({"name": "Nordvale", "website": "https://nordvale.co.uk"}, [NORDVALE, LABS])
+    assert result["status"] == "DUPLICATE" and [m["group_id"] for m in result["matches"]] == ["n-3"]  # n-1 is dropped
+
+
+def test_different_company_decision_is_read_from_either_side():
+    gmbh = dict(NORDVALE, different_from=["n-3"])  # the decision is stored on the other record
+    labs = dict(LABS, different_from=[])
+    result = decide({"name": "Nordvale", "website": "https://nordvale.co.uk"}, [gmbh, labs])
+    assert [m["group_id"] for m in result["matches"]] == ["n-3"]
+
+
+def test_the_same_entry_again_after_a_different_company_decision_is_not_asked_again():
+    labs = dict(LABS, candidate_url="https://nordvale.co.uk/")  # the human looked at this row and said: not n-1
+    result = decide({"name": "Nordvale Ltd", "website": "https://nordvale.co.uk"}, [NORDVALE, labs])
+    assert result["status"] == "DUPLICATE" and result["group_id"] == "n-3"
+
+
+def test_two_known_different_companies_with_equal_matches_still_go_to_a_human():
+    labs = dict(LABS, candidate_url="")
+    gmbh = dict(NORDVALE, candidate_url="")
+    result = decide({"name": "Nordvale Ltd", "sources": ["https://x.example/j"]}, [gmbh, labs])  # only the name matches both, equally strongly
+    assert sorted(m["group_id"] for m in result["matches"]) == ["n-1", "n-3"]
+
+
+def test_after_the_domain_is_verified_the_known_different_company_is_a_sure_match():
+    verified = dict(LABS, official_domain="nordvale.co.uk")
+    result = decide({"name": "Nordvale Ltd", "website": "https://www.nordvale.co.uk"}, [NORDVALE, verified])
+    assert result["status"] == "DUPLICATE" and result["group_id"] == "n-3"
+
+
+def test_different_company_pair_follows_the_linked_rows():
+    linked = {"group_id": "n-4", "name": "Nordvale", "duplicate_of": "n-1"}  # a row of Nordvale GmbH
+    result = decide({"name": "Nordvale", "website": "https://nordvale.co.uk"}, [linked, LABS])
+    assert [m["group_id"] for m in result["matches"]] == ["n-3"]  # n-4 is n-1, which is not n-3
+
+
+def test_make_adapter_reads_the_decision_fields():
+    rows = [dict(NORDVALE, group_id="n-1", company_label="Nordvale GmbH", candidate_url="https://nordvale.example/"),
+            {"group_id": "n-2", "company_label": "Nordval", "candidate_url": "https://nordvale.example/",
+             "duplicate_of": "n-1", "registration_verified": "true", "jurisdiction": "Göttingen", "different_from": "n-9; n-8"}]
+    out = make_decide({"company_label": "Nordvale", "candidate_url": "https://nordvale.example", "candidates": rows})
+    assert out["status"] == "DUPLICATE" and out["group_id"] == "n-1" and out["new_group_id"] == ""
+    c = candidate_from_make(rows[1])
+    assert c["duplicate_of"] == "n-1" and c["different_from"] == ["n-9", "n-8"] and c["registration_verified"] is True
+    assert candidate_from_make({"group_id": "x"})["registration_verified"] is False
+
+
+def test_reasons_tell_a_typo_and_different_websites_apart():
+    a1 = {"group_id": "o-1", "name": "Orlanne", "candidate_url": "https://orlanne.example"}
+    src = ["https://jobs.example/x"]
+
+    def reason(new):
+        return decide(new, [a1])["matches"][0]["reason"]
+
+    assert reason({"name": "Orlane", "sources": src}) == "similar name, no website to compare"
+    assert reason({"name": "Orlanne", "sources": src}) == "same name, no website to compare"
+    assert reason({"name": "Orlanne", "website": "https://other.example", "sources": src}) == "same name, different websites (not verified)"
+    assert reason({"name": "Orlane", "website": "https://other.example", "sources": src}) == "similar name, different websites (not verified)"
 
 
 if __name__ == "__main__":

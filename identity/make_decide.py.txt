@@ -63,6 +63,30 @@ def reg_key(value):
     return "".join(c for c in (value or "").upper() if c.isalnum())
 
 
+def jur_key(value):
+    """'Amtsgericht Göttingen' and 'amtsgericht gottingen' -> 'amtsgericht gottingen' (jurisdiction of a registration ID)."""
+    text = "".join(c for c in unicodedata.normalize("NFKD", (value or "").lower()) if not unicodedata.combining(c))
+    return " ".join("".join(c if c.isalnum() else " " for c in text).split())
+
+
+def truthy(value):
+    """A flag from the registry: True, or text 'true' / 'yes' / '1' (Make may pass either)."""
+    return value is True or str(value).strip().lower() in ("true", "yes", "1")
+
+
+def main_id(group_id, by_id):
+    """The main company of a row: follow duplicate_of until a row has none. A cycle ends at its smallest id."""
+    seen, current = set(), group_id
+    while True:
+        nxt = (by_id.get(current) or {}).get("duplicate_of") or ""
+        if not nxt or nxt == current:
+            return current
+        seen.add(current)
+        if nxt in seen:
+            return min(seen | {nxt})
+        current = nxt
+
+
 def names_of(record):
     return [record.get("name", "")] + list(record.get("aliases") or [])
 
@@ -86,12 +110,57 @@ def check_input(new):
     return problems
 
 
+SURE = 5  # rank of a sure match; unsure matches rank lower (used only to apply "different company" decisions)
+
+
+def compare_one(new, c, info, extra_platforms=None):
+    """One registry row against the new entry. Returns None, or (is sure, rank, reason)."""
+    domain, reg = info["domain_candidate"], info["registration_key"]
+    name_match = any(same_name(new.get("name", ""), n) for n in names_of(c))
+    exact = name_key(new.get("name", "")) in [name_key(n) for n in names_of(c)]
+    name_rank = 2 if exact else 1
+    label = "same name" if exact else "similar name"  # a typo or a close spelling is not "the same name"
+    c_reg = reg_key(c.get("registration_id", ""))
+    if reg and reg == c_reg:
+        # a number alone means nothing: it counts only when a human checked it in the register of the same jurisdiction
+        jurisdiction = jur_key(new.get("jurisdiction", ""))
+        if truthy(c.get("registration_verified")) and jurisdiction and jurisdiction == jur_key(c.get("jurisdiction", "")):
+            return True, SURE, "same verified registration ID (" + jurisdiction + ")"
+        return False, 4, "same registration ID, not verified for this jurisdiction"
+    if reg and c_reg:  # both have registration IDs and they differ
+        return (False, name_rank, label + ", different registration IDs") if name_match else None
+    reviewed = c.get("duplicate_of") or c.get("different_from")  # a human already looked at this entry
+    confirmed = host_of(c.get("candidate_url", "")) if reviewed else ""
+    if domain and confirmed == domain and name_match:
+        return True, SURE, "same website as an entry a human already reviewed"
+    known = [d for d in [c.get("official_domain", "")] + list(c.get("domain_history") or []) if d]  # verified
+    entered = host_of(c.get("candidate_url", ""))
+    entered = "" if is_platform(entered, extra_platforms) or entered in known else entered  # not verified
+    if domain and known:
+        if domain in known:
+            if name_match:
+                return True, SURE, "same verified domain" if domain == c.get("official_domain") else "earlier domain of this company"
+            return False, 2, "same domain, different names (shared or parent domain?)"
+        if any(registrable(domain) == registrable(d) for d in known):
+            return False, 2, "same parent domain, different subdomains"
+    if domain and entered == domain:
+        return False, 3, "same website, not verified yet"
+    if name_match:
+        if domain and known:
+            return False, name_rank, label + ", different domains (changed website or another company?)"
+        if domain and entered:  # both gave a website, neither is verified, and they differ
+            return False, name_rank, label + ", different websites (not verified)"
+        return False, name_rank, label + ", no website to compare"
+    return None
+
+
 def decide(new, candidates, extra_platforms=None):
     """Compare a new entry with candidate records of the registry.
 
-    new:        {"name", "website" (optional), "registration_id" (optional), "sources" (list of URLs)}
+    new:        {"name", "website" (optional), "registration_id" (optional), "jurisdiction" (optional), "sources" (list of URLs)}
     candidates: registry records {"group_id", "name", "aliases", "official_domain", "domain_history",
-                "candidate_url", "registration_id"}
+                "candidate_url", "registration_id", "registration_verified", "jurisdiction",
+                "duplicate_of", "different_from"}
                 official_domain is written only by a human after checking the site: filled = verified.
                 candidate_url is the site somebody entered, not verified.
     Returns {"status", "group_id" (only for DUPLICATE), "matches": [{"group_id", "reason"}], "input": {...}}.
@@ -101,42 +170,30 @@ def decide(new, candidates, extra_platforms=None):
     if problems:
         return {"status": "INVALID", "matches": [], "problems": problems, "input": info}
 
-    domain, reg = info["domain_candidate"], info["registration_key"]
-    sure, unsure = [], []
+    by_id = {c.get("group_id", ""): c for c in candidates}
+    best = {}  # main company -> (is sure, rank, reason); a row linked by a human counts as its main company
     for c in candidates:
+        found = compare_one(new, c, info, extra_platforms)
+        if not found:
+            continue
         cid = c.get("group_id", "")
-        name_match = any(same_name(new.get("name", ""), n) for n in names_of(c))
-        if reg and reg == reg_key(c.get("registration_id", "")):
-            sure.append({"group_id": cid, "reason": "same registration ID"})
-            continue
-        if reg and reg_key(c.get("registration_id", "")):  # both have registration IDs and they differ
-            if name_match:
-                unsure.append({"group_id": cid, "reason": "same name, different registration IDs"})
-            continue
-        known = [d for d in [c.get("official_domain", "")] + list(c.get("domain_history") or []) if d]  # verified
-        entered = host_of(c.get("candidate_url", ""))
-        entered = "" if is_platform(entered, extra_platforms) or entered in known else entered  # not verified
-        if domain and known:
-            if domain in known:
-                if name_match:
-                    reason = "same verified domain" if domain == c.get("official_domain") else "earlier domain of this company"
-                    sure.append({"group_id": cid, "reason": reason})
-                else:
-                    unsure.append({"group_id": cid, "reason": "same domain, different names (shared or parent domain?)"})
-                continue
-            if any(registrable(domain) == registrable(d) for d in known):
-                unsure.append({"group_id": cid, "reason": "same parent domain, different subdomains"})
-                continue
-        if domain and entered == domain:
-            unsure.append({"group_id": cid, "reason": "same website, not verified yet"})
-            continue
-        if name_match:
-            if domain and known:
-                why = "same name, different domains (changed website or another company?)"
-            else:
-                why = "same name, no domain to compare"
-            unsure.append({"group_id": cid, "reason": why})
+        main = main_id(cid, by_id)
+        sure_now, rank, reason = found
+        if main != cid:
+            reason += " (via an entry linked to this company)"
+        if main not in best or (sure_now, rank) > best[main][:2]:
+            best[main] = (sure_now, rank, reason)
 
+    pairs = set()  # companies a human said are different
+    for c in candidates:
+        mine = main_id(c.get("group_id", ""), by_id)
+        for other in c.get("different_from") or []:
+            pairs.add(frozenset((mine, main_id(other, by_id))))
+    dropped = {m for m in best for o in best
+               if o != m and frozenset((o, m)) in pairs and best[o][:2] > best[m][:2]}  # the stronger match explains the entry
+
+    sure = [{"group_id": m, "reason": v[2]} for m, v in best.items() if m not in dropped and v[0]]
+    unsure = [{"group_id": m, "reason": v[2]} for m, v in best.items() if m not in dropped and not v[0]]
     if len(sure) == 1 and not unsure:
         return {"status": "DUPLICATE", "group_id": sure[0]["group_id"], "matches": sure, "input": info}
     if sure or unsure:  # several sure matches also need a human: the registry may already hold a duplicate
@@ -151,7 +208,7 @@ def decide_json(payload):
 
 
 try:  # in the repository; inside Make these names are defined above (the block holds match.py first)
-    from identity.match import check_input, decide, describe_input, host_of, json
+    from identity.match import check_input, decide, describe_input, host_of, json, truthy
 except ImportError:
     pass
 
@@ -169,6 +226,7 @@ def new_from_make(inp):
     """Inputs of the scenario -> the new entry for decide()."""
     return {"name": inp.get("company_label") or "", "website": inp.get("candidate_url") or "",
             "registration_id": inp.get("registration_id") or "",
+            "jurisdiction": inp.get("registration_jurisdiction") or "",
             "sources": split_list(inp.get("source_urls"), ";")}
 
 
@@ -177,7 +235,11 @@ def candidate_from_make(item):
     return {"group_id": item.get("group_id") or "", "name": item.get("company_label") or "",
             "aliases": split_list(item.get("aliases"), ";"), "official_domain": host_of(item.get("official_domain")),
             "domain_history": [host_of(d) for d in split_list(item.get("domain_history"), ",")],
-            "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or ""}
+            "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or "",
+            "registration_verified": truthy(item.get("registration_verified")),
+            "jurisdiction": item.get("jurisdiction") or "",
+            "duplicate_of": item.get("duplicate_of") or "",
+            "different_from": split_list(item.get("different_from"), ";")}
 
 
 def make_keys(inp):
