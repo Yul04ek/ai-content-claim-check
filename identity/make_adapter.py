@@ -31,7 +31,7 @@ def new_from_make(inp):
 def candidate_from_make(item):
     """One aggregated search result (flat fields named as in the registry) -> a candidate for decide()."""
     return {"group_id": item.get("group_id") or "", "name": item.get("company_label") or "",
-            "aliases": split_list(item.get("aliases"), ";"), "official_domain": host_of(item.get("official_domain")),
+            "official_domain": host_of(item.get("official_domain")),
             "domain_history": [host_of(d) for d in split_list(item.get("domain_history"), ",")],
             "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or "",
             "registration_verified": truthy(item.get("registration_verified")),

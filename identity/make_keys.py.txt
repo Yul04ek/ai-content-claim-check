@@ -18,6 +18,7 @@ LEGAL_FORMS = {
     "inc", "ltd", "llc", "plc", "corp", "corporation", "company", "limited", "lp", "llp",
     "sarl", "sas", "sa", "bv", "nv", "oy", "ab", "as", "aps", "spa", "srl", "sp", "zoo",
 }
+TYPO_MIN_LENGTH = 6  # names at least this long may differ by one typo and still count as "similar"
 NAME_SIMILARITY = 0.9  # difflib ratio of two name keys counted as "the same name" (catches typos like Bildstash/Buildstash)
 
 
@@ -53,9 +54,27 @@ def name_key(name):
     return " ".join(kept or words)  # a name made only of legal-form words keeps them
 
 
+def one_edit_apart(a, b):
+    """True if b differs from a by one typo: one letter changed, added, removed, or two neighbours swapped."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        if len(diff) == 1:
+            return True
+        return len(diff) == 2 and diff[1] == diff[0] + 1 and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]]
+    short, long_ = (a, b) if len(a) < len(b) else (b, a)
+    return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+
+
 def same_name(a, b):
     ka, kb = name_key(a), name_key(b)
-    return bool(ka and kb) and (ka == kb or difflib.SequenceMatcher(None, ka, kb).ratio() >= NAME_SIMILARITY)
+    if not (ka and kb):
+        return False
+    if ka == kb or difflib.SequenceMatcher(None, ka, kb).ratio() >= NAME_SIMILARITY:
+        return True
+    # short names are left out: one letter changes a 4-letter name too much ("Nova" / "Nora")
+    return min(len(ka), len(kb)) >= TYPO_MIN_LENGTH and one_edit_apart(ka, kb)
 
 
 def reg_key(value):
@@ -88,7 +107,7 @@ def main_id(group_id, by_id):
 
 
 def names_of(record):
-    return [record.get("name", "")] + list(record.get("aliases") or [])
+    return [record.get("name", "")]
 
 
 def describe_input(new, extra_platforms=None):
@@ -158,7 +177,7 @@ def decide(new, candidates, extra_platforms=None):
     """Compare a new entry with candidate records of the registry.
 
     new:        {"name", "website" (optional), "registration_id" (optional), "jurisdiction" (optional), "sources" (list of URLs)}
-    candidates: registry records {"group_id", "name", "aliases", "official_domain", "domain_history",
+    candidates: registry records {"group_id", "name", "official_domain", "domain_history",
                 "candidate_url", "registration_id", "registration_verified", "jurisdiction",
                 "duplicate_of", "different_from"}
                 official_domain is written only by a human after checking the site: filled = verified.
@@ -233,7 +252,7 @@ def new_from_make(inp):
 def candidate_from_make(item):
     """One aggregated search result (flat fields named as in the registry) -> a candidate for decide()."""
     return {"group_id": item.get("group_id") or "", "name": item.get("company_label") or "",
-            "aliases": split_list(item.get("aliases"), ";"), "official_domain": host_of(item.get("official_domain")),
+            "official_domain": host_of(item.get("official_domain")),
             "domain_history": [host_of(d) for d in split_list(item.get("domain_history"), ",")],
             "candidate_url": item.get("candidate_url") or "", "registration_id": item.get("registration_id") or "",
             "registration_verified": truthy(item.get("registration_verified")),

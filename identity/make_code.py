@@ -1,6 +1,6 @@
 # Builds the two Python blocks for Make's Code module from identity/match.py and identity/make_adapter.py,
 # so the code in Make is always the tested code of the repository (one place to change).
-# Usage: python -m identity.make_code            writes identity/make_keys.py.txt and identity/make_decide.py.txt
+# Usage: python -m identity.make_code            writes identity/make_keys.py.txt, make_decide.py.txt and make_group.py.txt
 #        python -m identity.make_code --check    exits 1 if the files are out of date
 
 import sys
@@ -20,8 +20,10 @@ def body(path):
 
 def build():
     lib = body(HERE / "match.py") + "\n\n" + body(HERE / "make_adapter.py")
+    group = body(HERE / "match.py") + "\n\n" + body(HERE / "make_group.py")
     return {"make_keys.py.txt": HEADER + lib + "\n\nreturn make_keys(input)\n",
-            "make_decide.py.txt": HEADER + lib + "\n\nreturn make_decide(input)\n"}
+            "make_decide.py.txt": HEADER + lib + "\n\nreturn make_decide(input)\n",
+            "make_group.py.txt": HEADER + group + "\n\nreturn make_group(input)\n"}
 
 
 if __name__ == "__main__":

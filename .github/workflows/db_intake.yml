@@ -1,0 +1,26 @@
+# Manual intake run against the Supabase database: Actions -> "DB intake" -> Run workflow.
+# Needs the repository secret SUPABASE_DB_URL (Supabase -> Connect -> Session pooler connection string).
+name: DB intake
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Write to the database (unticked = dry run, only show the plan)"
+        type: boolean
+        default: false
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "psycopg[binary]"
+      - run: python tests/test_identity.py
+      - name: Intake
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -m identity.db_intake ${{ inputs.apply && '--apply' || '' }}

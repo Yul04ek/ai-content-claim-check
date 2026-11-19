@@ -7,8 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from identity.db_intake import plan_intake
+from identity.make_pick import pick_target
 from identity.match import (check_input, decide, decide_json, describe_input, host_of, is_platform, jur_key, main_id,
-                            name_key, registrable)
+                            name_key, registrable, same_name)
 
 # A small synthetic registry (records as Make would pass them as candidates)
 CORVANE = {"group_id": "c-1", "name": "Corvane GmbH", "official_domain": "corvane.de"}
@@ -371,6 +373,79 @@ def test_reasons_tell_a_typo_and_different_websites_apart():
     assert reason({"name": "Orlanne", "sources": src}) == "same name, no website to compare"
     assert reason({"name": "Orlanne", "website": "https://other.example", "sources": src}) == "same name, different websites (not verified)"
     assert reason({"name": "Orlane", "website": "https://other.example", "sources": src}) == "similar name, different websites (not verified)"
+
+
+def test_group_evidence_rows_into_companies():
+    from identity.make_group import make_group
+    rows = [{"row": 2, "label": "Corvane", "url": "https://a.example/1", "type": "Other"},
+            {"row": 3, "label": "corvane ", "url": "https://a.example/2", "type": "Other"},
+            {"row": 4, "label": "Tallowick", "url": "https://b.example/x", "type": "Other"},
+            {"row": 5, "label": "Tallowick", "url": "https://tallowick.example/", "type": "Company website"}]
+    groups = make_group({"rows": rows})["groups"]
+    assert [g["company_label"] for g in groups] == ["Corvane", "Tallowick"]
+    assert groups[0]["row_numbers"] == [2, 3] and groups[0]["source_urls"] == "https://a.example/1; https://a.example/2"
+    assert groups[0]["candidate_url"] == "https://a.example/1"
+    assert groups[1]["candidate_url"] == "https://tallowick.example/"
+    assert make_group({"rows": json.dumps(rows)}) == make_group({"rows": rows}) and make_group({"rows": []}) == {"groups": []}
+
+
+def test_pick_target_for_a_human_decision():
+    one = json.dumps([{"group_id": "G-1", "reason": "same name"}])
+    two = json.dumps([{"group_id": "G-1", "reason": "x"}, {"group_id": "G-2", "reason": "y"}])
+    assert pick_target({"typed": "", "candidates": one}) == {"target": "G-1", "count": 1}  # single candidate is used
+    assert pick_target({"typed": "G-9", "candidates": two})["target"] == "G-9"  # a typed ID always wins
+    assert pick_target({"typed": " ", "candidates": two}) == {"target": "", "count": 2}  # several: a human must choose
+    assert pick_target({"typed": "", "candidates": ""}) == {"target": "", "count": 0}  # no candidates
+    assert pick_target({"typed": "", "candidates": "not json"})["target"] == ""  # broken text never crashes
+    assert pick_target({"typed": "", "candidates": [{"group_id": "G-1"}, {"group_id": "G-1"}]})["target"] == "G-1"
+
+
+def test_one_typo_in_a_longer_name_is_similar():
+    assert same_name("Corvaen", "Corvane") and same_name("Korvane", "Corvane")  # swapped / changed letter
+    assert same_name("Corvanne", "Corvane")  # added letter
+    assert not same_name("Corvain", "Corvane")  # two letters differ
+    assert not same_name("Nora", "Nova")  # short names: one letter is too much
+    assert not same_name("Tallowick lab", "Tallowick")  # an extra word is not a typo
+
+
+# the prototype database on 2026-11-19 (companies table), all fictional
+DB_COMPANIES = [
+    {"id": "G-corvane", "label": "Corvane"},
+    {"id": "G-corvane-gmbh", "label": "Corvane GmbH", "duplicate_of": "G-corvane"},
+    {"id": "G-corvane-2", "label": "Corvane", "different_from": ["G-corvane"]},
+    {"id": "G-tallowick", "label": "Tallowick", "candidate_url": "https://claude.ai/artifact/S4kC"},
+    {"id": "G-tallowick-lab", "label": "Tallowick lab", "candidate_url": "https://claude.ai/artifact/S4kD"},
+]
+
+
+def test_db_intake_plan():
+    ids = iter(["G-new-1", "G-new-2", "G-new-3"])
+    rows = [
+        {"evidence_id": "EV-013", "company_label": "Corvaen", "source_url": "https://corvaen.example/about", "source_type": "Other"},
+        {"evidence_id": "EV-014", "company_label": "Quillmoor", "source_url": "https://quillmoor.example/", "source_type": "Company website"},
+        {"evidence_id": "EV-015", "company_label": "quillmoor ", "source_url": "https://quillmoor.example/jobs", "source_type": "Other"},
+        {"evidence_id": "EV-016", "company_label": "Nameless", "source_url": None, "source_type": "Other"},
+    ]
+    plan = plan_intake(rows, DB_COMPANIES, new_id=lambda: next(ids))
+    new = {c["label"]: c for c in plan["companies"]}
+    # the typo is caught; both Corvane companies stay candidates (a human said they differ, but neither is stronger)
+    assert new["Corvaen"]["match_status"] == "POSSIBLE_DUPLICATE"
+    assert new["Corvaen"]["review_state"] == "POSSIBLE_DUPLICATE_HELD"
+    assert {m["group_id"] for m in new["Corvaen"]["duplicate_candidates"]} == {"G-corvane", "G-corvane-2"}
+    # two sources with the same label become one company; its website is the one marked "Company website"
+    assert new["Quillmoor"]["match_status"] == "NEW" and new["Quillmoor"]["candidate_url"] == "https://quillmoor.example/"
+    assert ("EV-014", new["Quillmoor"]["id"]) in plan["assign"] and ("EV-015", new["Quillmoor"]["id"]) in plan["assign"]
+    # no HTTPS source: no company, a reason in the note
+    assert [e for e, _ in plan["invalid"]] == ["EV-016"] and plan["invalid"][0][1].startswith("INVALID:")
+    assert "Nameless" not in new and len(plan["companies"]) == 2
+
+
+def test_db_intake_links_to_a_company_created_in_the_same_run():
+    rows = [{"evidence_id": "EV-1", "company_label": "Fennick", "source_url": "https://fennick.example/", "source_type": "Company website"},
+            {"evidence_id": "EV-2", "company_label": "Fennick GmbH", "source_url": "https://news.example/f", "source_type": "Other"}]
+    plan = plan_intake(rows, [], new_id=iter(["G-a", "G-b"]).__next__)
+    assert [c["match_status"] for c in plan["companies"]] == ["NEW", "POSSIBLE_DUPLICATE"]
+    assert plan["companies"][1]["duplicate_candidates"][0]["group_id"] == "G-a"
 
 
 if __name__ == "__main__":
