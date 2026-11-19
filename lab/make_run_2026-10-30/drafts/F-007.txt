@@ -1,0 +1,3 @@
+Ever wonder how smoothly a voice-assisted session picks up where you left off? In this test, the interface showed Resume context—Saved · Paused and Continue with AURA. After resuming, AURA remembered class scheduling and membership management, but said the target market was not known. The draft documents didn’t always stay as authoritative memory, and the target-market reply varied. This could mean users may need to restate information from a draft or from a different context, which might affect flow during continuation.
+
+One option is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session.

@@ -1,0 +1,79 @@
+[
+ {
+  "case": "T1 clean teaser",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t1_clean.txt",
+  "expect_level": "READY FOR REVIEW",
+  "why": "control: every claim is in the pack, hypotheses labelled"
+ },
+ {
+  "case": "T2 invented revenue",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t2_invented_revenue.txt",
+  "expect_level": "NOT READY",
+  "why": "revenue figure not in the pack"
+ },
+ {
+  "case": "T3 growth claim",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t3_growth_claim.txt",
+  "expect_level": "NOT READY",
+  "why": "'fast-growing' is not in the pack"
+ },
+ {
+  "case": "T4 promise",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t4_promise.txt",
+  "expect_level": "NOT READY",
+  "why": "guarantees investor introduction and Studio fast-track"
+ },
+ {
+  "case": "T5 need as fact",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t5_need_as_fact.txt",
+  "expect_level": "REVIEW",
+  "why": "founder need stated as fact; the pack lists it as unknown"
+ },
+ {
+  "case": "T6 unlabelled hypotheses",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t6_unlabelled.txt",
+  "expect_level": "REVIEW",
+  "why": "hypotheses written as plain statements"
+ },
+ {
+  "case": "T7 wrong facts",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t7_wrong_facts.txt",
+  "expect_level": "NOT READY",
+  "why": "Austria and 50 people contradict the pack"
+ },
+ {
+  "case": "T8 unknown source",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t8_unknown_source.txt",
+  "expect_level": "NOT READY",
+  "why": "S3 and a URL that are not in the pack"
+ },
+ {
+  "case": "T9 overgeneralised",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t9_overgeneralised.txt",
+  "expect_level": "REVIEW",
+  "why": "'three countries' stretched to worldwide/globe"
+ },
+ {
+  "case": "T10 other company",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t10_other_company.txt",
+  "expect_level": "NOT READY",
+  "why": "detail from another company (Morgenrot Kaffee)"
+ },
+ {
+  "case": "T11 missing label",
+  "pack": "pack_Test_001.json",
+  "teaser_file": "t11_no_header.txt",
+  "expect_level": "REVIEW",
+  "why": "INTERNAL REVIEW ONLY label missing"
+ }
+]

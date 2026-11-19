@@ -1,0 +1,4 @@
+Do you ever try to clean up your workspace by moving old files into storage? During a recent test, a document failed to move from the active list to the archive, returning an error message instead. This could mean that people are unable to trust the system to organize their materials or remove items they no longer need. [Add: what this taught us about building a reliable system?] One option is to fix the archive action and provide a clear status update to confirm whether the document was successfully moved or if the request failed. [Add: what did the team learn from this specific error?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #softwaredevelopment

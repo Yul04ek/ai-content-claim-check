@@ -1,0 +1,4 @@
+Have you ever tried to save your company’s core information, only to find the process stuck in a loop? During testing, after approving a draft of company facts, the final step failed to apply the data. The system displayed an update as approved but did not finalize it, while also keeping draft instructions inside the fields instead of just the facts. This may mean that information is not correctly saved or cleaned for final use. A possible next step is to make the recovery action reliably complete the update without requiring a new approval, while providing a clear way to cancel or edit the input and preventing system instructions from being stored. [Add: what this taught us about building AURA] [Add: what changed after the fix?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productmanagement

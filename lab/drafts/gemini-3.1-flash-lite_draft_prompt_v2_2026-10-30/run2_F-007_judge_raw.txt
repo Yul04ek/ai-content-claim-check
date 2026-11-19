@@ -1,0 +1,40 @@
+{
+  "claims": [
+    {
+      "claim": "I resumed a voice session to ask about a specific project.",
+      "finding": "supported",
+      "source_field": "SCENARIO",
+      "record_quote": "I used the Company DNA voice flow, paused it, and resumed through Continue with AURA. I asked what AURA knew about StudioFlow.",
+      "reason": "The draft describes the actions taken during the test accurately."
+    },
+    {
+      "claim": "The system successfully recalled details about class scheduling and membership management.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "AURA remembered class scheduling and membership management",
+      "reason": "This is a direct restatement of the observation."
+    },
+    {
+      "claim": "It did not recognize information regarding the target market that was already saved in a draft.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "AURA remembered class scheduling and membership management, but said the target market was not known.",
+      "reason": "The record confirms the system failed to retrieve the target market information."
+    },
+    {
+      "claim": "This may mean that the system does not always treat draft documents as authoritative memory.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory.",
+      "reason": "The draft accurately reflects the record's observation regarding draft documents."
+    },
+    {
+      "claim": "One option is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session.",
+      "reason": "The recommendation is stated as an option, which is consistent with the proposal in the record."
+    }
+  ],
+  "summary": "The draft accurately reflects the testing scenario, the observations made, and the resulting recommendations. All factual claims are supported by the provided source record."
+}

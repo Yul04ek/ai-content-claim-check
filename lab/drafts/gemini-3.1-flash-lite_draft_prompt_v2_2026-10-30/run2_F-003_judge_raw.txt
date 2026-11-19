@@ -1,0 +1,26 @@
+{
+  "claims": [
+    {
+      "claim": "During a recent test, a document failed to move from the active list to the archive, returning an error message instead.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The action failed with Request failed with status code 503. The document remained in Documents and did not appear in the archive.",
+      "reason": "The observation confirms the failure and the resulting error state."
+    },
+    {
+      "claim": "This could mean that people are unable to trust the system to organize their materials or remove items they no longer need.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users cannot rely on archiving to organise or remove a document from the active list.",
+      "reason": "The claim reflects the potential impact documented in the record."
+    },
+    {
+      "claim": "One option is to fix the archive action and provide a clear status update to confirm whether the document was successfully moved or if the request failed.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Fix the archive action in the next release and provide a clear success or failure state without leaving the user uncertain about the document’s status.",
+      "reason": "The draft accurately reflects the proposed recommendation."
+    }
+  ],
+  "summary": "The draft accurately reflects the testing observation regarding the failed archive action and correctly identifies the user impact and recommended solution. No factual discrepancies were found."
+}

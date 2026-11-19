@@ -1,0 +1,40 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, I paused a session about business planning and resumed it later to ask about specific details.",
+      "finding": "not_in_record",
+      "source_field": "SCENARIO",
+      "record_quote": "",
+      "reason": "The record mentions using the Company DNA voice flow, not business planning."
+    },
+    {
+      "claim": "While the system remembered class scheduling and membership management, it did not recognize information regarding the target market.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "AURA remembered class scheduling and membership management, but said the target market was not known.",
+      "reason": "The claim accurately reflects the specific details AURA recalled and the information it failed to recognize."
+    },
+    {
+      "claim": "This could mean that draft documents are not always treated as authoritative memory,",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory.",
+      "reason": "The draft maintains the conditional nature of the record's observation."
+    },
+    {
+      "claim": "and users may need to restate information provided in different contexts.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "users may need to restate information that exists in a draft or that was provided in a different context.",
+      "reason": "The claim accurately captures the potential user impact stated in the record."
+    },
+    {
+      "claim": "A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session.",
+      "reason": "The draft correctly frames the recommendation as a proposal for a next step."
+    }
+  ],
+  "summary": "Most of the claims in the draft are supported by the source record. However, the draft incorrectly identifies the topic of the test session as 'business planning,' which is not mentioned in the record."
+}

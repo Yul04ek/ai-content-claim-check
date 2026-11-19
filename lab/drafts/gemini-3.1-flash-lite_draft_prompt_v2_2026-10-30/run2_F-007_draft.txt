@@ -1,0 +1,4 @@
+Do you ever find yourself pausing a project and wondering what your assistant remembers when you pick it back up? In a recent test of our document organization tool, I resumed a voice session to ask about a specific project. While the system successfully recalled details about class scheduling and membership management, it did not recognize information regarding the target market that was already saved in a draft. This may mean that the system does not always treat draft documents as authoritative memory. [Add: what surprised you about this result?] One option is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session. [Add: what this taught us about building AURA.]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productmanagement

@@ -1,0 +1,54 @@
+{
+  "claims": [
+    {
+      "claim": "I looked for a delete option in the Documents area.",
+      "finding": "supported",
+      "source_field": "SCENARIO",
+      "record_quote": "I looked for a way to delete a document in the Documents area.",
+      "reason": "The claim accurately reflects the tester's described scenario."
+    },
+    {
+      "claim": "I could not find a delete option.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I could not find a delete option.",
+      "reason": "This is a direct paraphrase of the observation."
+    },
+    {
+      "claim": "I did not delete anything.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I did not delete a document.",
+      "reason": "The claim is a faithful paraphrase of the observation."
+    },
+    {
+      "claim": "The intended product behavior and permissions around deletion are not clear.",
+      "finding": "supported",
+      "source_field": "SEVERITY",
+      "record_quote": "the intended product behavior and permissions are not clear.",
+      "reason": "The claim matches the severity assessment provided in the record."
+    },
+    {
+      "claim": "Users may be unsure how to remove an unwanted document or whether archiving is the only option.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users may not know how to remove an unwanted document or whether archiving is the only option.",
+      "reason": "The claim reflects the potential user impact stated in the record."
+    },
+    {
+      "claim": "Unclear options can slow people down and raise questions about document management.",
+      "finding": "not_in_record",
+      "source_field": "none",
+      "record_quote": "",
+      "reason": "The record does not mention the effect of slowing people down or raising general management questions."
+    },
+    {
+      "claim": "We suggest clarifying whether deletion is supported, where it is available, and how it differs from archiving.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "reason": "The draft accurately presents the recommendation from the record."
+    }
+  ],
+  "summary": "The draft accurately reports the testing scenario, observations, and recommendations. However, it includes an extra claim regarding the negative impact on user efficiency that is not supported by the source record."
+}

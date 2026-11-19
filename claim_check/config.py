@@ -22,6 +22,10 @@ except ImportError:  # the offline tests run without the package
 _RETRY_CODES = (429, 500, 502, 503, 504)
 
 
+class DailyQuotaExhausted(RuntimeError):
+    """The daily free quota of the model is used up. Waiting does not help: stop and go on tomorrow."""
+
+
 def get_env(key: str) -> str:
     result = os.getenv(key)
     if result is None:
@@ -35,12 +39,14 @@ def get_client():
     return openai.OpenAI(base_url=get_env("BASE_URL"), api_key=get_env("API_KEY"))
 
 
-def chat(client, retries: int = 5, timeout: float = 90, **kwargs):
+def chat(client, retries: int = 5, timeout: float | None = None, **kwargs):
     """client.chat.completions.create(**kwargs) with a timeout, waiting and retrying.
 
     Waits and tries again on 429 (rate limit) and 5xx (model overloaded) and on timeouts.
     Stops at once when the DAILY free quota is used up, because waiting does not help.
     """
+    if timeout is None:  # slow models that think long need more than 90 s: set CLAIM_CHECK_TIMEOUT (seconds)
+        timeout = float(os.getenv("CLAIM_CHECK_TIMEOUT", "90"))
     fast = client.with_options(timeout=timeout, max_retries=0)  # we do the retrying ourselves
     for attempt in range(retries + 1):
         try:
@@ -53,7 +59,7 @@ def chat(client, retries: int = 5, timeout: float = 90, **kwargs):
             time.sleep(wait)
         except openai.APIStatusError as error:
             if error.status_code == 429 and "PerDay" in str(error.body):
-                raise
+                raise DailyQuotaExhausted("Daily quota of the model is used up (429, PerDay).") from error
             if error.status_code in _RETRY_CODES and attempt < retries:
                 wait = 20 * (attempt + 1)
                 print(f"Model answered {error.status_code}, waiting {wait} s ...")

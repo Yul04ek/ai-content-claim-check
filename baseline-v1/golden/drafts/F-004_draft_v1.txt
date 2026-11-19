@@ -1,0 +1,11 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-004
+Created: 2026-10-29 10:45
+Source: BZ021_Test_Copy, column A, finding ID F-004
+Evidence: https://drive.google.com/file/d/1FViEBU7PfPliiJl1n9-X35MhScF2tF41/view?usp=sharing
+----------------------------------------
+Is there an easy way to remove a document when I’m working in the Documents area? In this test, I looked for a delete option but could not find one and I did not delete anything. This suggests the intended product behavior and permissions around deletion are not clear, which could leave users unsure how to remove an unwanted document or whether archiving is the only option. It may matter because unclear options can slow people down and raise questions about document management. We suggest clarifying whether deletion is supported, where it is available, and how it differs from archiving. [Add: what this taught us about building AURA] [Add: next step to confirm current permissions with product owner]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+
+Suggested topic tags: #usabilitytesting #productfeedback

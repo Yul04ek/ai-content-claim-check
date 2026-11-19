@@ -1,0 +1,4 @@
+Have you ever tried to clear out your workspace by moving an old file to an archive folder, only to find it still sitting in your main list? During testing, an attempt to archive a document from the main view failed with a 503 status code, leaving the file exactly where it started. This could mean that people are unable to effectively organize their files or clean up their active project lists, which may lead to frustration when trying to keep things tidy. [Add: what this taught us about building AURA] One option is to fix the archive action and provide a clear success or failure state so that the status of a document is never in doubt. [Add: what you hope to achieve with this fix]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productmanagement

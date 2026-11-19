@@ -1,0 +1,5 @@
+Did you ever try to finalize a small update and hit a stuck moment where the system wouldn’t complete the final step?
+
+During testing, a 40% working draft appeared and stayed after refresh; the approved Company DNA remained at 0%. The final apply step failed, and the same recovery action loop returned the same failure. The screen kept showing Approved / Final apply pending, and the version history indicated no proposal completed the final apply. The draft fields included instruction prompts like “Show me a draft for review” and “Please record only these two product areas,” rather than clean company facts.
+
+This may mean that users cannot finish an approved Company DNA update and could be pulled back into a looping recovery flow, with a risk that prompt instructions get saved as company facts if applied uncorrected. One option is to make the recovery action reliably complete the already-approved update without requiring a new approval, keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts.

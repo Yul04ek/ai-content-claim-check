@@ -1,0 +1,13 @@
+DRAFT, NOT APPROVED. DO NOT PUBLISH.
+ID: F-007
+Created: 2026-10-29 10:46
+Source: BZ021_Test_Copy, column A, finding ID F-007
+Evidence: https://drive.google.com/file/d/1un8T-FPuXc2XIT709OV0uX5mbH4omuqK/view?usp=sharing
+----------------------------------------
+Did you try picking up where you left off with a voice session and wonder what AURA “remembers”? during testing, we used the Company DNA voice flow, paused it, and resumed with Continue with AURA. The interface showed Resume context — Saved · Paused and Continue with AURA. After resuming, AURA remembered class scheduling and membership management, but said the target market was not known. It also showed that draft documents aren’t necessarily treated as authoritative memory, and the voice interaction itself worked in the checks I made.
+
+This may matter because it suggests resumed context can surface some items correctly while other items from drafts or different contexts may not be treated as memory. one option is to make the source and scope of resumed context clearer, and tell users whether voice resumes only within the live Voice session. [Add: what surprised you?] [Add: what this taught us about building AURA].
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+
+Suggested topic tags: #usabilitytesting #voiceinteraction

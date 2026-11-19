@@ -1,0 +1,30 @@
+Result: REVIEW: 2 to verify, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reflects the findings from the StudioFlow testing session, including the specific failure of the final apply step and the inclusion of prompt instructions in the draft fields. No factual errors were found.
+
+Problems (2)
+- Verify: Draft fields also contained prompt instructions instead of clean company facts. -- The draft accurately reflects the record. [quote NOT found in record]
+  Record: "The draft fields also contained AURA instructions ... rather than only clean company facts."
+- Verify: We suggest exploring a reliable recovery path that completes the approved update, with a clear cancel/edit option and separation of draft prompts from company facts. -- The draft summarizes the recommendations provided in the record. [quote NOT found in record]
+  Record: "Make the recovery action reliably complete the already-approved update ... Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts."
+
+Supported (8)
+- A 40% working draft appeared and stayed after refresh. -- Record: "A 40% working draft appeared and remained after refresh"
+- The accepted Company DNA remained at 0%. -- Record: "accepted Company DNA stayed at 0%."
+- The approval was saved, but the final apply step failed. -- Record: "The approval was saved, but the final apply step failed."
+- The same recovery action kept failing. -- Record: "The same Finish applying recovery action returned the same failure again."
+- The screen showed Approved / Final apply pending. -- Record: "The screen continued to show Approved / Final apply pending"
+- The accepted version history indicated no completed final apply. -- Record: "accepted version history said no proposal had completed the final apply step."
+- This blocks updates. -- Record: "the final apply action is blocked for this update."
+- It could place prompt instructions into company facts if applied as-is. -- Record: "If applied without correction, the draft would also place prompt instructions in Company DNA fields."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 146 words
+Placeholders to fill: 2 ([Add: what this taught us about building AURA] [Add: next steps for handling recovery flows])

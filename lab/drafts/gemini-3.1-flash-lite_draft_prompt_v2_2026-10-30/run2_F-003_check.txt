@@ -1,0 +1,21 @@
+Result: NO ISSUES FOUND (human review still required): 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reflects the testing observation regarding the failed archive action and correctly identifies the user impact and recommended solution. No factual discrepancies were found.
+
+Problems (0)
+
+Supported (3)
+- During a recent test, a document failed to move from the active list to the archive, returning an error message instead. -- Record: "The action failed with Request failed with status code 503. The document remained in Documents and did not appear in the archive."
+- This could mean that people are unable to trust the system to organize their materials or remove items they no longer need. -- Record: "Users cannot rely on archiving to organise or remove a document from the active list."
+- One option is to fix the archive action and provide a clear status update to confirm whether the document was successfully moved or if the request failed. -- Record: "Fix the archive action in the next release and provide a clear success or failure state without leaving the user uncertain about the document’s status."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 85 words
+Placeholders to fill: 2 ([Add: what this taught us about building a reliable system?] [Add: what did the team learn from this specific error?])

@@ -1,0 +1,24 @@
+Result: NOT READY: 1 unsupported, 1 style flag, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: Most of the claims in the draft are supported by the source record. However, the draft incorrectly identifies the topic of the test session as 'business planning,' which is not mentioned in the record.
+
+Problems (2)
+- Unsupported: During testing, I paused a session about business planning and resumed it later to ask about specific details. -- The record mentions using the Company DNA voice flow, not business planning.
+- Style: always -- Banned word in the draft (generalisation or hype).
+
+Supported (4)
+- While the system remembered class scheduling and membership management, it did not recognize information regarding the target market. -- Record: "AURA remembered class scheduling and membership management, but said the target market was not known."
+- This could mean that draft documents are not always treated as authoritative memory, -- Record: "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory."
+- and users may need to restate information provided in different contexts. -- Record: "users may need to restate information that exists in a draft or that was provided in a different context."
+- A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session. -- Record: "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 1 (always)
+Missing series hashtags: 0
+Draft length: 112 words
+Placeholders to fill: 2 ([Add: what surprised you?] [Add: what this taught us about building AURA.])

@@ -1,0 +1,26 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, I looked for a way to delete a document but could not find an option to do so.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "I looked for a way to delete a document in the Documents area. I could not find a delete option.",
+      "reason": "The draft accurately reflects the tester's actions and findings described in the record."
+    },
+    {
+      "claim": "This may mean that you might be unsure how to clear out unwanted files or if archiving is the only path available.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "Users may not know how to remove an unwanted document or whether archiving is the only option.",
+      "reason": "The draft correctly frames the impact as a possibility, matching the speculative tone of the record."
+    },
+    {
+      "claim": "A possible next step is to clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Clarify whether deletion is supported, where it is available, and how it differs from archiving.",
+      "reason": "The draft presents the recommendation as a proposal rather than a completed action."
+    }
+  ],
+  "summary": "All factual claims made in the draft are supported by the provided source record. The post accurately describes the difficulty in finding a delete option and correctly characterizes the potential user impact and necessary recommendations as proposed next steps."
+}

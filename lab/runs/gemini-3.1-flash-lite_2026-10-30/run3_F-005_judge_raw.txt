@@ -1,0 +1,61 @@
+{
+  "claims": [
+    {
+      "claim": "I tested the Documents library with 29 assets.",
+      "finding": "supported",
+      "source_field": "SCENARIO",
+      "record_quote": "I tested the Documents library with 29 assets.",
+      "reason": "The claim matches the scenario provided in the record."
+    },
+    {
+      "claim": "Searching for StudioFlow returned 2 results.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "Searching for StudioFlow returned 2 results.",
+      "reason": "The claim is explicitly stated in the observation."
+    },
+    {
+      "claim": "QA-S02 — StudioFlow — Interview Guide opened with its content visible.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "QA-S02 — StudioFlow — Interview Guide opened and its content was visible.",
+      "reason": "The claim matches the observation."
+    },
+    {
+      "claim": "After a refresh, the document count stayed at 29.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "After refresh, the document count remained 29.",
+      "reason": "The claim matches the observation."
+    },
+    {
+      "claim": "Category filters plus “All documents” behaved as expected.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The category filter and return to All documents caused no issue in the checks reported.",
+      "reason": "This is a faithful paraphrase of the observed behavior."
+    },
+    {
+      "claim": "This test suggests the search and view actions can display content consistently in this scenario.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "No issue observed in these specific checks.",
+      "reason": "The claim reflects the absence of issues during the specific test scenario."
+    },
+    {
+      "claim": "Timing and exhaustive verification of every document were not performed.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Timing and exhaustive verification of every document were not performed.",
+      "reason": "The claim is an exact match to the record."
+    },
+    {
+      "claim": "One option is to plan a broader check to confirm results across more assets and timing conditions.",
+      "finding": "not_in_record",
+      "source_field": "none",
+      "record_quote": "",
+      "reason": "The record states no immediate change is identified; it does not propose a broader check."
+    }
+  ],
+  "summary": "The draft accurately reports the findings from the document library test. However, it includes an unsupported recommendation to perform a broader check, which is not mentioned in the source record."
+}

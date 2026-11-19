@@ -1,0 +1,23 @@
+Result: NOT READY: 1 unsupported, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reports the technical failure of the archive action and the resulting user impact. However, it introduces an unsupported claim regarding user loss of confidence.
+
+Problems (1)
+- Unsupported: Users could lose confidence in the system when an action looks like it worked but didn’t. -- This sentiment is not mentioned in the record.
+
+Supported (4)
+- Archiving from Documents failed with a 503 error. -- Record: "The action failed with Request failed with status code 503."
+- The document stayed visible instead of moving to the archive. -- Record: "The document remained in Documents and did not appear in the archive."
+- Users rely on archiving to keep active lists clean. -- Record: "Users cannot rely on archiving to organise or remove a document from the active list."
+- We suggest exploring improvements in the archive action for the next release and adding a clear success or failure state so users aren’t left unsure about a document’s status. -- Record: "Fix the archive action in the next release and provide a clear success or failure state without leaving the user uncertain about the document’s status."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 96 words
+Placeholders to fill: 2 ([Add: what this taught us about building AURA] [Add: what changed after the fix?])

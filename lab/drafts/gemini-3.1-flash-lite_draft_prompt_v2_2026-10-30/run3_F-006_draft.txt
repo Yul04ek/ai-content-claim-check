@@ -1,0 +1,4 @@
+Have you ever tried to save important company details only to find the process stuck in a loop? During testing, the system failed to finalize an approved company profile update. Even after refreshing or using the recovery action, the update remained pending, and the draft included internal prompt instructions instead of just the intended information. This could mean a significant delay in maintaining accurate records and potential confusion due to the unwanted text. A possible next step is to make the recovery action reliably complete the approved update, keep the payload available, provide a clear cancel or edit route, and prevent prompt instructions from being stored as company facts. [Add: how you feel about this blocker] [Add: what this taught us about building AURA].
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productdevelopment

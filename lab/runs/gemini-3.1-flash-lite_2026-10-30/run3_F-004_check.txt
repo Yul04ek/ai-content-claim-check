@@ -1,0 +1,25 @@
+Result: NOT READY: 1 unsupported, 2 placeholders to fill
+
+-----
+AI-generated:
+Judge summary: The draft accurately reports the testing scenario, observations, and recommendations. However, it includes an extra claim regarding the negative impact on user efficiency that is not supported by the source record.
+
+Problems (1)
+- Unsupported: Unclear options can slow people down and raise questions about document management. -- The record does not mention the effect of slowing people down or raising general management questions.
+
+Supported (6)
+- I looked for a delete option in the Documents area. -- Record: "I looked for a way to delete a document in the Documents area."
+- I could not find a delete option. -- Record: "I could not find a delete option."
+- I did not delete anything. -- Record: "I did not delete a document."
+- The intended product behavior and permissions around deletion are not clear. -- Record: "the intended product behavior and permissions are not clear."
+- Users may be unsure how to remove an unwanted document or whether archiving is the only option. -- Record: "Users may not know how to remove an unwanted document or whether archiving is the only option."
+- We suggest clarifying whether deletion is supported, where it is available, and how it differs from archiving. -- Record: "Clarify whether deletion is supported, where it is available, and how it differs from archiving."
+
+-----
+Code checks (Python, rule-based)
+Numbers not in the record: 0
+Quoted text not in the record: 0
+Banned words: 0
+Missing series hashtags: 0
+Draft length: 100 words
+Placeholders to fill: 2 ([Add: what this taught us about building AURA] [Add: next step to confirm current permissions with product owner])

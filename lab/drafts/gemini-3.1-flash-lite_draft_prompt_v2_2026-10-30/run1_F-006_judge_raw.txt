@@ -1,0 +1,40 @@
+{
+  "claims": [
+    {
+      "claim": "During testing, after approving a draft of company facts, the final step failed to apply the data.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The approval was saved, but the final apply step failed.",
+      "reason": "The record confirms the approval was saved but the final application step failed."
+    },
+    {
+      "claim": "The system displayed an update as approved but did not finalize it",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The screen continued to show Approved / Final apply pending",
+      "reason": "The observation confirms the status showed approved while the final apply step remained pending."
+    },
+    {
+      "claim": "while also keeping draft instructions inside the fields instead of just the facts.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The draft fields also contained AURA instructions such as “Show me a draft for review” and “Please record only these two product areas,” rather than only clean company facts.",
+      "reason": "The observation directly notes that AURA instructions were present in the fields instead of just clean facts."
+    },
+    {
+      "claim": "This may mean that information is not correctly saved or cleaned for final use.",
+      "finding": "supported",
+      "source_field": "USER IMPACT",
+      "record_quote": "If applied without correction, the draft would also place prompt instructions in Company DNA fields.",
+      "reason": "The record acknowledges that the system would store prompt instructions if the apply step were to succeed."
+    },
+    {
+      "claim": "A possible next step is to make the recovery action reliably complete the update without requiring a new approval, while providing a clear way to cancel or edit the input and preventing system instructions from being stored.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the recovery action reliably complete the already-approved update without requiring a new approval. Keep the approved payload available, provide a clear cancel/edit route, and prevent prompt instructions from being stored as company facts.",
+      "reason": "The draft accurately reflects the recommendations provided in the record."
+    }
+  ],
+  "summary": "The draft accurately describes the observed failure of the Company DNA apply process and the presence of unwanted AURA instructions in the draft fields. All claims are supported by the source record, including the summary of recommendations."
+}

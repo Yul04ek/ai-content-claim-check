@@ -1,0 +1,12 @@
+INTERNAL REVIEW ONLY. Do not publish or send.
+
+AURA opportunity teaser: Test Firma Demo GmbH
+
+Who you are: Test Firma Demo GmbH builds scheduling software for small craft businesses (S1), founded in Germany (S2). Like Morgenrot Kaffee, the company runs a cafe in its headquarters.
+
+Hypothesis 1: A clear story of the product could help when talking to investors (S1). How AURA could help: the Pitch Deck builder.
+
+Hypothesis 2: Customers in three countries may need consistent documents (S2). How AURA could help: the Documents library with AI-assisted drafting.
+Next step: sign up for AURA to view a preliminary company profile built only from your public website.
+Sources: S1 https://example.com, S2 https://example.com/about
+Unknown: funding, revenue, customer numbers, current tools, whether AI support is wanted.

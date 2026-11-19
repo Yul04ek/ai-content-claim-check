@@ -1,0 +1,4 @@
+Do you ever struggle to save your business details after you have finished writing them? During testing, after providing information about StudioFlow, the final step to apply those updates failed. Even after refreshing the page, the system displayed an approval status but would not complete the final action, leaving the draft stuck in a loop. This may mean that critical updates remain unfinished, or that internal instructions meant for the AI could accidentally be saved as official company facts. [Add: what this taught us about building AURA]. A possible next step is to make the recovery action reliably complete the already-approved update without requiring a new approval, provide a clear cancel or edit route, and prevent prompt instructions from being stored as company facts. [Add: what surprised you?]
+
+#AURABuildLog #FundraiseInPublic #AURAFundraiseLog
+Suggested topic tags: #usabilitytesting #productmanagement

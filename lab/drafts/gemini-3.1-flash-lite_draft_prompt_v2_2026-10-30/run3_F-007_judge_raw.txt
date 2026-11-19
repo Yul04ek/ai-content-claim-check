@@ -1,0 +1,33 @@
+{
+  "claims": [
+    {
+      "claim": "During testing of the voice flow, I paused my session and resumed it later to ask about my target market.",
+      "finding": "supported",
+      "source_field": "SCENARIO",
+      "record_quote": "I used the Company DNA voice flow, paused it, and resumed through Continue with AURA. I asked what AURA knew about StudioFlow.",
+      "reason": "The tester describes the sequence of actions taken in the record."
+    },
+    {
+      "claim": "While the assistant recalled class scheduling and membership details, it could not identify the target market despite that information being in my draft documents.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "AURA remembered class scheduling and membership management, but said the target market was not known. The later target-market response also showed that draft documents were not necessarily treated as authoritative memory.",
+      "reason": "The observation confirms the assistant recalled specific details but failed to identify the target market while noting the draft documents were involved."
+    },
+    {
+      "claim": "This may mean that the system does not always treat drafts as authoritative memory.",
+      "finding": "supported",
+      "source_field": "OBSERVATION",
+      "record_quote": "The later target-market response also showed that draft documents were not necessarily treated as authoritative memory.",
+      "reason": "The draft accurately reflects the record's note regarding the authoritative status of draft documents."
+    },
+    {
+      "claim": "A possible next step is to make the source and scope of resumed context clear, and tell users whether voice resumes only within the live voice session.",
+      "finding": "supported",
+      "source_field": "RECOMMENDATION",
+      "record_quote": "Make the source and scope of resumed context clear, and tell users whether voice resumes only within the live Voice session.",
+      "reason": "The draft accurately presents the recommendations provided in the record."
+    }
+  ],
+  "summary": "The draft accurately reflects the testing process, observations, and recommendations found in the source record. All claims are supported by the provided information."
+}
