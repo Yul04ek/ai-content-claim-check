@@ -60,7 +60,7 @@ The Make drafting prompt and its history are in `docs/make-prompt-history.md`.
 
 | Notebook | Task | Use it to | Needs |
 |---|---|---|---|
-| `evidence_to_drive_colab.ipynb` | YL-004B, no AI | for one company marked `READY_FOR_TEASER`: read its sources (whole group, identical addresses once) from the database, make dated text snapshots, save one file `<company_id>.md` in the Drive folder `YL004B evidence` (read by the Make Teaser Generator) | Colab Secret `SUPABASE_DB_URL`; a Google account that can edit the folder |
+| `evidence_to_drive_colab.ipynb` | YL-004B, no AI | for every company marked `READY_FOR_TEASER` (the whole queue, nothing to type): read its sources (whole group, identical addresses once) from the database, make dated text snapshots, save one file `<company_id>.md` per company in the Drive folder `YL004B evidence` (read by the Make Teaser Generator) | Colab Secret `SUPABASE_DB_URL`; a Google account that can edit the folder |
 | `teaser_lab_colab.ipynb` | YL-004B judge | run the judge once on your own pack + teaser files, free checks first | `GEMINI_API_KEY` |
 
 Older notebooks are in `archive/` (they still work, they clone the repository themselves): `claim_check_colab.ipynb` (YL-004 story drafts), `teaser_check_colab.ipynb`, `evidence_fetch_colab.ipynb` (snapshot as text to copy by hand, replaced by `evidence_to_drive_colab.ipynb`), `teaser_experiment_colab.ipynb`, `teaser_experiment_v3_colab.ipynb`, `teaser_experiment_v4_colab.ipynb` (judge experiments).
