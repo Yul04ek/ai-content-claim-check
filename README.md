@@ -15,7 +15,7 @@ It runs outside Make, publishes nothing, and writes a CSV for the reviewer. A hu
 You need a free Gemini API key: https://aistudio.google.com/apikey (no payment details).
 
 1. Open the notebook in Colab:
-   [Open in Colab](https://colab.research.google.com/github/Yul04ek/ai-content-claim-check/blob/main/claim_check_colab.ipynb)
+   [Open in Colab](https://colab.research.google.com/github/Yul04ek/ai-content-claim-check/blob/main/archive/claim_check_colab.ipynb)
 2. In Colab, open the key icon (Secrets) in the left sidebar. Add a secret `GEMINI_API_KEY` with your key and switch on
    "Notebook access". If this repository is private, add a second secret `GITHUB_TOKEN` (a fine-grained token with read access to this repository only).
 3. Run the cells from top to bottom. The notebook installs the packages, checks the model with one short message,
@@ -60,11 +60,9 @@ The Make drafting prompt and its history are in `docs/make-prompt-history.md`.
 
 | Notebook | Task | Use it to | Needs |
 |---|---|---|---|
-| `claim_check_colab.ipynb` | YL-004 story drafts | check an AI story draft against its source finding (nine test cases, one real run) | `GEMINI_API_KEY` |
-| `teaser_check_colab.ipynb` | YL-004B teasers | the synthetic teaser suite (A0-A8, approved offer list) and one teaser against a pack | `GEMINI_API_KEY` |
-| `evidence_fetch_colab.ipynb` | YL-004B lab, no AI | turn company page addresses into a dated text snapshot, `make_evidence.txt` for the Make field `evidence` | nothing (public pages only) |
-| `teaser_lab_colab.ipynb` | YL-004B lab | run the judge once on your own pack + teaser files, free checks first | `GEMINI_API_KEY` |
-| `teaser_experiment_colab.ipynb` | YL-004B lab | controlled experiments: the lab set, one change at a time, 3 repeats, MLflow in a folder you download (Drive optional) | `GEMINI_API_KEY`, `lab_set_v1.zip` |
+| `evidence_to_drive_colab.ipynb` | YL-004B, no AI | for one company marked `READY_FOR_TEASER`: read its sources (whole group, identical addresses once) from the database, make dated text snapshots, save one file `<company_id>.md` in the Drive folder `YL004B evidence` (read by the Make Teaser Generator) | Colab Secret `SUPABASE_DB_URL`; a Google account that can edit the folder |
+| `teaser_lab_colab.ipynb` | YL-004B judge | run the judge once on your own pack + teaser files, free checks first | `GEMINI_API_KEY` |
 
-Order of the lab work: `evidence_fetch` (snapshot) -> Make generator (teaser) -> `teaser_lab` (one run) -> `teaser_experiment` (compare versions).
-`teaser_lab` and `teaser_experiment` overlap; once the experiment notebook is proven, `teaser_lab` can be dropped.
+Older notebooks are in `archive/` (they still work, they clone the repository themselves): `claim_check_colab.ipynb` (YL-004 story drafts), `teaser_check_colab.ipynb`, `evidence_fetch_colab.ipynb` (snapshot as text to copy by hand, replaced by `evidence_to_drive_colab.ipynb`), `teaser_experiment_colab.ipynb`, `teaser_experiment_v3_colab.ipynb`, `teaser_experiment_v4_colab.ipynb` (judge experiments).
+
+Order of the teaser work: `evidence_to_drive` (snapshot file on Drive) -> Make generator (teaser) -> `teaser_lab` (judge).
