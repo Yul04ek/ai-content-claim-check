@@ -1,0 +1,66 @@
+# The judge for teasers in the database (YL-004B). Started by hand: Actions -> "Teaser judge" -> Run workflow,
+# or by the Make Teaser Generator (HTTP request "workflow dispatch" with the teaser id, planned, not built yet).
+# Repository secrets needed: SUPABASE_DB_URL (Session pooler connection string), GEMINI_API_KEY,
+# SUPABASE_URL and SUPABASE_SERVICE_KEY (to put the PDF report into the private bucket teaser-reports).
+# Nothing is published or sent. Result: one row in teaser_checks per teaser (the database updates teasers.judge_result).
+name: Teaser judge
+
+on:
+  workflow_dispatch:
+    inputs:
+      teaser:
+        description: "Teaser id (empty = the whole queue)"
+        type: string
+        default: ""
+      limit:
+        description: "At most this many teasers (the free Gemini tier has a daily quota)"
+        type: string
+        default: "3"
+      dry_run:
+        description: "Dry run: code checks only, no model, nothing is written"
+        type: boolean
+        default: false
+
+concurrency:
+  group: teaser-judge   # one run at a time: two runs would check the same queue twice
+  cancel-in-progress: false
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt "psycopg[binary]"
+      - name: Offline tests
+        run: |
+          python tests/test_teaser_check.py | tail -1
+          python tests/test_db_judge.py | tail -1
+      - name: Judge
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai/
+          MODEL_NAME: gemini-3.6-flash
+          CLAIM_CHECK_TIMEOUT: "300"
+          TEASER: ${{ inputs.teaser }}
+          LIMIT: ${{ inputs.limit }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=""
+          # inputs go through the environment and are checked as numbers: nothing from them is run as a command
+          if [ -n "$TEASER" ]; then
+            case "$TEASER" in (*[!0-9]*) echo "teaser must be a number"; exit 1;; esac
+            args="$args --teaser $TEASER"
+          fi
+          if [ -n "$LIMIT" ]; then
+            case "$LIMIT" in (*[!0-9]*) echo "limit must be a number"; exit 1;; esac
+            args="$args --limit $LIMIT"
+          fi
+          if [ "$DRY_RUN" = "true" ]; then args="$args --dry-run"; fi
+          python -m teaser_check.db_judge $args
