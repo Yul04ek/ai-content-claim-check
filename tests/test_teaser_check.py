@@ -85,6 +85,16 @@ def test_figure_words_are_flags_not_verdicts():
     assert flags and all(r["verdict"] == "" for r in flags)
 
 
+def test_report_shows_the_judges_judgement_when_the_row_has_a_fit_rating():
+    from teaser_check import report
+    row = {"finding": "supported", "source_field": "S1", "reason": "Weak fit: the quote is a doubt, not a plan.", "basis": "weak"}
+    tags, flagged = report._judge_tags([row], None)
+    text = " ".join(tags)
+    assert not flagged and "Weak fit: the quote is a doubt" in text and "verified" not in text
+    plain = {"finding": "supported", "source_field": "S1", "reason": "Directly stated."}
+    assert "verified" in " ".join(report._judge_tags([plain], None)[0])
+
+
 def test_figure_word_note_names_the_word():
     flags = [r for r in rows_for("t3_growth_claim.txt") if r["kind"] == "flag"]
     assert all(f"“{r['text']}”" in r["reason"] for r in flags)

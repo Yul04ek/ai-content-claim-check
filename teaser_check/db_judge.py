@@ -43,6 +43,15 @@ order by q.teaser_id
 {limit}
 """
 
+# Same columns, but for one teaser that already has a check (a second look with another rubric).
+AGAIN_SQL = """
+select t.id as teaser_id, t.company_id, c.label, t.version, i.teaser_text, i.evidence_text
+from public.teasers t
+join public.companies c on c.id = t.company_id
+left join public.teaser_inputs i on i.teaser_id = t.id
+where t.id = %s
+"""
+
 INSERT_SQL = """
 insert into public.teaser_checks
   (teaser_id, company_id, status, model, rubric, statements, judge_verified, judge_flagged, code_errors, review_rows,
@@ -166,7 +175,11 @@ def save(conn, values: dict) -> None:
     conn.commit()
 
 
-def read_queue(conn, teaser_id: int | None, limit: int | None) -> list[dict]:
+def read_queue(conn, teaser_id: int | None, limit: int | None, again: bool = False) -> list[dict]:
+    if again:  # one named teaser, even if it already has a check: a new row is added, the old one stays
+        cur = conn.execute(AGAIN_SQL, [teaser_id])
+        names = [d.name for d in cur.description]
+        return [dict(zip(names, r)) for r in cur.fetchall()]
     where, params = ("where q.teaser_id = %s", [teaser_id]) if teaser_id else ("", [])
     sql = QUEUE_SQL.format(where=where, limit="limit %s" if limit else "")
     cur = conn.execute(sql, params + ([limit] if limit else []))
@@ -181,11 +194,14 @@ def main(argv=None) -> int:
     p.add_argument("--dry-run", action="store_true", help="code checks only, no model, nothing is written")
     p.add_argument("--no-pdf", action="store_true", help="do not make or upload the PDF")
     p.add_argument("--rubric", default=os.getenv("JUDGE_RUBRIC", DEFAULT_RUBRIC))
+    p.add_argument("--again", action="store_true", help="check the given --teaser once more, even if it already has a check")
     args = p.parse_args(argv)
+    if args.again and not args.teaser:
+        p.error("--again needs --teaser")
 
     import psycopg
     conn = psycopg.connect(get_env("SUPABASE_DB_URL"))
-    queue = read_queue(conn, args.teaser, args.limit)
+    queue = read_queue(conn, args.teaser, args.limit, args.again)
     print(f"Queue: {len(queue)} teaser(s)")
     if args.dry_run:
         judge, model = no_judge, "none (dry run)"

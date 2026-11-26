@@ -195,7 +195,10 @@ def _judge_tags(entries: list[dict], pack: dict | None, quote_line: bool = True)
     for r in entries:
         if r.get("finding") == "supported":
             where = _source_html(r.get("source_field", ""), pack)
-            tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {where}.{_basis_note(r)}</div>')
+            if r.get("basis") and r.get("reason"):  # a rubric with a fit rating (n4): show the judge's own judgement
+                tags.append(f'<div class="tag ok"><b>Judge:</b> {html.escape(_clean_reason(r.get("reason")))} Evidence: {where}.{_basis_note(r)}</div>')
+            else:
+                tags.append(f'<div class="tag ok"><b>Judge:</b> verified. Evidence: {where}.{_basis_note(r)}</div>')
             if quote_line:  # not on Evidence lines: there the code line of the rule already says where the quote is
                 tags.append(_ok_code(f"quote checked. Evidence: {where}."))
         else:

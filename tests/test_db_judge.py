@@ -155,6 +155,23 @@ def test_read_queue_builds_the_query():
     assert "where" not in conn.sql and conn.params == []
 
 
+def test_read_queue_again_reads_one_teaser_without_the_queue_filter():
+    class Cur:
+        description = [types.SimpleNamespace(name=n) for n in ("teaser_id", "label")]
+
+        def fetchall(self):
+            return [(8, "Halvorn")]
+
+    class Conn:
+        def execute(self, sql, params):
+            self.sql, self.params = sql, params
+            return Cur()
+
+    conn = Conn()
+    assert dj.read_queue(conn, 8, None, again=True) == [{"teaser_id": 8, "label": "Halvorn"}]
+    assert "teaser_check_queue" not in conn.sql and "where t.id = %s" in conn.sql and conn.params == [8]
+
+
 def test_run_ref_only_on_github():
     import os
     old = {k: os.environ.pop(k, None) for k in ("GITHUB_RUN_ID", "GITHUB_REPOSITORY")}

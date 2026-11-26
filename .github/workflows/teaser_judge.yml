@@ -20,6 +20,15 @@ on:
         description: "Dry run: code checks only, no model, nothing is written"
         type: boolean
         default: false
+      rubric:
+        description: "Rubric of the judge (n3 = the one in use, n4 = draft with a fit rating)"
+        type: choice
+        options: ["n3", "n4"]
+        default: "n3"
+      again:
+        description: "Check the teaser above once more although it already has a check (a new row is added; needs a teaser id)"
+        type: boolean
+        default: false
 
 concurrency:
   group: teaser-judge   # one run at a time: two runs would check the same queue twice
@@ -51,6 +60,8 @@ jobs:
           TEASER: ${{ inputs.teaser }}
           LIMIT: ${{ inputs.limit }}
           DRY_RUN: ${{ inputs.dry_run }}
+          RUBRIC: ${{ inputs.rubric }}
+          AGAIN: ${{ inputs.again }}
         run: |
           args=""
           # inputs go through the environment and are checked as numbers: nothing from them is run as a command
@@ -63,4 +74,6 @@ jobs:
             args="$args --limit $LIMIT"
           fi
           if [ "$DRY_RUN" = "true" ]; then args="$args --dry-run"; fi
+          case "$RUBRIC" in (n3|n4) args="$args --rubric skills/experiments/$RUBRIC.md";; (*) echo "unknown rubric"; exit 1;; esac
+          if [ "$AGAIN" = "true" ]; then args="$args --again"; fi
           python -m teaser_check.db_judge $args
