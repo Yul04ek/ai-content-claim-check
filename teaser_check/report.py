@@ -279,32 +279,44 @@ def build_report(rows: list[dict], teaser: str, title: str = "Teaser check", pac
     sentences = [(i, sent) for i, (line, _) in enumerate(lines) if kinds[i] == "claim" for sent in _sentences(line)]
     by_sentence: dict[int, list[dict]] = {}
     by_template: dict[int, list[dict]] = {}   # judge verdicts on lines the code checks too (Evidence lines): checked by both
-    def best_template(cw):
-        best, score = None, 0.0
+    used_lines: set[int] = set()   # template lines that already got a judge row
+    used_sents: set[int] = set()   # sentences that already got a judge row
+
+    def best_template(cw, take=False):
+        # the same text can stand in several blocks (one Evidence quote in three offers): rows are given out in order,
+        # the first free line with the best score wins; only when all are taken the first one is used again
+        scored = []
         for i, (line, _) in enumerate(lines):
             if kinds[i] == "template":
                 lw = _words(line)
-                ov = len(cw & lw) / max(1, min(len(cw), len(lw)))
-                if ov > score:
-                    best, score = i, ov
-        return best if score >= 0.6 else None
+                scored.append((len(cw & lw) / max(1, min(len(cw), len(lw))), i))
+        top = max((sc for sc, _ in scored), default=0.0)
+        if top < 0.6:
+            return None
+        tied = [i for sc, i in scored if sc == top]
+        pick = next((i for i in tied if i not in used_lines), tied[0])
+        if take:
+            used_lines.add(pick)
+        return pick
 
     for r in judged:
         cw = _words(r["text"])
         # an "Evidence: ..." verdict belongs to the Evidence line, not to a hypothesis that repeats the same quote
         if re.match(r"^\W*(%s):" % "|".join(labels), r["text"], re.I) and best_template(cw) is not None:
-            by_template.setdefault(best_template(cw), []).append(r)
+            by_template.setdefault(best_template(cw, take=True), []).append(r)
             continue
-        best, score = None, 0.0
+        scored = []
         for k, (_, sent) in enumerate(sentences):
             sw = _words(sent)
-            ov = len(cw & sw) / max(1, min(len(cw), len(sw)))
-            if ov > score:
-                best, score = k, ov
-        if best is not None and score >= 0.6:
+            scored.append((len(cw & sw) / max(1, min(len(cw), len(sw))), k))
+        top = max((sc for sc, _ in scored), default=0.0)
+        if top >= 0.6:
+            tied = [k for sc, k in scored if sc == top]
+            best = next((k for k in tied if k not in used_sents), tied[0])  # identical sentences: rows go out in order
+            used_sents.add(best)
             by_sentence.setdefault(best, []).append(r)
         elif best_template(cw) is not None:
-            by_template.setdefault(best_template(cw), []).append(r)
+            by_template.setdefault(best_template(cw, take=True), []).append(r)
     sent_ids: dict[int, list[int]] = {}
     for k, (i, _) in enumerate(sentences):
         sent_ids.setdefault(i, []).append(k)

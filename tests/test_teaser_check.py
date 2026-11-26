@@ -95,6 +95,23 @@ def test_report_shows_the_judges_judgement_when_the_row_has_a_fit_rating():
     assert "verified" in " ".join(report._judge_tags([plain], None)[0])
 
 
+def test_report_gives_identical_evidence_lines_their_own_judge_rows_in_order():
+    from teaser_check import report
+    quote = "Evidence: \u201cSomeone at a meetup last week asked if I had a deck.\u201d"
+    teaser = "\n".join(["Company: Halvorn", "", "Offer: AURA AI Free", quote, "Company need: A first deck.", "",
+                        "Offer: Launchpad", quote, "Company need: A paid package."])
+    rows = [
+        {"kind": "claim", "text": quote, "finding": "supported", "verdict": "Supported", "reason": "strong fit: first block", "basis": "strong", "source_field": "S2"},
+        {"kind": "claim", "text": quote, "finding": "supported", "verdict": "Supported", "reason": "partial fit: second block", "basis": "partial", "source_field": "S2"},
+    ]
+    page = report.build_report(rows, teaser)
+    first, second = page.find("strong fit: first block"), page.find("partial fit: second block")
+    assert 0 < first < second
+    assert page.count("first block") == 1 and page.count("second block") == 1
+    # the second reason sits under the second Evidence line, not under the first one
+    assert page.rfind(quote.split("\u201c")[1][:20], 0, second) > page.rfind(quote.split("\u201c")[1][:20], 0, first)
+
+
 def test_figure_word_note_names_the_word():
     flags = [r for r in rows_for("t3_growth_claim.txt") if r["kind"] == "flag"]
     assert all(f"“{r['text']}”" in r["reason"] for r in flags)
