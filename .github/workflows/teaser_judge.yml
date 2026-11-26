@@ -25,6 +25,10 @@ on:
         type: choice
         options: ["n3", "n4"]
         default: "n3"
+      model:
+        description: "Gemini model (each model has its own free daily quota)"
+        type: string
+        default: "gemini-3.6-flash"
       again:
         description: "Check the teaser above once more although it already has a check (a new row is added; needs a teaser id)"
         type: boolean
@@ -55,7 +59,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai/
-          MODEL_NAME: gemini-3.6-flash
+          MODEL_NAME: ${{ inputs.model || 'gemini-3.6-flash' }}
           CLAIM_CHECK_TIMEOUT: "300"
           TEASER: ${{ inputs.teaser }}
           LIMIT: ${{ inputs.limit }}
@@ -64,6 +68,7 @@ jobs:
           AGAIN: ${{ inputs.again }}
         run: |
           args=""
+          case "$MODEL_NAME" in (*[!A-Za-z0-9._-]*) echo "model name has a wrong character"; exit 1;; esac
           # inputs go through the environment and are checked as numbers: nothing from them is run as a command
           if [ -n "$TEASER" ]; then
             case "$TEASER" in (*[!0-9]*) echo "teaser must be a number"; exit 1;; esac
