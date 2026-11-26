@@ -54,9 +54,9 @@ where t.id = %s
 
 INSERT_SQL = """
 insert into public.teaser_checks
-  (teaser_id, company_id, status, model, rubric, statements, judge_verified, judge_flagged, code_errors, review_rows,
-   report_path, run_ref, error, result)
-values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+  (teaser_id, company_id, status, model, rubric, statements, read_only_by_judge, checked_only_by_code, checked_by_both,
+   not_checked_by_anyone, judge_flagged, code_errors, review_required, report_path, run_ref, error, result)
+values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 
@@ -86,11 +86,15 @@ def report_numbers(report_html: str) -> dict:
         return [int(x) for x in m.groups()] if m else None
 
     total = find(r"The teaser has (\d+) statements")
+    parts = find(r"<b>(\d+)</b> read only by the judge, <b>(\d+)</b> checked only by code, <b>(\d+)</b> checked by both, "
+                 r"<b>(\d+)</b> not checked by anyone")
     judge = find(r"of (\d+) statements <b>(\d+) verified \(\d+%\)</b>, (\d+) flagged")
     code = find(r"Errors found there: (\d+)\. Review required by the offer table \(not errors\): (\d+)")
     return {"statements": total[0] if total else None,
-            "judge_verified": judge[1] if judge else None, "judge_flagged": judge[2] if judge else None,
-            "code_errors": code[0] if code else None, "review_rows": code[1] if code else None}
+            "read_only_by_judge": parts[0] if parts else None, "checked_only_by_code": parts[1] if parts else None,
+            "checked_by_both": parts[2] if parts else None, "not_checked_by_anyone": parts[3] if parts else None,
+            "judge_flagged": judge[2] if judge else None,
+            "code_errors": code[0] if code else None, "review_required": code[1] if code else None}
 
 
 def make_pdf(report_html: str, pdf_path: Path) -> str | None:
@@ -169,8 +173,10 @@ def save(conn, values: dict) -> None:
     result = values.get("result")
     conn.execute(INSERT_SQL, (
         values["teaser_id"], values["company_id"], values["status"], values.get("model"), values.get("rubric"),
-        values.get("statements"), values.get("judge_verified"), values.get("judge_flagged"), values.get("code_errors"),
-        values.get("review_rows"), values.get("report_path"), values.get("run_ref"), values.get("error"),
+        values.get("statements"), values.get("read_only_by_judge"), values.get("checked_only_by_code"),
+        values.get("checked_by_both"), values.get("not_checked_by_anyone"), values.get("judge_flagged"),
+        values.get("code_errors"), values.get("review_required"), values.get("report_path"), values.get("run_ref"),
+        values.get("error"),
         Jsonb(result) if result is not None else None))
     conn.commit()
 
@@ -225,7 +231,7 @@ def main(argv=None) -> int:
             print("FAILED:", values["error"])
         else:
             print("Result:", values["result"]["overall"])
-            print({k: values.get(k) for k in ("statements", "judge_verified", "judge_flagged", "code_errors", "review_rows")})
+            print({k: values.get(k) for k in ("statements", "read_only_by_judge", "checked_only_by_code", "checked_by_both", "not_checked_by_anyone", "judge_flagged", "code_errors", "review_required")})
             if values["result"]["pdf_problem"]:
                 print("PDF problem:", values["result"]["pdf_problem"])
         if not args.dry_run:

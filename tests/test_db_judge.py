@@ -69,10 +69,15 @@ def test_missing_text_gives_failed_row():
 
 
 def test_report_numbers():
-    html = ("<b>The teaser has 28 statements</b> x <b>Judge:</b> of 17 statements <b>15 verified (88%)</b>, 2 flagged. "
+    html = ("<b>The teaser has 28 statements</b> (headings not counted): <b>13</b> read only by the judge, "
+            "<b>12</b> checked only by code, <b>3</b> checked by both, <b>0</b> not checked by anyone.<br>"
+            "<b>Judge:</b> of 17 statements <b>15 verified (88%)</b>, 2 flagged. "
             "Errors found there: 3. Review required by the offer table (not errors): 2.<br>")
-    assert dj.report_numbers(html) == {"statements": 28, "judge_verified": 15, "judge_flagged": 2, "code_errors": 3, "review_rows": 2}
+    assert dj.report_numbers(html) == {
+        "statements": 28, "read_only_by_judge": 13, "checked_only_by_code": 12, "checked_by_both": 3,
+        "not_checked_by_anyone": 0, "judge_flagged": 2, "code_errors": 3, "review_required": 2}
     assert dj.report_numbers("nothing")["statements"] is None
+    assert dj.report_numbers("nothing")["checked_by_both"] is None
 
 
 def test_pdf_problem_is_recorded_not_fatal():
@@ -125,7 +130,7 @@ def test_save_writes_one_row_with_matching_columns():
         dj.save(conn, values)
         sql, params = conn.calls[0]
         assert "insert into public.teaser_checks" in sql and conn.committed == 1
-        assert len(params) == sql.count("%s") == 14 and params[0] == 4 and params[2] == "DONE" and params[-1][0] == "JSONB"
+        assert len(params) == sql.count("%s") == 17 and params[0] == 4 and params[2] == "DONE" and params[-1][0] == "JSONB"
         dj.save(conn, {"teaser_id": 4, "company_id": "G-test", "status": "FAILED", "error": "boom"})
         assert conn.calls[1][1][2] == "FAILED" and conn.calls[1][1][-1] is None  # no result for a failed run
     finally:
