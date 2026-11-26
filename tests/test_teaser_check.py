@@ -85,6 +85,11 @@ def test_figure_words_are_flags_not_verdicts():
     assert flags and all(r["verdict"] == "" for r in flags)
 
 
+def test_figure_word_note_names_the_word():
+    flags = [r for r in rows_for("t3_growth_claim.txt") if r["kind"] == "flag"]
+    assert all(f"“{r['text']}”" in r["reason"] for r in flags)
+
+
 def test_supported_with_quote_stays_supported():
     row = jd.apply_rules(judgement("Founded in Germany", "supported", "The company was founded in Germany.", "F2"), RECORD)
     assert row["verdict"] == "Supported"

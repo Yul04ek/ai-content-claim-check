@@ -132,7 +132,9 @@ def deterministic_checks(text: str, body: str, pack: dict, record_text: str) -> 
         sentence = body[start:min(end) if end else len(body)]
         if NEGATION.search(sentence):  # "revenue ... have not been established" states an unknown, it is not a figure
             continue
-        rows.append(make_row("flag", match.group(0), reason="Business-figure word. The pack contains no such figure."))
+        # Name the word in the note, so the reader sees which one it is.
+        rows.append(make_row("flag", match.group(0),
+                             reason=f"Business-figure word “{match.group(0)}”. The pack contains no such figure."))
 
     rows += offer_checks(body, pack, record_text)
     rows += scope_checks(text, body, tail_text_of(text), pack)
